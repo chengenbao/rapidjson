@@ -20,6 +20,7 @@
 #ifndef _TUBEMQ_CLIENT_UTILS_H_
 #define _TUBEMQ_CLIENT_UTILS_H_
 
+#include <map>
 #include <string>
 
 namespace TubeMQ {
@@ -28,9 +29,22 @@ namespace TubeMQ {
 
   static const string tWhitespaceCharSet = " \n\r\t\f\v";
 
+  namespace delimiter {
+    static const string tDelimiterEqual = "=";
+    static const string tDelimiterAnd   = "&";
+    static const string tDelimiterComma = ",";
+    static const string tDelimiterColon = ":";
+    static const string tDelimiterAt    = "@";
+    static const string tDelimiterPound = "#";
+  }
+
   class Utils {
-    public:
-      static string trim(const string& source);
+   public:
+    // trim string info
+    static string trim(const string& source);
+    // split string to vector
+    static void split(const string& source, map<string, int>& result, 
+                     const string& delimiterStep1, const string& delimiterStep2);
 
   };
  

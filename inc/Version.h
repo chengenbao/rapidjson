@@ -20,10 +20,15 @@
 #ifndef _TUBEMQ_CLIENT_VERSION_H_
 #define _TUBEMQ_CLIENT_VERSION_H_
 
-#ifndef TUBEMQ_CLIENT_VER
-#define TUBEMQ_CLIENT_VER    "0.5.0"
-#endif
+#include <string>
 
+namespace TubeMQ {
+
+  using namespace std;
+
+  static const String tTubeMQClientVersion = "0.5.0";
+
+}
 
 #endif
 

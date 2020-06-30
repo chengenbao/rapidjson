@@ -17,8 +17,9 @@
  * under the License.
  */
 
+#include <vector>
+#include <stdlib.h>
 #include "utils.h"
-
 
 namespace TubeMQ {
 
@@ -28,16 +29,63 @@ string Utils::trim(const string& source) {
   if(!target.empty()) {
     size_t foudPos = target.find_first_not_of(tWhitespaceCharSet);
     if (foudPos != string::npos) {
-      target = target.substr(foudPos)
+      target = target.substr(foudPos);
     }
     foudPos = target.find_last_not_of(tWhitespaceCharSet);
     if(foudPos != string::npos) {
-      target = target.substr(0, foudPos + 1)
+      target = target.substr(0, foudPos + 1);
     }
   }
   return target;
 }
 
+void Utils::split(const string& source, map<string, int>& result, 
+      const string& delimiterStep1, const string& delimiterStep2) {
+  int tmpValue;
+  string subStr;
+  string keyStr;
+  string valStr;
+  string::size_type pos1,pos2,pos3;
+  if(!source.empty()) {
+    pos1 = 0;
+    pos2 = source.find(delimiterStep1);
+    while(string::npos != pos2) {
+      subStr = source.substr(pos1, pos2-pos1);
+      subStr = Utils::trim(subStr);
+      pos1 = pos2 + delimiterStep1.length();
+      pos2 = source.find(delimiterStep1, pos1);
+      if(subStr.empty()) {
+        continue;
+      }
+      pos3 = subStr.find(delimiterStep2);
+      if(string::npos == pos3) {
+        continue;
+      }
+      keyStr = subStr.substr(0, pos3);
+      valStr = subStr.substr(pos3+delimiterStep2.length());
+      keyStr = Utils::trim(keyStr);
+      valStr = Utils::trim(valStr);
+      if(keyStr.empty()) {
+        continue;
+      }
+      result[keyStr] = atoi(valStr.c_str());
+    }
+    if(pos1 != source.length()) {
+      subStr = source.substr(pos1);
+      subStr = Utils::trim(subStr);
+      pos3 = subStr.find(delimiterStep2);
+      if(string::npos != pos3) {
+        keyStr = subStr.substr(0, pos3);
+        valStr = subStr.substr(pos3+delimiterStep2.length());
+        keyStr = Utils::trim(keyStr);
+        valStr = Utils::trim(valStr);
+        if(!keyStr.empty()){
+          result[keyStr] = atoi(valStr.c_str());
+        }
+      }
+    }
+  }
+}
 
 }
 
