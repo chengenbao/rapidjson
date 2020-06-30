@@ -97,10 +97,50 @@ class BaseConfig {
 };
 
 
-class ConsumerConfig {
- public:
-  ConsumerConfig();
+enum ConsumePosition {
+  kConsumeFromFirstOffset = -1,
+  kConsumeFromLatestOffset = 0,
+  kComsumeFromMaxOffsetAlways = 1,
 };
+
+
+
+class ConsumerConfig : public BaseConfig {
+ public: 
+  ConsumerConfig();
+  ~ConsumerConfig();
+  ConsumerConfig& operator=(const ConsumerConfig& target); 
+  bool SetGroupConsumeTarget(string& err_info, 
+    const string& group_name, const set<string>& subscribed_topicset);
+  bool SetGroupConsumeTarget(string& err_info, 
+    const string& group_name, const map<string, set<string> >& subscribed_topic_and_filter_map);
+  const string& GetGroupName() const;
+  const map<string, set<string> >& GetSubTopicAndFilterMap() const;
+  void SetConsumePosition(ConsumePosition consume_from_where);
+  const ConsumePosition GetConsumePosition() const;
+  const int GetMsgNotFoundWaitPeriodMs() const;
+  void SetMsgNotFoundWaitPeriodMs(int msg_notfound_wait_period_ms);
+  const int GetMaxSubinfoReportIntvl() const;
+  void SetMaxSubinfoReportIntvl(int max_subinfo_report_intvl);
+  bool IsConfirmInLocal();
+  void SetConfirmInLocal(bool confirm_in_local);
+     
+  
+ private: 
+  string group_name_;
+  map<string, set<string> > sub_topic_and_filter_map_;
+  ConsumePosition consume_position_;
+  int max_subinfo_report_intvl_;
+  int msg_notfound_wait_period_ms_;
+  bool is_confirm_in_local_;
+  bool is_rollback_if_confirm_timout_;
+  int reb_confirm_wait_period_ms_;
+  int max_confirm_wait_period_ms_;
+  int shutdown_reb_wait_period_ms_;
+};
+
+
+
 
 }
 
