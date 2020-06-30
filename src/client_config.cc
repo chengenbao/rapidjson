@@ -17,18 +17,18 @@
  * under the License.
  */
  
-#include "TubeClientConfig.h"
+#include "ClientConfig.h"
 
 
 namespace TubeMQ {
 
 
-TubeConsumerConfig::TubeConsumerConfig()
+ConsumerConfig::ConsumerConfig()
 {
 
 }
 
-TubeConsumerConfig::~TubeConsumerConfig()
+ConsumerConfig::~ConsumerConfig()
 {
 
 }

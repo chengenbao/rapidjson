@@ -30,14 +30,14 @@ namespace TubeMQ {
 
     using namespace std;
 
-    class TubeConsumerConfig
+    class ConsumerConfig {
+        
        public:
-            TubeConsumerConfig();
+            ConsumerConfig();
 
     };
-{
-        
- 
+
+
 }
 
 

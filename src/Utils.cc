@@ -23,7 +23,7 @@
 namespace TubeMQ {
 
 
-string TubeMQUtils::trim(const string& source) 
+string Utils::trim(const string& source) 
 {
     string target = source;
     if(!target.empty())

@@ -27,7 +27,7 @@ namespace TubeMQ {
     using namespace std;
 
 
-    class TubeMQUtils
+    class Utils
     {
         public:
             static string trim(const string& source);
