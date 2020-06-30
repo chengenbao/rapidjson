@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include "utils.h"
 
-namespace TubeMQ {
+namespace tubemq {
 
 
 string Utils::trim(const string& source) {
@@ -40,7 +40,7 @@ string Utils::trim(const string& source) {
 }
 
 void Utils::split(const string& source, map<string, int>& result, 
-      const string& delimiterStep1, const string& delimiterStep2) {
+      const string& delimiter_step1, const string& delimiter_step2) {
   int tmpValue;
   string subStr;
   string keyStr;
@@ -48,21 +48,21 @@ void Utils::split(const string& source, map<string, int>& result,
   string::size_type pos1,pos2,pos3;
   if(!source.empty()) {
     pos1 = 0;
-    pos2 = source.find(delimiterStep1);
+    pos2 = source.find(delimiter_step1);
     while(string::npos != pos2) {
       subStr = source.substr(pos1, pos2-pos1);
       subStr = Utils::trim(subStr);
-      pos1 = pos2 + delimiterStep1.length();
-      pos2 = source.find(delimiterStep1, pos1);
+      pos1 = pos2 + delimiter_step1.length();
+      pos2 = source.find(delimiter_step1, pos1);
       if(subStr.empty()) {
         continue;
       }
-      pos3 = subStr.find(delimiterStep2);
+      pos3 = subStr.find(delimiter_step2);
       if(string::npos == pos3) {
         continue;
       }
       keyStr = subStr.substr(0, pos3);
-      valStr = subStr.substr(pos3+delimiterStep2.length());
+      valStr = subStr.substr(pos3+delimiter_step2.length());
       keyStr = Utils::trim(keyStr);
       valStr = Utils::trim(valStr);
       if(keyStr.empty()) {
@@ -73,10 +73,10 @@ void Utils::split(const string& source, map<string, int>& result,
     if(pos1 != source.length()) {
       subStr = source.substr(pos1);
       subStr = Utils::trim(subStr);
-      pos3 = subStr.find(delimiterStep2);
+      pos3 = subStr.find(delimiter_step2);
       if(string::npos != pos3) {
         keyStr = subStr.substr(0, pos3);
-        valStr = subStr.substr(pos3+delimiterStep2.length());
+        valStr = subStr.substr(pos3+delimiter_step2.length());
         keyStr = Utils::trim(keyStr);
         valStr = Utils::trim(valStr);
         if(!keyStr.empty()){
