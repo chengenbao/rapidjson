@@ -17,7 +17,7 @@
  * under the License.
  */
  
-#include "ClientConfig.h"
+#include "client_config.h"
 
 
 namespace TubeMQ {

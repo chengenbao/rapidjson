@@ -24,14 +24,15 @@
 
 namespace TubeMQ {
 
-    using namespace std;
+  using namespace std;
 
+  static const string tWhitespaceCharSet = " \n\r\t\f\v";
 
-    class Utils
-    {
-        public:
-            static string trim(const string& source);
-    };
+  class Utils {
+    public:
+      static string trim(const string& source);
+
+  };
  
 }
 

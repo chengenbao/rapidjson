@@ -17,29 +17,27 @@
  * under the License.
  */
 
-#include "Utils.h"
+#include "utils.h"
 
 
 namespace TubeMQ {
 
 
-string Utils::trim(const string& source) 
-{
-    string target = source;
-    if(!target.empty())
-    {
-        size_t foudPos = target.find_first_not_of(TUBEMQ_TOKEN_WHITESPACE_CHAR_SET);
-        if (foudPos != string::npos) 
-        {
-            target = target.substr(foudPos)
-        }
-        foudPos = target.find_last_not_of(TUBEMQ_TOKEN_WHITESPACE_CHAR_SET);
-        if(foudPos != string::npos)
-        {
-            target = target.substr(0, foudPos + 1)
-        }
+string Utils::trim(const string& source) {
+  string target = source;
+  if(!target.empty()) {
+    size_t foudPos = target.find_first_not_of(tWhitespaceCharSet);
+    if (foudPos != string::npos) {
+      target = target.substr(foudPos)
     }
-    return target;
+    foudPos = target.find_last_not_of(tWhitespaceCharSet);
+    if(foudPos != string::npos) {
+      target = target.substr(0, foudPos + 1)
+    }
+  }
+  return target;
 }
 
+
 }
+
