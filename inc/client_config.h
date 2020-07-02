@@ -23,31 +23,13 @@
 #include <string>
 #include <stdio.h>
 #include <map>
+#include <set>
 
 
 
 namespace tubemq {
 
 using namespace std;
-
-
-// configuration value setting
-namespace config {
-// rpc timeout define  
-static const int kRpcTimoutDef = 15;
-static const int kRpcTimoutMax = 300;
-static const int kRpcTimoutMin = 8;
-// heartbeat period define
-static const int kHeartBeatPeriodDef = 10;
-static const int kHeartBeatFailRetryTimesDef = 5;
-static const int kHeartBeatSleepPeriodDef = 60;
-// max masterAddrInfo length
-static const int kMasterAddrInfoMaxLength = 1024;
-// max TopicName length
-static const int kTopicNameMaxLength = 64;
-// max Consume GroupName length
-static const int kGroupNameMaxLength = 1024;
-}  // namespace config
 
 
 class BaseConfig {
@@ -100,7 +82,7 @@ class BaseConfig {
 enum ConsumePosition {
   kConsumeFromFirstOffset = -1,
   kConsumeFromLatestOffset = 0,
-  kComsumeFromMaxOffsetAlways = 1,
+  kComsumeFromMaxOffsetAlways = 1
 };
 
 
@@ -114,6 +96,9 @@ class ConsumerConfig : public BaseConfig {
     const string& group_name, const set<string>& subscribed_topicset);
   bool SetGroupConsumeTarget(string& err_info, 
     const string& group_name, const map<string, set<string> >& subscribed_topic_and_filter_map);
+  bool SetGroupConsumeTarget(string& err_info, 
+    const string& group_name, const map<string, set<string> >& subscribed_topic_and_filter_map,
+    const string& session_key, int source_count, bool is_select_big, const map<string, long>& part_offset_map);
   const string& GetGroupName() const;
   const map<string, set<string> >& GetSubTopicAndFilterMap() const;
   void SetConsumePosition(ConsumePosition consume_from_where);
@@ -124,11 +109,30 @@ class ConsumerConfig : public BaseConfig {
   void SetMaxSubinfoReportIntvl(int max_subinfo_report_intvl);
   bool IsConfirmInLocal();
   void SetConfirmInLocal(bool confirm_in_local);
-     
+  bool IsRollbackIfConfirmTimeout();
+  void setRollbackIfConfirmTimeout(bool is_rollback_if_confirm_timeout);
+  const int GetWaitPeriodIfConfirmWaitRebalanceMs() const;
+  void SetWaitPeriodIfConfirmWaitRebalanceMs(int reb_confirm_wait_period_ms);
+  const int GetMaxConfirmWaitPeriodMs() const;
+  void SetMaxConfirmWaitPeriodMs(int max_confirm_wait_period_ms);
+  const int GetShutdownRebWaitPeriodMs() const;
+  void SetShutdownRebWaitPeriodMs(int wait_period_when_shutdown_ms);
+  string ToString();
+
+ private:
+  bool setGroupConsumeTarget(string& err_info, bool is_bound_consume,
+    const string& group_name, const map<string, set<string> >& subscribed_topic_and_filter_map,
+    const string& session_key, int source_count, bool is_select_big, const map<string, long>& part_offset_map);
+    
   
  private: 
   string group_name_;
   map<string, set<string> > sub_topic_and_filter_map_;
+  bool is_bound_consume_;
+  string session_key_;
+  int source_count_;
+  bool is_select_big_;
+  map<string, long> part_offset_map_;
   ConsumePosition consume_position_;
   int max_subinfo_report_intvl_;
   int msg_notfound_wait_period_ms_;

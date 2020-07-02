@@ -22,29 +22,32 @@
 
 #include <map>
 #include <string>
+#include <vector>
+
 
 namespace tubemq {
 
 using namespace std;
 
-static const string tWhitespaceCharSet = " \n\r\t\f\v";
 
-namespace delimiter {
-  static const string tDelimiterEqual = "=";
-  static const string tDelimiterAnd   = "&";
-  static const string tDelimiterComma = ",";
-  static const string tDelimiterColon = ":";
-  static const string tDelimiterAt    = "@";
-  static const string tDelimiterPound = "#";
-}
 
 class Utils {
  public:
   // trim string info
-  static string trim(const string& source);
+  static string Trim(const string& source);
   // split string to vector
-  static void split(const string& source, map<string, int>& result, 
+  static void Split(const string& source, vector<string>& result, const string& delimiter);
+  // split string to map<string, int>
+  static void Split(const string& source, map<string, int>& result, 
                    const string& delimiter_step1, const string& delimiter_step2);
+  static void Join(const vector<string>& vec, const string& delimiter, string& target);
+  static bool ValidString(string& err_info, const string& source,
+                   bool allow_empty, bool pat_match, bool check_max_length, unsigned int maxlen);
+  static bool ValidGroupName(string &err_info, 
+                   const string& group_name, string& tgt_group_name);
+  static bool ValidFilterItem(string& err_info, 
+                   const string& src_filteritem, string& tgt_filteritem);
+  static long GetCurrentTimeMillis();
 
 };
  
