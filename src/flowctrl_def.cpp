@@ -450,10 +450,10 @@ bool FlowCtrlRuleHandler::parseDataLimit(string &err_info,
         err_info = "Illegal rule'value item, must be dict type";
         return false;
     }
-    if(!parseTimeMember(err_info, node_item, "start", start_time)) {
+    if (!parseTimeMember(err_info, node_item, "start", start_time)) {
       return false;
     }
-    if(!parseTimeMember(err_info, node_item, "end", end_time)) {
+    if (!parseTimeMember(err_info, node_item, "end", end_time)) {
       return false;
     }
     if (start_time > end_time) {
