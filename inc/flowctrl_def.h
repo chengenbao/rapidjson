@@ -134,7 +134,7 @@ class FlowCtrlRuleHandler {
   bool parseIntMember(string &err_info, Json::Value &root, 
     const char* key, int &value, bool compare_value, int required_val);
   bool parseFlowCtrlInfo(const string& flowctrl_info, map<int,vector<FlowCtrlItem> >& flowctrl_info_map);
-  bool parseDataLimit(int type, Json::Value &root, vector<FlowCtrlItem>& flowCtrlItems,string &err_info);
+  bool parseDataLimit(string &err_info, Json::Value &root, vector<FlowCtrlItem>& flowCtrlItems);
   bool parseFreqLimit(string &err_info, Json::Value &root, vector<FlowCtrlItem>& flowctrl_items);
   bool parseLowFetchLimit(string &err_info, Json::Value &root, vector<FlowCtrlItem>& flowctrl_items);
   bool FlowCtrlRuleHandler::parseTimeMember(string &err_info, Json::Value &root, const char* key, int& value);
