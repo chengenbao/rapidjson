@@ -342,31 +342,32 @@ bool FlowCtrlRuleHandler::parseFlowCtrlInfo(const string& flowctrl_info,
   int type;
   string err_info;
   stringstream ss;
-  Json::Value root;
-  Json::Reader reader;
-  
+  rapidjson::Document doc;
   // check flowctrl info length
   if (flowctrl_info.length() == 0){
     return false;
   }
   // parse flowctrl info
-  if (!reader.parse(flowctrl_info, root)) {
+  if(doc.Parse(flowctrl_info).HasParseError()) {
     LogRText(ERROR,"arsing error, flowCtrlInfo's value must be valid json format! flowctrl_info=%s\n",flowctrl_info.c_str()); 
     return false;
   }
-  // if empty return true
-  if (root.size() == 0) {
-    return true;
+  if (!doc.IsArray()) {
+    LogRText(ERROR,"flowCtrlInfo's value must be dict! flowctrl_info=%s\n",flowctrl_info.c_str()); 
+    return false;
   }
-  for (unsigned int i=0; i<root.size(); i++) {
+  for (unsigned int i = 0; i < doc.Size(); i++) {
     vector<FlowCtrlItem> flowctrl_item_vec;
-    Json::Value node_item = root[Json::UInt(i)];
+    const rapidjson::Value& node_item = doc[i];
+    if(!node_item.IsObject()) {
+      continue;
+    }
     if (!parseIntMember(err_info, node_item, "type", type, false, -2)) {
       ss << "Decode Failure: ";
       ss << err_info;
       ss << " of type field in parse flowctrl_info!";
       err_info = ss.str();
-      LogRText(ERROR,"parseFlowCtrlInfo failure %s",err_reason.c_str()); 
+      LogRText(ERROR,"parseFlowCtrlInfo failure %s",err_info.c_str()); 
       return false;
     }    
     if (type < 0 || type > 3) {
@@ -413,8 +414,8 @@ bool FlowCtrlRuleHandler::parseFlowCtrlInfo(const string& flowctrl_info,
   return true;
 }
 
-bool FlowCtrlRuleHandler::parseDataLimit(string &err_info, 
-                           Json::Value &root, vector<FlowCtrlItem>& flowctrl_items) {
+bool FlowCtrlRuleHandler::parseDataLimit(string& err_info, 
+                           const rapidjson::Value& root, vector<FlowCtrlItem>& flowctrl_items) {
   int type_val;
   stringstream ss;
   string attr_sep = delimiter::kDelimiterColon;
@@ -426,27 +427,25 @@ bool FlowCtrlRuleHandler::parseDataLimit(string &err_info,
     err_info = ss.str();
     return false;
   }
-  if (!root.isMember("rule")) {
+  // check rule type
+  if (!root.HasMember("rule")) {
     err_info = "rule field not existed";
     return false;
   }
-  if (root["rule"].empty()) {
-    err_info = "Ok";
-    return true;
-  }
-  if (!root["rule"].isArray()) {
+  if (!root["rule"].IsArray()) {
     err_info = "Illegal value, rule must be list type";
     return false;
   }
-  Json::Value obj_set = root["rule"];
-  for (unsigned int index = 0 ; index < obj_set.size() ; index++) {
+  // parse rule info
+  const rapidjson::Value& obj_set = root["rule"];
+  for (unsigned int index = 0 ; index < obj_set.Size() ; index++) {
     int start_time = 0;
     int end_time = 0;
     long datadlt_m = 0;
     long datasize_limit = 0;
     int freqms_limit = 0;
-    Json::Value node_item = obj_set[Json::UInt(index)];
-    if (!node_item.isObject()) {
+    const rapidjson::Value& node_item = obj_set[index];
+    if (!node_item.IsObject()) {
         err_info = "Illegal rule'value item, must be dict type";
         return false;
     }
@@ -517,8 +516,8 @@ bool FlowCtrlRuleHandler::parseDataLimit(string &err_info,
   return true;  
 }
 
-bool FlowCtrlRuleHandler::parseFreqLimit(string &err_info, 
-                           Json::Value &root, vector<FlowCtrlItem>& flowctrl_items) {
+bool FlowCtrlRuleHandler::parseFreqLimit(string& err_info, 
+                           const rapidjson::Value& root, vector<FlowCtrlItem>& flowctrl_items) {
   int type_val;
   stringstream ss;
 
@@ -529,24 +528,21 @@ bool FlowCtrlRuleHandler::parseFreqLimit(string &err_info,
     err_info = ss.str();
     return false;
   }
-  if (!root.isMember("rule")) {
+  if (!root.HasMember("rule")) {
     err_info = "rule field not existed";
     return false;
   }
-  if (root["rule"].empty()) {
-    err_info = "Ok";
-    return true;
-  }
-  if (!root["rule"].isArray()) {
+  if (!root["rule"].IsArray()) {
     err_info = "Illegal value, rule must be list type";
     return false;
   }
-  Json::Value obj_set = root["rule"];
-  for (unsigned int i = 0 ; i < obj_set.size() ; i++) {
+  // parse rule info
+  const rapidjson::Value& obj_set = root["rule"];
+  for (unsigned int i = 0 ; i < obj_set.Size() ; i++) {
     int zeroCnt = -2;
     int freqms_limit = -2;
-    Json::Value node_item = obj_set[Json::UInt(i)];
-    if (!node_item.isObject()) {
+    const rapidjson::Value& node_item = obj_set[i];
+    if (!node_item.IsObject()) {
       err_info = "Illegal rule'value item, must be dict type";
       return false;
     }
@@ -574,8 +570,8 @@ bool FlowCtrlRuleHandler::parseFreqLimit(string &err_info,
   return true;  
 }
 
-bool FlowCtrlRuleHandler::parseLowFetchLimit(string &err_info, 
-                            Json::Value &root, vector<FlowCtrlItem>& flowctrl_items) {
+bool FlowCtrlRuleHandler::parseLowFetchLimit(string& err_info, 
+                            const rapidjson::Value& root, vector<FlowCtrlItem>& flowctrl_items) {
   int type_val;
   stringstream ss;
   if (!parseIntMember(err_info, root, "type", type_val, true, 3)) {
@@ -585,31 +581,28 @@ bool FlowCtrlRuleHandler::parseLowFetchLimit(string &err_info,
     err_info = ss.str();
     return false;
   }
-  if (!root.isMember("rule")) {
+  if (!root.HasMember("rule")) {
     err_info = "rule field not existed";
     return false;
   }
-  if (root["rule"].empty()) {
-    err_info = "Ok";
-    return true;
-  }
-  if (!root["rule"].isArray()) {
+  if (!root["rule"].IsArray()) {
     err_info = "Illegal value, rule must be list type";
     return false;
   }
-  Json::Value node_item = root["rule"];
-  for (unsigned int i = 0 ; i < node_item.size() ; i++) {
+  // parse rule info
+  const rapidjson::Value& node_item = root["rule"];
+  for (unsigned int i = 0 ; i < node_item.Size() ; i++) {
     int norm_freq_ms = 0;
     int filter_freq_ms = 0;
     int min_filter_freq_ms = 0;
     FlowCtrlItem flowctrl_item;
-    Json::Value node_item = node_item[Json::UInt(i)];
-    if (!node_item.isObject()) {
+    const rapidjson::Value& node_item = node_item[i];
+    if (!node_item.IsObject()) {
       err_info = "Illegal rule'value item, must be dict type";
       return false;
     }
-    if (node_item.isMember("filterFreqInMs") 
-      || node_item.isMember("minDataFilterFreqInMs")) {
+    if (node_item.HasMember("filterFreqInMs") 
+      || node_item.HasMember("minDataFilterFreqInMs")) {
       if (!parseIntMember(err_info, node_item, 
         "filterFreqInMs", filter_freq_ms, false, -1)) {
         ss << "Decode Failure: ";
@@ -651,7 +644,7 @@ bool FlowCtrlRuleHandler::parseLowFetchLimit(string &err_info,
         return false;
       }
     }
-    if (node_item.isMember("normFreqInMs")) {
+    if (node_item.HasMember("normFreqInMs")) {
       if (!parseIntMember(err_info, node_item, 
         "normFreqInMs", norm_freq_ms, false, -1)) {
         ss << "Decode Failure: ";
@@ -676,91 +669,80 @@ bool FlowCtrlRuleHandler::parseLowFetchLimit(string &err_info,
   return true;
 }
 
-bool FlowCtrlRuleHandler::parseStringMember(string &err_info, Json::Value &root, 
-  const char* key, string &value, bool compare_value, string required_val) {
+bool FlowCtrlRuleHandler::parseStringMember(string& err_info, const rapidjson::Value& root, 
+                            const char* key, string& value, bool compare_value, string required_val) {
   // check key if exist
-  if (!root.isMember(key)) {
+  if (!root.HasMember(key)) {
     err_info = "Field not existed";
     return false;
   }
-
-  if (root[key].empty()) {
-    if (compare_value) {
-      if (required_val != "") {
-        err_info = "Illegal value, not required value content";
-        return false;
-      }
-    }
-    value = "";
-  } else {
-    if (!root[key].isString()) {
-      err_info = "Illegal value, must be string type";
+  if (!root[key].IsString()) {
+    err_info = "Illegal value, must be string type";
+    return false;
+  }
+  
+  if (compare_value) {
+    if (root[key].GetString() != required_val) {
+      err_info = "Illegal value, not required value content";
       return false;
     }
-
-    if (compare_value) {
-      if (root[key].asString() != required_val) {
-        err_info = "Illegal value, not required value content";
-        return false;
-      }
-    }
-    value = root[key].asString();
   }
+  value = root[key].GetString();
   return true;
 }
 
-bool FlowCtrlRuleHandler::parseLongMember(string &err_info, Json::Value &root, 
-                            const char* key, long &value, bool compare_value, long required_val) {
-  if (!root.isMember(key)) {
+bool FlowCtrlRuleHandler::parseLongMember(string& err_info, const rapidjson::Value& root, 
+                            const char* key, long& value, bool compare_value, long required_val) {
+  if (!root.HasMember(key)) {
     err_info = "Field not existed";
     return false;
   }
-  if (!root[key].isNumeric()) {
+  if (!root[key].IsNumber()) {
     err_info = "Illegal value, must be number type";
     return false;
   }
   if (compare_value) {
-    if ((long)root[key].asDouble() != required_val) {
+    if ((long)root[key].GetInt64() != required_val) {
       err_info = "Illegal value, not required value content";
       return false;
     }
   }
-  value = (long)root[key].asDouble();
+  value = (long)root[key].GetInt64();
   return true;
 }
 
-bool FlowCtrlRuleHandler::parseIntMember(string &err_info, Json::Value &root, 
-                            const char* key, int &value, bool compare_value, int required_val) {
-  if (!root.isMember(key)) {
+bool FlowCtrlRuleHandler::parseIntMember(string& err_info, const rapidjson::Value& root, 
+                            const char* key, int& value, bool compare_value, int required_val) {
+  if (!root.HasMember(key)) {
     err_info = "Field not existed";
     return false;
   }
-  if (!root[key].isInt()) {
+  if (!root[key].IsInt()) {
     err_info = "Illegal value, must be int type";
     return false;
   }
   if (compare_value) {
-    if (root[key].asInt() != required_val) {
+    if (root[key].GetInt() != required_val) {
       err_info = "Illegal value, not required value content";
       return false;
     }
   }
-  value = root[key].asInt();
+  value = root[key].GetInt();
   return true;
 }
 
-bool FlowCtrlRuleHandler::parseTimeMember(string &err_info, 
-                           Json::Value &root, const char* key, int& value) {
+bool FlowCtrlRuleHandler::parseTimeMember(string& err_info, 
+                           const rapidjson::Value& root, const char* key, int& value) {
   // check key if exist
   stringstream ss;
-  if (!root.isMember(key)) {
+  if (!root.HasMember(key)) {
     ss << "field ";
     ss << key;
     ss << " not existed!";
     err_info = ss.str();
     return false;
   }
-  if (!root[key].isString()) {
+  if (!root[key].IsString()) {
     ss << "field ";
     ss << key;
     ss << " must be string type!";
@@ -768,7 +750,7 @@ bool FlowCtrlRuleHandler::parseTimeMember(string &err_info,
     return false;
   }
   string::size_type pos1;
-  string str_value = root[key].asString();
+  string str_value = root[key].GetString();
   string attr_sep = delimiter::kDelimiterColon;
   pos1 = str_value.find(attr_sep);
   if (string::npos == pos1) {

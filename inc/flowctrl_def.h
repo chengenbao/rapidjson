@@ -25,7 +25,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
-#include <json/json.h>
+#include "rapidjson/document.h"
 #include "atomic_def.h"
 
 
@@ -127,17 +127,17 @@ class FlowCtrlRuleHandler {
   void clearStatisData();
   static bool compareFeqQueue(const FlowCtrlItem& queue1, const FlowCtrlItem& queue2);
   static bool compareDataLimitQueue(const FlowCtrlItem& o1, const FlowCtrlItem& o2);
-  bool parseStringMember(string &err_info, Json::Value &root, 
-    const char* key, string &value, bool compare_value, string required_val);
-  bool parseLongMember(string &err_info, Json::Value &root, 
-    const char* key, long &value, bool compare_value, long required_val);
-  bool parseIntMember(string &err_info, Json::Value &root, 
-    const char* key, int &value, bool compare_value, int required_val);
+  bool parseStringMember(string &err_info, const rapidjson::Value& root, 
+    const char* key, string& value, bool compare_value, string required_val);
+  bool parseLongMember(string &err_info, const rapidjson::Value& root, 
+    const char* key, long& value, bool compare_value, long required_val);
+  bool parseIntMember(string &err_info, const rapidjson::Value& root, 
+    const char* key, int& value, bool compare_value, int required_val);
   bool parseFlowCtrlInfo(const string& flowctrl_info, map<int,vector<FlowCtrlItem> >& flowctrl_info_map);
-  bool parseDataLimit(string &err_info, Json::Value &root, vector<FlowCtrlItem>& flowCtrlItems);
-  bool parseFreqLimit(string &err_info, Json::Value &root, vector<FlowCtrlItem>& flowctrl_items);
-  bool parseLowFetchLimit(string &err_info, Json::Value &root, vector<FlowCtrlItem>& flowctrl_items);
-  bool FlowCtrlRuleHandler::parseTimeMember(string &err_info, Json::Value &root, const char* key, int& value);
+  bool parseDataLimit(string& err_info, const rapidjson::Value& root, vector<FlowCtrlItem>& flowCtrlItems);
+  bool parseFreqLimit(string& err_info, const rapidjson::Value& root, vector<FlowCtrlItem>& flowctrl_items);
+  bool parseLowFetchLimit(string& err_info, const rapidjson::Value& root, vector<FlowCtrlItem>& flowctrl_items);
+  bool FlowCtrlRuleHandler::parseTimeMember(string& err_info, const rapidjson::Value& root, const char* key, int& value);
 
  private:
   AtomicLong    flowctrl_id_;
