@@ -17,12 +17,12 @@
  * under the License.
  */
 
-#include <sstream>
-#include <vector>
 #include "client_config.h"
 #include "const_config.h"
 #include "const_rpc.h"
 #include "utils.h"
+#include <sstream>
+#include <vector>
 
 
 namespace tubemq {

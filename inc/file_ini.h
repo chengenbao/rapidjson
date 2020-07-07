@@ -16,9 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-      
-#ifndef _TUBEMQ_CLIENT_FILE_INI_H_
-#define _TUBEMQ_CLIENT_FILE_INI_H_
+
+#ifndef TUBEMQ_CLIENT_FILE_INI_H_
+#define TUBEMQ_CLIENT_FILE_INI_H_
 
 #include <map>
 #include <string>
@@ -43,7 +43,7 @@ class Fileini {
   map<string, map<string, string> > ini_map_;
 };
 
-}
+}  // namespace tubemq
 
-#endif
+#endif  // TUBEMQ_CLIENT_FILE_INI_H_
 

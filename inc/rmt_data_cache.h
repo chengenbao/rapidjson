@@ -17,8 +17,8 @@
  * under the License.
  */
 
-#ifndef _TUBEMQ_CLIENT_RMT_DATA_CACHE_H_
-#define _TUBEMQ_CLIENT_RMT_DATA_CACHE_H_
+#ifndef TUBEMQ_CLIENT_RMT_DATA_CACHE_H_
+#define TUBEMQ_CLIENT_RMT_DATA_CACHE_H_
  
 #include <atomic>
 #include <stdint.h>
@@ -35,5 +35,5 @@ class RmtDataCacheCsm {
  
  }  // namespace tubemq
  
-#endif
+#endif  // TUBEMQ_CLIENT_RMT_DATA_CACHE_H_
 

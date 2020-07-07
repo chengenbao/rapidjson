@@ -16,9 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
- 
-#ifndef _TUBEMQ_CLIENT_CONFIGURE_H_
-#define _TUBEMQ_CLIENT_CONFIGURE_H_
+
+#ifndef TUBEMQ_CLIENT_CONFIGURE_H_
+#define TUBEMQ_CLIENT_CONFIGURE_H_
 
 #include <stdio.h>
 #include <map>
@@ -146,9 +146,9 @@ class ConsumerConfig : public BaseConfig {
 
 
 
-}
+}  // namespace tubemq
 
-#endif
+#endif  // TUBEMQ_CLIENT_CONFIGURE_H_
 
 
 

@@ -17,8 +17,8 @@
  * under the License.
  */
 
-#ifndef _TUBEMQ_CLIENT_FLOW_CONTROL_H_
-#define _TUBEMQ_CLIENT_FLOW_CONTROL_H_
+#ifndef TUBEMQ_CLIENT_FLOW_CONTROL_H_
+#define TUBEMQ_CLIENT_FLOW_CONTROL_H_
 
 #include "atomic_def.h"
 #include <rapidjson/document.h>
@@ -155,8 +155,8 @@ class FlowCtrlRuleHandler {
 
   
 
-}
+}  // namespace tubemq
 
 
-#endif
+#endif  // TUBEMQ_CLIENT_FLOW_CONTROL_H_
 

@@ -17,8 +17,8 @@
  * under the License.
  */
 
-#ifndef _TUBEMQ_CLIENT_ATOMIC_DEF_H_
-#define _TUBEMQ_CLIENT_ATOMIC_DEF_H_
+#ifndef TUBEMQ_CLIENT_ATOMIC_DEF_H_
+#define TUBEMQ_CLIENT_ATOMIC_DEF_H_
 
 #include <stdlib.h>
 
@@ -266,11 +266,8 @@ class AtomicBoolean{
 };
 
 
+}  // namespace tubemq
 
 
-
-}
-
-
-#endif
+#endif  // TUBEMQ_CLIENT_ATOMIC_DEF_H_
 

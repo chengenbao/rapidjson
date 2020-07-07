@@ -16,9 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-      
-#ifndef _TUBEMQ_CLIENT_CONST_CONFIG_H_
-#define _TUBEMQ_CLIENT_CONST_CONFIG_H_
+
+#ifndef TUBEMQ_CLIENT_CONST_CONFIG_H_
+#define TUBEMQ_CLIENT_CONST_CONFIG_H_
 
 #include <map>
 #include <string>
@@ -71,7 +71,6 @@ static const int kBrokerTlsPortDef = 8124;
 // invalid value
 static const int kInvalidValue = -2;
 
-
 }  // namespace config
 
 
@@ -91,11 +90,10 @@ namespace delimiter {
   // right square bracket
   static const string kDelimiterRgtSB = "]";
   
-} // namespace delimiter
-
+}  // namespace delimiter
 
  
-}
+}  // namespace tubemq
 
-#endif
+#endif  // TUBEMQ_CLIENT_CONST_CONFIG_H_
 

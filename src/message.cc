@@ -17,8 +17,8 @@
  * under the License.
  */
 
-#include "const_config.h"
 #include "message.h"
+#include "const_config.h"
 #include "utils.h"
 #include <string.h>
 #include <sstream>

@@ -16,10 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-      
-#ifndef _TUBEMQ_CLIENT_META_INFO_H_
-#define _TUBEMQ_CLIENT_META_INFO_H_
 
+#ifndef TUBEMQ_CLIENT_META_INFO_H_
+#define TUBEMQ_CLIENT_META_INFO_H_
+
+#include "flowctrl_def.h"
 #include <list>
 #include <string>
 
@@ -148,7 +149,7 @@ class PartitionExt : public Partition {
 
 
 
-}
+}  // namespace tubemq
 
-#endif
+#endif  // TUBEMQ_CLIENT_META_INFO_H_
 
