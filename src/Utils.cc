@@ -240,21 +240,20 @@ bool Utils::ValidFilterItem(string& err_info,
   return true;
 }
 
-
-string Utils::Int2str(int data) {
+string Utils::Int2str(int32_t data) {
   stringstream ss;
   ss << data;
   return ss.str();
 }
 
-string Utils::Long2str(long data) {
+string Utils::Long2str(int64_t data) {
   stringstream ss;
   ss << data;
   return ss.str();
 }
 
-int Utils::IpToInt(const string& ipv4_addr) {
-  int result = 0;
+int32_t Utils::IpToInt(const string& ipv4_addr) {
+  int32_t result = 0;
   vector<string> result_vec;
 
   Utils::Split(ipv4_addr, result_vec, delimiter::kDelimiterDot);
@@ -265,7 +264,7 @@ int Utils::IpToInt(const string& ipv4_addr) {
   return result;
 }
 
-long Utils::GetCurrentTimeMillis() {
+int64_t Utils::GetCurrentTimeMillis() {
   struct timeval tv;
   gettimeofday(&tv, NULL);
   return tv.tv_sec * 1000 + tv.tv_usec /1000;

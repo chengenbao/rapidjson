@@ -23,6 +23,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <stdint.h>
 
 
 namespace tubemq {
@@ -47,14 +48,13 @@ class Utils {
                    const string& group_name, string& tgt_group_name);
   static bool ValidFilterItem(string& err_info,
                    const string& src_filteritem, string& tgt_filteritem);
-  static string Int2str(int data);
-  static string Long2str(long data);
+  static string Int2str(int32_t data);
+  static string Long2str(int64_t data);
   static int IpToInt(const string& ipv4_addr);
-  static long GetCurrentTimeMillis();
-
+  static int64_t GetCurrentTimeMillis();
 };
 
-} //namespace tubemq
+}  // namespace tubemq
 
-#endif // TUBEMQ_CLIENT_UTILS_H_
+#endif  // TUBEMQ_CLIENT_UTILS_H_
 
