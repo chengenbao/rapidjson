@@ -64,16 +64,16 @@ namespace rpc_config {
   static const int32_t kBrokerMethoddConsumerHeatbeat    = 16;
   static const int32_t kBrokerMethoddConsumerGetMsg      = 17;
   static const int32_t kBrokerMethoddConsumerCommit      = 18;
-  static const int32_t kBrokerMethoddConsumerClose       = 19; 
+  static const int32_t kBrokerMethoddConsumerClose       = 19;
 
   // register operate type
-  static const int32_t kRegOpTypeRegister       = 31; 
-  static const int32_t kRegOpTypeUnReg          = 32; 
+  static const int32_t kRegOpTypeRegister       = 31;
+  static const int32_t kRegOpTypeUnReg          = 32;
 
   // rpc connect node timeout
   static const int32_t kRpcConnectTimeoutMs    = 3000;
 
-  // rpc timeout define  
+  // rpc timeout define
   static const int32_t kRpcTimoutDefSec = 15;
   static const int32_t kRpcTimoutMaxSec = 300;
   static const int32_t kRpcTimoutMinSec = 8;

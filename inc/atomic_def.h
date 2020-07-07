@@ -29,7 +29,7 @@ using namespace std;
 
 class AtomicInteger {
  public:
-  AtomicInteger(){
+  AtomicInteger() {
     this->counter_ = 0;
   }
 
@@ -68,7 +68,7 @@ class AtomicInteger {
       int next = current + 1;
       if (__sync_bool_compare_and_swap(&this->counter_, current, next)) {
         return current;
-      }  
+      }
     }
   }
 
@@ -78,7 +78,7 @@ class AtomicInteger {
       int next = current - 1;
       if (__sync_bool_compare_and_swap(&this->counter_, current, next)) {
         return current;
-      }  
+      }
     }
   }
 
@@ -88,7 +88,7 @@ class AtomicInteger {
       int next = current + delta;
       if (__sync_bool_compare_and_swap(&this->counter_, current, next)) {
         return current;
-      }  
+      }
     }
   }
 
@@ -116,7 +116,7 @@ class AtomicInteger {
     for ( ; ; ) {
       int current = this->counter_;
       int next = current + delta;
-      if (__sync_bool_compare_and_swap (&this->counter_, current, next)) {
+      if (__sync_bool_compare_and_swap(&this->counter_, current, next)) {
         return next;
       }
     }
@@ -216,7 +216,7 @@ class AtomicLong {
     for ( ; ; ) {
       long current = this->counter_;
       long next = current + delta;
-      if (__sync_bool_compare_and_swap (&this->counter_, current, next)) {
+      if (__sync_bool_compare_and_swap(&this->counter_, current, next)) {
         return next;
       }
     }

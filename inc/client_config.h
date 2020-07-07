@@ -93,15 +93,15 @@ enum ConsumePosition {
 
 
 class ConsumerConfig : public BaseConfig {
- public: 
+ public:
   ConsumerConfig();
   ~ConsumerConfig();
-  ConsumerConfig& operator=(const ConsumerConfig& target); 
-  bool SetGroupConsumeTarget(string& err_info, 
+  ConsumerConfig& operator=(const ConsumerConfig& target);
+  bool SetGroupConsumeTarget(string& err_info,
     const string& group_name, const set<string>& subscribed_topicset);
-  bool SetGroupConsumeTarget(string& err_info, 
+  bool SetGroupConsumeTarget(string& err_info,
     const string& group_name, const map<string, set<string> >& subscribed_topic_and_filter_map);
-  bool SetGroupConsumeTarget(string& err_info, 
+  bool SetGroupConsumeTarget(string& err_info,
     const string& group_name, const map<string, set<string> >& subscribed_topic_and_filter_map,
     const string& session_key, uint32_t source_count, bool is_select_big, const map<string, int64_t>& part_offset_map);
   const string& GetGroupName() const;
@@ -129,7 +129,7 @@ class ConsumerConfig : public BaseConfig {
     const string& group_name, const map<string, set<string> >& subscribed_topic_and_filter_map,
     const string& session_key, int32_t source_count, bool is_select_big, const map<string, int64_t>& part_offset_map);
 
- private: 
+ private:
   string group_name_;
   map<string, set<string> > sub_topic_and_filter_map_;
   bool is_bound_consume_;

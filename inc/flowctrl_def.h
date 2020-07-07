@@ -82,7 +82,7 @@ class FlowCtrlItem {
   const int32_t GetEndTime() const {
     return end_time_;
   }
-  const int64_t GetDataSizeLimit() const { 
+  const int64_t GetDataSizeLimit() const {
     return datasize_limit_;
   }
   const int32_t GetFreqMsLimit() const {
@@ -108,22 +108,22 @@ class FlowCtrlRuleHandler {
   ~FlowCtrlRuleHandler();
   void UpdateDefFlowCtrlInfo(bool is_default,
     int32_t qrypriority_id, int64_t flowctrl_id, const string& flowctrl_info);
-  bool GetCurDataLimit(int32_t last_datadlt,FlowCtrlResult& flowctrl_result);
+  bool GetCurDataLimit(int32_t last_datadlt, FlowCtrlResult& flowctrl_result);
   int32_t GetCurFreqLimitTime(int32_t msg_zero_cnt, int32_t received_limit);
   int32_t GetMinZeroCnt() { return this->min_zero_cnt_.Get();}
-  int32_t GetQryPriorityId() { 
+  int32_t GetQryPriorityId() {
     return this->qrypriority_id_.Get();
   }
-  void SetQryPriorityId(int32_t qrypriority_id) { 
+  void SetQryPriorityId(int32_t qrypriority_id) {
     this->qrypriority_id_.Set(qrypriority_id);
   }
-  int64_t GetFlowCtrlId() { 
+  int64_t GetFlowCtrlId() {
     return this->flowctrl_id_.Get();
   }
   const FlowCtrlItem& GetFilterCtrlItem() const {
     return this->filter_ctrl_item_;
   }
-  const string& GetFlowCtrlInfo() const { 
+  const string& GetFlowCtrlInfo() const {
     return this->flowctrl_info_;
   }
 
@@ -138,7 +138,7 @@ class FlowCtrlRuleHandler {
     const char* key, int64_t& value, bool compare_value, int64_t required_val);
   bool parseIntMember(string &err_info, const rapidjson::Value& root,
     const char* key, int32_t& value, bool compare_value, int32_t required_val);
-  bool parseFlowCtrlInfo(const string& flowctrl_info, map<int32_t,vector<FlowCtrlItem> >& flowctrl_info_map);
+  bool parseFlowCtrlInfo(const string& flowctrl_info, map<int32_t, vector<FlowCtrlItem> >& flowctrl_info_map);
   bool parseDataLimit(string& err_info, const rapidjson::Value& root, vector<FlowCtrlItem>& flowCtrlItems);
   bool parseFreqLimit(string& err_info, const rapidjson::Value& root, vector<FlowCtrlItem>& flowctrl_items);
   bool parseLowFetchLimit(string& err_info, const rapidjson::Value& root, vector<FlowCtrlItem>& flowctrl_items);

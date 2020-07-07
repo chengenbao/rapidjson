@@ -301,7 +301,7 @@ bool ConsumerConfig::SetGroupConsumeTarget(string& err_info,
       return false;
     }
     set<string> tmp_filters;
-    tmp_sub_map[topic_name] = tmp_filters; 
+    tmp_sub_map[topic_name] = tmp_filters;
   }
   this->is_bound_consume_ = false;
   this->group_name_ = tgt_group_name;
@@ -390,7 +390,7 @@ bool ConsumerConfig::setGroupConsumeTarget(string& err_info, bool is_bound_consu
     }
     tmp_sub_map[topic_name] = tgt_filters;
   }
-  // check if bound consume 
+  // check if bound consume
   if (!is_bound_consume) {
     this->is_bound_consume_ = false;
     this->group_name_ = tgt_group_name;
@@ -400,7 +400,7 @@ bool ConsumerConfig::setGroupConsumeTarget(string& err_info, bool is_bound_consu
   }
   // check session_key
   string tgt_session_key = Utils::Trim(session_key);
-  if (tgt_session_key.length() == 0 
+  if (tgt_session_key.length() == 0
     || tgt_session_key.length() > config::kSessionKeyMaxLength) {
     if (tgt_session_key.length() == 0) {
       err_info = "Illegal parameter: session_key is empty!";
@@ -483,7 +483,7 @@ const string& ConsumerConfig::GetGroupName() const {
 const map<string, set<string> >& ConsumerConfig::GetSubTopicAndFilterMap() const {
   return this->sub_topic_and_filter_map_;
 }
-  
+
 void ConsumerConfig::SetConsumePosition(ConsumePosition consume_from_where) {
   this->consume_position_ = consume_from_where;
 }

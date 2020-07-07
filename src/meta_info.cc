@@ -47,7 +47,7 @@ NodeInfo::NodeInfo(bool is_broker, const string& node_info) {
     this->node_id_   = atoi(result[0].c_str());
     this->node_host_ = result[1];
     this->node_port_ = config::kBrokerPortDef;
-    if (result.size() >= 3){
+    if (result.size() >= 3) {
       this->node_port_ = atoi(result[2].c_str());
     }
   } else {
@@ -66,7 +66,6 @@ NodeInfo::NodeInfo(const string& node_host, uint32_t node_port) {
   this->node_host_ = node_host;
   this->node_port_ = node_port;
   buildStrInfo();
-
 }
 
 NodeInfo::NodeInfo(int node_id, const string& node_host, uint32_t node_port) {
@@ -77,11 +76,11 @@ NodeInfo::NodeInfo(int node_id, const string& node_host, uint32_t node_port) {
 }
 
 NodeInfo::~NodeInfo() {
-
+  //
 }
 
 NodeInfo& NodeInfo::operator=(const NodeInfo& target) {
-  if (this != &target){
+  if (this != &target) {
     this->node_id_   = target.node_id_;
     this->node_host_ = target.node_host_;
     this->node_port_ = target.node_port_;
@@ -99,13 +98,11 @@ bool NodeInfo::operator== (const NodeInfo& target) {
     return true;
   }
   return false;
-
 }
 
 bool NodeInfo::operator< (const NodeInfo& target) const {
   return this->node_info_ < target.node_info_;
 }
-  
 const uint32_t NodeInfo::GetNodeId() const {
   return this->node_id_;
 }
@@ -117,7 +114,7 @@ const string& NodeInfo::GetHost() const {
 const uint32_t NodeInfo::GetPort() const {
   return this->node_port_;
 }
-  
+
 const string& NodeInfo::GetAddrInfo() const {
   return this->addr_info_;
 }
@@ -153,12 +150,12 @@ Partition::Partition(const string& partition_info) {
   this->topic_ = " ";
   this->partition_id_ = 0;
   // parse partition_info string
-  string::size_type pos=0;
+  string::size_type pos = 0;
   string seg_key = delimiter::kDelimiterPound;
   string token_key = delimiter::kDelimiterColon;
   // parse broker_info
   pos = partition_info.find(seg_key);
-  if (pos != string::npos){
+  if (pos != string::npos) {
     string broker_info = partition_info.substr(0, pos);
     broker_info = Utils::Trim(broker_info);
     this->broker_info_ = NodeInfo(true, broker_info);
@@ -176,7 +173,7 @@ Partition::Partition(const string& partition_info) {
   }
   buildPartitionKey();
 }
-  
+
 // part_str = topic:partition_id
 Partition::Partition(const NodeInfo& broker_info, const string& part_str) {
   vector<string> result;
@@ -221,7 +218,6 @@ bool Partition::operator== (const Partition& target) {
     return true;
   }
   return false;
-
 }
 
 const uint32_t Partition::GetBrokerId() const {
@@ -277,13 +273,13 @@ void Partition::buildPartitionKey() {
 
 // sub_info = consumerId@group#broker_info#topic:partitionId
 SubscribeInfo::SubscribeInfo(const string& sub_info) {
-  string::size_type pos=0;
+  string::size_type pos = 0;
   string seg_key = delimiter::kDelimiterPound;
   string at_key = delimiter::kDelimiterAt;
   this->consumer_id_ = " ";
   this->group_ = " ";
   // parse sub_info
-  pos=sub_info.find(seg_key);
+  pos = sub_info.find(seg_key);
   if (pos != string::npos) {
     string consumer_info = sub_info.substr(0, pos);
     consumer_info = Utils::Trim(consumer_info);
@@ -299,7 +295,7 @@ SubscribeInfo::SubscribeInfo(const string& sub_info) {
   buildSubInfo();
 }
 
-SubscribeInfo::SubscribeInfo(const string& consumer_id, 
+SubscribeInfo::SubscribeInfo(const string& consumer_id,
                  const string& group, const Partition& partition) {
   this->consumer_id_ = consumer_id;
   this->group_       = group;
@@ -389,7 +385,7 @@ ConsumerEvent::ConsumerEvent(int64_t rebalance_id, int32_t event_type,
 }
 
 ConsumerEvent& ConsumerEvent::operator=(const ConsumerEvent& target) {
-  if(this != &target){
+  if (this != &target) {
     this->rebalance_id_ = target.rebalance_id_;
     this->event_type_ = target.event_type_;
     this->event_status_ = target.event_status_;
@@ -433,9 +429,9 @@ string ConsumerEvent::ToString() {
   ss << ", status=";
   ss << this->event_status_;
   ss << ", subscribeInfoList=[";
-  for (it = this->subscribe_list_.begin(); 
+  for (it = this->subscribe_list_.begin();
           it != this->subscribe_list_.end(); ++it) {
-    if(count++ > 0) {
+    if (count++ > 0) {
       ss << ",";
     }
     ss << it->ToString();

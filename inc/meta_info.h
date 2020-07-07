@@ -52,7 +52,7 @@ class NodeInfo {
  private:
   void buildStrInfo();
 
- private: 
+ private:
   uint32_t node_id_;
   string   node_host_;
   uint32_t node_port_;
@@ -87,7 +87,7 @@ class Partition {
  private:
   string   topic_;
   NodeInfo broker_info_;
-  uint32_t partition_id_;   
+  uint32_t partition_id_;
   string   partition_key_;
   string   partition_info_;
 };
@@ -140,7 +140,6 @@ class ConsumerEvent {
   int32_t event_status_;
   list<SubscribeInfo> subscribe_list_;
 };
-
 
 class PartitionExt : public Partition {
   PartitionExt();

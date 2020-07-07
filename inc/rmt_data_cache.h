@@ -19,21 +19,21 @@
 
 #ifndef TUBEMQ_CLIENT_RMT_DATA_CACHE_H_
 #define TUBEMQ_CLIENT_RMT_DATA_CACHE_H_
- 
+
 #include <atomic>
 #include <stdint.h>
- 
+
 namespace tubemq {
- 
+
 using namespace std;
 
 // consumer remote data cache
 class RmtDataCacheCsm {
-  
+
 }
 
- 
- }  // namespace tubemq
- 
+
+}  // namespace tubemq
+
 #endif  // TUBEMQ_CLIENT_RMT_DATA_CACHE_H_
 
