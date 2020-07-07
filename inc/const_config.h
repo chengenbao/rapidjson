@@ -29,10 +29,6 @@ using namespace std;
 
 // configuration value setting
 namespace config {
-// rpc timeout define  
-static const int kRpcTimoutDef = 15;
-static const int kRpcTimoutMax = 300;
-static const int kRpcTimoutMin = 8;
 // heartbeat period define
 static const int kHeartBeatPeriodDef = 10;
 static const int kHeartBeatFailRetryTimesDef = 5;
@@ -51,7 +47,6 @@ static const int kFilterItemMaxCount = 500;
 // max session key length
 static const int kSessionKeyMaxLength = 1024;
 
-
 // max subscribe info report times
 static const int kSubInfoReportMaxIntervalTimes = 6;
 // default message not found response wait period
@@ -68,6 +63,11 @@ static const int kMaxIntValue = 0x7fffffff;
 // max long value
 static const long kMaxLongValue = 0x7fffffffffffffffL;
 
+// default broker port
+static const int kBrokerPortDef = 8123;
+// default broker TLS port
+static const int kBrokerTlsPortDef = 8124;
+
 // invalid value
 static const int kInvalidValue = -2;
 
@@ -76,6 +76,7 @@ static const int kInvalidValue = -2;
 
 
 namespace delimiter {
+  static const string kDelimiterDot = ".";
   static const string kDelimiterEqual = "=";
   static const string kDelimiterAnd   = "&";
   static const string kDelimiterComma = ",";
