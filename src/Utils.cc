@@ -17,8 +17,8 @@
  * under the License.
  */
 
-#include "const_config.h"
 #include "utils.h"
+#include "const_config.h"
 #include <regex.h>
 #include <stdlib.h>
 #include <sys/time.h>
@@ -159,7 +159,7 @@ bool Utils::ValidString(string& err_info, const string& source,
     regex_t reg;
     regmatch_t pmatch[1];
     const char* patRule = "^[a-zA-Z]\\w+$";
-    regcomp(&reg, patRule,cflags);
+    regcomp(&reg, patRule, cflags);
     int status = regexec(&reg, source.c_str(), 1, pmatch, 0);
     regfree(&reg);
     if (status == REG_NOMATCH) {
@@ -194,7 +194,7 @@ bool Utils::ValidGroupName(string& err_info,
   regex_t reg;
   regmatch_t pmatch[1];
   const char* patRule = "^[a-zA-Z][\\w-]+$";
-  regcomp(&reg, patRule,cflags);
+  regcomp(&reg, patRule, cflags);
   int status = regexec(&reg, tgt_group_name.c_str(), 1, pmatch, 0);
   regfree(&reg);
   if (status == REG_NOMATCH) {
@@ -243,13 +243,13 @@ bool Utils::ValidFilterItem(string& err_info,
 
 string Utils::Int2str(int data) {
   stringstream ss;
-  ss<<data;
+  ss << data;
   return ss.str();
 }
 
 string Utils::Long2str(long data) {
   stringstream ss;
-  ss<<data;
+  ss << data;
   return ss.str();
 }
 
@@ -267,11 +267,11 @@ int Utils::IpToInt(const string& ipv4_addr) {
 
 long Utils::GetCurrentTimeMillis() {
   struct timeval tv;
-  gettimeofday(&tv,NULL);
+  gettimeofday(&tv, NULL);
   return tv.tv_sec * 1000 + tv.tv_usec /1000;
 }
 
 
 
-}
+}// namespace tubemq
 
