@@ -103,7 +103,7 @@ class ConsumerConfig : public BaseConfig {
     const string& group_name, const map<string, set<string> >& subscribed_topic_and_filter_map);
   bool SetGroupConsumeTarget(string& err_info, 
     const string& group_name, const map<string, set<string> >& subscribed_topic_and_filter_map,
-    const string& session_key, uint32_t source_count, bool is_select_big, const map<string, long>& part_offset_map);
+    const string& session_key, uint32_t source_count, bool is_select_big, const map<string, int64_t>& part_offset_map);
   const string& GetGroupName() const;
   const map<string, set<string> >& GetSubTopicAndFilterMap() const;
   void SetConsumePosition(ConsumePosition consume_from_where);
@@ -127,7 +127,7 @@ class ConsumerConfig : public BaseConfig {
  private:
   bool setGroupConsumeTarget(string& err_info, bool is_bound_consume,
     const string& group_name, const map<string, set<string> >& subscribed_topic_and_filter_map,
-    const string& session_key, int32_t source_count, bool is_select_big, const map<string, long>& part_offset_map);
+    const string& session_key, int32_t source_count, bool is_select_big, const map<string, int64_t>& part_offset_map);
 
  private: 
   string group_name_;
@@ -136,7 +136,7 @@ class ConsumerConfig : public BaseConfig {
   string session_key_;
   uint32_t source_count_;
   bool is_select_big_;
-  map<string, long> part_offset_map_;
+  map<string, int64_t> part_offset_map_;
   ConsumePosition consume_position_;
   int32_t max_subinfo_report_intvl_;
   int32_t msg_notfound_wait_period_ms_;

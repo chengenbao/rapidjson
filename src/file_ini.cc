@@ -61,8 +61,8 @@ bool Fileini::Loadini(string& err_info, const string& file_name) {
   while (getline(conf_file, line_str)) {
     // check if a comment
     line_str = Utils::Trim(line_str);
-    if (line_str.empty() 
-      || line_str.find(delimiter::kDelimiterDbSlash) == 0 
+    if (line_str.empty()
+      || line_str.find(delimiter::kDelimiterDbSlash) == 0
       || line_str.find(delimiter::kDelimiterSemicolon) == 0) {
       continue;
     }
@@ -70,8 +70,8 @@ bool Fileini::Loadini(string& err_info, const string& file_name) {
     lftsb_pos = line_str.find(delimiter::kDelimiterLftSB);
     rgtsb_pos = line_str.find(delimiter::kDelimiterRgtSB);
     if (lftsb_pos != string::npos && rgtsb_pos != string::npos) {
-      sector = line_str.substr(lftsb_pos + (delimiter::kDelimiterLftSB).size(), 
-        rgtsb_pos - (delimiter::kDelimiterRgtSB).size());
+      sector = line_str.substr(lftsb_pos + (delimiter::kDelimiterLftSB).size(),
+                      rgtsb_pos - (delimiter::kDelimiterRgtSB).size());
       sector = Utils::Trim(sector);
       continue;
     }
@@ -145,6 +145,6 @@ bool Fileini::GetValue(string& err_info, const string& sector,
   return true;
 }
 
-}
+}  // namespace tubemq
 
 

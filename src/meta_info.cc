@@ -444,5 +444,5 @@ string ConsumerEvent::ToString() {
   return ss.str();
 }
 
-};
+};  // namespace tubemq
 

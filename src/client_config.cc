@@ -43,7 +43,7 @@ BaseConfig::BaseConfig() {
 }
 
 BaseConfig::~BaseConfig() {
-
+  //
 }
 
 BaseConfig& BaseConfig::operator=(const BaseConfig& target) {
@@ -81,7 +81,7 @@ bool BaseConfig::SetMasterAddrInfo(string& err_info, const string& master_addrin
   // parse and verify master address info
   // master_addrinfo's format like ip1:port1,ip2:port2,ip3:port3
   map<string, int> tgt_address_map;
-  Utils::Split(master_addrinfo, tgt_address_map, 
+  Utils::Split(master_addrinfo, tgt_address_map,
     delimiter::kDelimiterComma, delimiter::kDelimiterColon);
   if (tgt_address_map.empty()) {
     err_info = "Illegal parameter: master_addrinfo is blank!";
@@ -106,8 +106,8 @@ bool BaseConfig::SetTlsInfo(string& err_info, bool tls_enable,
       err_info = "Illegal parameter: trust_store_password is empty!";
       return false;
     }
-      this->tls_trust_store_path_= trimed_trust_store_path;
-      this->tls_trust_store_password_= trimed_trust_store_password;
+      this->tls_trust_store_path_ = trimed_trust_store_path;
+      this->tls_trust_store_password_ = trimed_trust_store_password;
   } else {
     this->tls_trust_store_path_ = "";
     this->tls_trust_store_password_ = "";
@@ -116,7 +116,7 @@ bool BaseConfig::SetTlsInfo(string& err_info, bool tls_enable,
   return true;
 }
 
-bool BaseConfig::SetAuthenticInfo(string& err_info, bool authentic_enable, 
+bool BaseConfig::SetAuthenticInfo(string& err_info, bool authentic_enable,
                 const string& usr_name, const string& usr_password) {
   this->auth_enable_ = authentic_enable;
   if (authentic_enable) {
@@ -234,30 +234,29 @@ string BaseConfig::ToString() {
   return ss.str();
 }
 
+ConsumerConfig::ConsumerConfig() {
+  this->group_name_ = "";
+  this->is_bound_consume_ = false;
+  this->session_key_ = "";
+  this->source_count_ = 0;
+  this->is_select_big_ = true;
+  this->consume_position_ = kConsumeFromLatestOffset;
+  this->is_confirm_in_local_ = false;
+  this->is_rollback_if_confirm_timout_ = true;
+  this->max_subinfo_report_intvl_ = config::kSubInfoReportMaxIntervalTimes;
+  this->msg_notfound_wait_period_ms_ = config::kMsgNotfoundWaitPeriodMsDef;
+  this->reb_confirm_wait_period_ms_ = config::kRebConfirmWaitPeriodMsDef;
+  this->max_confirm_wait_period_ms_ = config::kConfirmWaitPeriodMsMax;
+  this->shutdown_reb_wait_period_ms_ = config::kRebWaitPeriodWhenShutdownMs;
+}
 
- ConsumerConfig::ConsumerConfig() {
-   this->group_name_ = "";
-   this->is_bound_consume_ = false;
-   this->session_key_ = "";
-   this->source_count_ = 0;
-   this->is_select_big_ = true;
-   this->consume_position_ = kConsumeFromLatestOffset;
-   this->is_confirm_in_local_ = false;
-   this->is_rollback_if_confirm_timout_ = true;
-   this->max_subinfo_report_intvl_ = config::kSubInfoReportMaxIntervalTimes;
-   this->msg_notfound_wait_period_ms_ = config::kMsgNotfoundWaitPeriodMsDef;
-   this->reb_confirm_wait_period_ms_ = config::kRebConfirmWaitPeriodMsDef;
-   this->max_confirm_wait_period_ms_ = config::kConfirmWaitPeriodMsMax;
-   this->shutdown_reb_wait_period_ms_ = config::kRebWaitPeriodWhenShutdownMs;
- }
- 
- ConsumerConfig::~ConsumerConfig() {
-
- }
+ConsumerConfig::~ConsumerConfig() {
+  //
+}
 
 ConsumerConfig& ConsumerConfig::operator=(const ConsumerConfig& target) {
   if (this != &target) {
-    // parent class 
+    // parent class
     BaseConfig::operator =(target);
     // child class
     this->group_name_ = target.group_name_;
@@ -280,9 +279,9 @@ ConsumerConfig& ConsumerConfig::operator=(const ConsumerConfig& target) {
 }
 
 bool ConsumerConfig::SetGroupConsumeTarget(string& err_info,
-                       const string& group_name, const set<string>& subscribed_topicset) {
+                        const string& group_name, const set<string>& subscribed_topicset) {
   string tgt_group_name;
-  bool is_success = Utils::ValidGroupName(err_info,group_name, tgt_group_name);
+  bool is_success = Utils::ValidGroupName(err_info, group_name, tgt_group_name);
   if (!is_success) {
     return false;
   }
@@ -292,10 +291,10 @@ bool ConsumerConfig::SetGroupConsumeTarget(string& err_info,
   }
   string topic_name;
   map<string, set<string> > tmp_sub_map;
-  for (set<string>::iterator it = subscribed_topicset.begin(); 
+  for (set<string>::iterator it = subscribed_topicset.begin();
           it != subscribed_topicset.end(); ++it) {
     topic_name = Utils::Trim(*it);
-    is_success = Utils::ValidString(err_info, topic_name, 
+    is_success = Utils::ValidString(err_info, topic_name,
                          false, true, true, config::kTopicNameMaxLength);
     if (!is_success) {
       err_info = "Illegal parameter: subscribed_topicset's item error, " + err_info;
@@ -311,31 +310,31 @@ bool ConsumerConfig::SetGroupConsumeTarget(string& err_info,
   return true;
 }
 
-bool ConsumerConfig::SetGroupConsumeTarget(string& err_info, 
+bool ConsumerConfig::SetGroupConsumeTarget(string& err_info,
   const string& group_name, const map<string, set<string> >& subscribed_topic_and_filter_map) {
   string session_key;
   int source_count = 0;
   bool is_select_big = false;
-  map<string, long> part_offset_map;
-  return setGroupConsumeTarget(err_info, false, 
-    group_name, subscribed_topic_and_filter_map, 
-    session_key, source_count, is_select_big, part_offset_map);
+  map<string, int64_t> part_offset_map;
+  return setGroupConsumeTarget(err_info, false,
+              group_name, subscribed_topic_and_filter_map,
+              session_key, source_count, is_select_big, part_offset_map);
 }
 
-bool ConsumerConfig::SetGroupConsumeTarget(string& err_info, 
+bool ConsumerConfig::SetGroupConsumeTarget(string& err_info,
       const string& group_name, const map<string, set<string> >& subscribed_topic_and_filter_map,
-      const string& session_key, uint32_t source_count, bool is_select_big, const map<string, long>& part_offset_map) {
-  return setGroupConsumeTarget(err_info, true, 
-    group_name, subscribed_topic_and_filter_map, 
-    session_key, source_count, is_select_big, part_offset_map);
+      const string& session_key, uint32_t source_count, bool is_select_big, const map<string, int64_t>& part_offset_map) {
+  return setGroupConsumeTarget(err_info, true,
+              group_name, subscribed_topic_and_filter_map,
+              session_key, source_count, is_select_big, part_offset_map);
 }
 
 bool ConsumerConfig::setGroupConsumeTarget(string& err_info, bool is_bound_consume,
       const string& group_name, const map<string, set<string> >& subscribed_topic_and_filter_map,
-      const string& session_key, uint32_t source_count, bool is_select_big, const map<string, long>& part_offset_map) {
+      const string& session_key, uint32_t source_count, bool is_select_big, const map<string, int64_t>& part_offset_map) {
   // check parameter group_name
   string tgt_group_name;
-  bool is_success = Utils::ValidGroupName(err_info,group_name, tgt_group_name);
+  bool is_success = Utils::ValidGroupName(err_info, group_name, tgt_group_name);
   if (!is_success) {
     return false;
   }
@@ -346,14 +345,14 @@ bool ConsumerConfig::setGroupConsumeTarget(string& err_info, bool is_bound_consu
   }
   map<string, set<string> > tmp_sub_map;
   map<string, set<string> >::const_iterator it_map;
-  for (it_map = subscribed_topic_and_filter_map.begin(); 
-    it_map != subscribed_topic_and_filter_map.end(); ++it_map) {
-    uint32_t count=0;
+  for (it_map = subscribed_topic_and_filter_map.begin();
+              it_map != subscribed_topic_and_filter_map.end(); ++it_map) {
+    uint32_t count = 0;
     string tmp_filteritem;
     set<string> tgt_filters;
     // check topic_name info
-    is_success = Utils::ValidString(err_info, it_map->first, 
-                         false, true, true, config::kTopicNameMaxLength);
+    is_success = Utils::ValidString(err_info, it_map->first,
+                          false, true, true, config::kTopicNameMaxLength);
     if (!is_success) {
       stringstream ss;
       ss << "Check parameter subscribed_topic_and_filter_map error: topic ";
@@ -420,8 +419,8 @@ bool ConsumerConfig::setGroupConsumeTarget(string& err_info, bool is_bound_consu
   }
   // check part_offset_map
   string part_key;
-  map<string, long> tmp_parts_map;
-  map<string, long>::const_iterator it_part;
+  map<string, int64_t> tmp_parts_map;
+  map<string, int64_t>::const_iterator it_part;
   for (it_part = part_offset_map.begin(); it_part != part_offset_map.end(); ++it_part) {
     vector<string> result;
     Utils::Split(it_part->first, result, delimiter::kDelimiterColon);
@@ -550,9 +549,9 @@ void ConsumerConfig::SetShutdownRebWaitPeriodMs(int wait_period_when_shutdown_ms
 }
 
 string ConsumerConfig::ToString() {
-  int i = 0;
+  int32_t i = 0;
   stringstream ss;
-  map<string, long>::iterator it;
+  map<string, int64_t>::iterator it;
   map<string, set<string> >::iterator it_map;
 
   // print info
@@ -561,15 +560,15 @@ string ConsumerConfig::ToString() {
   ss << ", group_name_='";
   ss << this->group_name_;
   ss << "', sub_topic_and_filter_map_={";
-  for (it_map = this->sub_topic_and_filter_map_.begin(); 
-      it_map != this->sub_topic_and_filter_map_.end(); ++it_map) {
+  for (it_map = this->sub_topic_and_filter_map_.begin();
+              it_map != this->sub_topic_and_filter_map_.end(); ++it_map) {
     if (i++ > 0) {
       ss << ",";
     }
     ss << "'";
     ss << it_map->first;
     ss << "'=[";
-    int j=0;
+    int32_t j = 0;
     set<string> topic_set = it_map->second;
     for (set<string>::iterator it = topic_set.begin(); it != topic_set.end(); ++it) {
       if (j++ > 0) {
@@ -591,8 +590,8 @@ string ConsumerConfig::ToString() {
   ss << this->is_select_big_;
   ss << ", part_offset_map_={";
   i = 0;
-  for (it = this->part_offset_map_.begin(); 
-      it != this->part_offset_map_.end(); ++it) {
+  for (it = this->part_offset_map_.begin();
+              it != this->part_offset_map_.end(); ++it) {
     if (i++ > 0) {
       ss << ",";
     }
@@ -621,5 +620,5 @@ string ConsumerConfig::ToString() {
   return ss.str();
 }
 
-}
+}  // namespace tubemq
 

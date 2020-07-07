@@ -66,7 +66,7 @@ Message::~Message() {
 }
 
 Message& Message::operator=(const Message& target) {
-  if (this == &target) 
+  if (this == &target)
     return *this;
   this->topic_      = target.topic_;
   this->message_id_ = target.message_id_;
@@ -168,7 +168,7 @@ bool Message::AddProperty(string& err_info, const string& key, const string& val
     err_info = "Not allowed null value of parmeter key or value";
     return false;
   }
-  if ((string::npos != trimed_key.find(delimiter::kDelimiterComma)) 
+  if ((string::npos != trimed_key.find(delimiter::kDelimiterComma))
     ||(string::npos != trimed_key.find(delimiter::kDelimiterEqual))) {
     stringstream ss;
     ss << "Reserved token '";
@@ -179,7 +179,7 @@ bool Message::AddProperty(string& err_info, const string& key, const string& val
     err_info = ss.str();
     return false;
   }
-  if ((string::npos != trimed_value.find(delimiter::kDelimiterComma)) 
+  if ((string::npos != trimed_value.find(delimiter::kDelimiterComma))
     ||(string::npos != trimed_value.find(delimiter::kDelimiterEqual))) {
     stringstream ss;
     ss << "Reserved token '";
@@ -190,8 +190,8 @@ bool Message::AddProperty(string& err_info, const string& key, const string& val
     err_info = ss.str();
     return false;
   }
-  if (trimed_key == kRsvPropKeyFilterItem 
-    || trimed_key == kRsvPropKeyMsgTime) {
+  if (trimed_key == kRsvPropKeyFilterItem
+         || trimed_key == kRsvPropKeyMsgTime) {
     stringstream ss;
     ss << "Reserved token '";
     ss << kRsvPropKeyFilterItem;
@@ -242,7 +242,7 @@ void Message::copyProperties(const map<string, string>& properties) {
 }
 
 
-}
+}  // namespace tubemq
 
 
 
