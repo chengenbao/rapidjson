@@ -22,7 +22,6 @@
 
 namespace tubemq {
 
-using namespace std;
 
 
 namespace rpc_config {
@@ -74,7 +73,7 @@ namespace rpc_config {
   static const int kRpcTimoutMinSec = 8;
 
 
-}
+}  // namespace rpc_config
 
 
 }  // namespace tubemq

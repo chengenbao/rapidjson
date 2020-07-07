@@ -22,10 +22,14 @@
 
 #include <map>
 #include <string>
+#include <stdint.h>
+
 
 namespace tubemq {
 
-using namespace std;
+using std::string;
+using std::map;
+
 
 class Fileini {
  public:
@@ -35,7 +39,7 @@ class Fileini {
   bool GetValue(string& err_info, const string& sector, 
                    const string& key, string& value, const string& def);
   bool GetValue(string& err_info, const string& sector, 
-                   const string& key, int& value, const int def);
+                   const string& key, int32_t& value, const int32_t def);
 
  private:
   bool init_flag_;

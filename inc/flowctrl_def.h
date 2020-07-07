@@ -20,19 +20,23 @@
 #ifndef TUBEMQ_CLIENT_FLOW_CONTROL_H_
 #define TUBEMQ_CLIENT_FLOW_CONTROL_H_
 
-#include "atomic_def.h"
-#include <rapidjson/document.h>
 #include <algorithm>
 #include <list>
 #include <map>
 #include <string>
 #include <vector>
+#include "atomic_def.h"
+#include <rapidjson/document.h>
 
 
 
 namespace tubemq {
 
-using namespace std;
+
+using std::map;
+using std::string;
+using std::vector;
+
 
 class FlowCtrlResult {
  public:

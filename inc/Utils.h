@@ -23,13 +23,15 @@
 #include <map>
 #include <string>
 #include <vector>
+
 #include <stdint.h>
 
 
 namespace tubemq {
 
-using namespace std;
-
+using std::map;
+using std::string;
+using std::vector;
 
 
 class Utils {

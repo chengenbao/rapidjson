@@ -20,14 +20,16 @@
 #ifndef TUBEMQ_CLIENT_META_INFO_H_
 #define TUBEMQ_CLIENT_META_INFO_H_
 
-#include "flowctrl_def.h"
 #include <list>
 #include <string>
+#include "flowctrl_def.h"
+
 
 namespace tubemq {
 
-using namespace std;
-
+using std::list;
+using std::map;
+using std::string;
 
 
 class NodeInfo {

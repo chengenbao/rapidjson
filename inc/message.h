@@ -20,16 +20,18 @@
 #ifndef TUBEMQ_CLIENT_MESSAGE_H_
 #define TUBEMQ_CLIENT_MESSAGE_H_
 
-
-#include <stdio.h>
 #include <list>
 #include <map>
 #include <string>
+#include <stdio.h>
 
 
 namespace tubemq {
 
-using namespace std;
+using std::map;
+using std::string;
+
+
 
 class Message {
  public:

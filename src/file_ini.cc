@@ -17,12 +17,14 @@
  * under the License.
  */
 
-#include "const_config.h"
 #include "file_ini.h"
-#include "utils.h"
+
 #include <fstream>
 #include <sstream>
+
 #include <stdlib.h>
+#include "const_config.h"
+#include "utils.h"
 
 
 namespace tubemq {
@@ -134,7 +136,7 @@ bool Fileini::GetValue(string& err_info, const string& sector,
 }
 
 bool Fileini::GetValue(string& err_info, const string& sector, 
-                const string& key, int& value, const int def) {
+                const string& key, int32_t& value, const int32_t def) {
   string val_str;
   string def_str = Utils::Int2str(def);
   bool result = GetValue(err_info, sector, key, val_str, def_str);
