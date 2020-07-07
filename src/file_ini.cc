@@ -135,7 +135,7 @@ bool Fileini::GetValue(string& err_info, const string& sector,
   return true;
 }
 
-bool Fileini::GetValue(string& err_info, const string& sector, 
+bool Fileini::GetValue(string& err_info, const string& sector,
                 const string& key, int32_t& value, const int32_t def) {
   string val_str;
   string def_str = Utils::Int2str(def);

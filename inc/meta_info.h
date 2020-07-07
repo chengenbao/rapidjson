@@ -36,15 +36,15 @@ class NodeInfo {
  public:
   NodeInfo();
   NodeInfo(bool is_broker, const string& node_info);
-  NodeInfo(const string& node_host, int node_port);
-  NodeInfo(int node_id, const string& node_host, int node_port);
+  NodeInfo(const string& node_host, uint32_t node_port);
+  NodeInfo(int32_t node_id, const string& node_host, uint32_t node_port);
   ~NodeInfo();
   NodeInfo& operator=(const NodeInfo& target);
   bool operator== (const NodeInfo& target);
   bool operator< (const NodeInfo& target) const;
-  const int GetNodeId() const;
+  const uint32_t GetNodeId() const;
   const string& GetHost() const;
-  const int GetPort() const;
+  const uint32_t GetPort() const;
   const string& GetAddrInfo() const;
   const string& GetNodeInfo() const;
       
@@ -52,13 +52,13 @@ class NodeInfo {
   void buildStrInfo();
 
  private: 
-  int    node_id_;
-  string node_host_;
-  int    node_port_;
+  uint32_t node_id_;
+  string   node_host_;
+  uint32_t node_port_;
   // ip:port
-  string addr_info_;
+  string  addr_info_;
   // id:ip:port
-  string node_info_;
+  string  node_info_;
 };
 
 
@@ -67,17 +67,17 @@ class Partition {
   Partition();
   Partition(const string& partition_info);
   Partition(const NodeInfo& broker_info, const string& part_str);
-  Partition(const NodeInfo& broker_info, const string& topic, int partition_id);
+  Partition(const NodeInfo& broker_info, const string& topic, uint32_t partition_id);
   ~Partition();
   Partition& operator=(const Partition& target);
   bool operator== (const Partition& target);
-  const int GetBrokerId() const;
+  const uint32_t GetBrokerId() const;
   const string& GetBrokerHost() const;
-  const int GetBrokerPort() const;
+  const uint32_t GetBrokerPort() const;
   const string& GetPartitionKey() const;
   const string& GetTopic() const;
   const NodeInfo& GetBrokerInfo() const;
-  const int GetPartitionId() const;
+  const uint32_t GetPartitionId() const;
   const string& ToString() const;
 
  private:
@@ -86,7 +86,7 @@ class Partition {
  private:
   string   topic_;
   NodeInfo broker_info_;
-  int      partition_id_;   
+  uint32_t partition_id_;   
   string   partition_key_;
   string   partition_info_;
 };
@@ -100,11 +100,11 @@ class SubscribeInfo {
   const string& GetConsumerId() const;
   const string& GetGroup() const;
   const Partition& GetPartition() const;
-  const int GgetBrokerId() const;
+  const uint32_t GgetBrokerId() const;
   const string& GetBrokerHost() const;
-  const int GetBrokerPort() const;
+  const uint32_t GetBrokerPort() const;
   const string& GetTopic() const;
-  const int GetPartitionId() const;
+  const uint32_t GetPartitionId() const;
   const string& ToString() const;
 
  private:
@@ -122,21 +122,21 @@ class ConsumerEvent {
  public:
   ConsumerEvent();
   ConsumerEvent(const ConsumerEvent& target);
-  ConsumerEvent(long rebalance_id,int event_type, 
-    const list<SubscribeInfo>& subscribeInfo_lst, int event_status);
+  ConsumerEvent(int64_t rebalance_id, int32_t event_type,
+    const list<SubscribeInfo>& subscribeInfo_lst, int32_t event_status);
   ConsumerEvent& operator=(const ConsumerEvent& target);
-  const long GetRebalanceId() const;
-  const int  GetEventType() const;
-  const int  GetEventStatus() const;
-  void SetEventType(int event_type);
-  void SetEventStatus(int event_status);
+  const int64_t GetRebalanceId() const;
+  const int32_t GetEventType() const;
+  const int32_t  GetEventStatus() const;
+  void SetEventType(int32_t event_type);
+  void SetEventStatus(int32_t event_status);
   const list<SubscribeInfo>& GetSubscribeInfoList() const;
   string ToString();
 
  private:
-  long rebalance_id_;
-  int  event_type_;
-  int  event_status_;
+  int64_t rebalance_id_;
+  int32_t event_type_;
+  int32_t event_status_;
   list<SubscribeInfo> subscribe_list_;
 };
 

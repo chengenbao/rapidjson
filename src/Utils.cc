@@ -254,8 +254,8 @@ string Utils::Long2str(int64_t data) {
   return ss.str();
 }
 
-int32_t Utils::IpToInt(const string& ipv4_addr) {
-  int32_t result = 0;
+uint32_t Utils::IpToInt(const string& ipv4_addr) {
+  uint32_t result = 0;
   vector<string> result_vec;
 
   Utils::Split(ipv4_addr, result_vec, delimiter::kDelimiterDot);

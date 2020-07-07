@@ -52,7 +52,7 @@ class Utils {
                    const string& src_filteritem, string& tgt_filteritem);
   static string Int2str(int32_t data);
   static string Long2str(int64_t data);
-  static int IpToInt(const string& ipv4_addr);
+  static uint32_t IpToInt(const string& ipv4_addr);
   static int64_t GetCurrentTimeMillis();
 };
 
