@@ -17,12 +17,12 @@
  * under the License.
  */
 
-#include <sstream>
-#include <vector>
-#include <stdlib.h>
-#include "utils.h"
 #include "meta_info.h"
 #include "const_config.h"
+#include "utils.h"
+#include <stdlib.h>
+#include <sstream>
+#include <vector>
 
 
 namespace tubemq {
@@ -437,7 +437,7 @@ string ConsumerEvent::ToString() {
     ss << it->ToString();
   }
   ss << "]]";
-  return ss.str();   
+  return ss.str();
 }
 
 };

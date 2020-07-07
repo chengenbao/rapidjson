@@ -17,7 +17,7 @@
  * under the License.
  */
 
- #include <stdio.h>
+#include <stdio.h>
 #include <time.h>
 #include <unistd.h>
 #include <sstream>
@@ -32,19 +32,19 @@ namespace tubemq {
 
 
 FlowCtrlResult::FlowCtrlResult() {
-  this->datasize_limit_ = config::kMaxIntValue;  
+  this->datasize_limit_ = config::kMaxIntValue;
   this->freqms_limit_ = 0;
 }
 
 FlowCtrlResult::FlowCtrlResult(long datasize_limit, int freqms_limit) {
-  this->datasize_limit_ = datasize_limit;  
+  this->datasize_limit_ = datasize_limit;
   this->freqms_limit_ = freqms_limit;
 }
 
 FlowCtrlResult& FlowCtrlResult::operator=(const FlowCtrlResult& target) {
   if (this == &target) 
     return *this;
-  this->datasize_limit_ = target.datasize_limit_;  
+  this->datasize_limit_ = target.datasize_limit_;
   this->freqms_limit_ = target.freqms_limit_;
   return *this;
 }
@@ -179,7 +179,7 @@ FlowCtrlRuleHandler::FlowCtrlRuleHandler() {
   this->datalimit_start_time_.Set(2500);
   this->datalimit_end_time_.Set(config::kInvalidValue);
   this->last_update_time_ = Utils::GetCurrentTimeMillis();
-  pthread_rwlock_init(&configrw_lock_, NULL);  
+  pthread_rwlock_init(&configrw_lock_, NULL);
 }
 
 FlowCtrlRuleHandler::~FlowCtrlRuleHandler() {
@@ -368,7 +368,7 @@ bool FlowCtrlRuleHandler::parseFlowCtrlInfo(const string& flowctrl_info,
       err_info = ss.str();
       LOG_ERROR("parse flowCtrlInfo failure %s", err_info.c_str()); 
       return false;
-    }    
+    }
     if (type < 0 || type > 3) {
       ss << "type value must in [0,1,2,3] in index(";
       ss << i;
@@ -409,7 +409,7 @@ bool FlowCtrlRuleHandler::parseFlowCtrlInfo(const string& flowctrl_info,
       default:
         break;
     }
-  }  
+  }
   return true;
 }
 
@@ -504,7 +504,7 @@ bool FlowCtrlRuleHandler::parseDataLimit(string& err_info,
       ss << ") of data limit rule!";
       err_info = ss.str();
       return false;
-    }    
+    }
     FlowCtrlItem flowctrl_item(0, start_time, end_time, datadlt_m, datasize_limit, freqms_limit);
     flowctrl_items.push_back(flowctrl_item);
   }
@@ -512,7 +512,7 @@ bool FlowCtrlRuleHandler::parseDataLimit(string& err_info,
     std::sort(flowctrl_items.begin(), flowctrl_items.end(), compareDataLimitQueue);
   }
   err_info = "Ok";
-  return true;  
+  return true;
 }
 
 bool FlowCtrlRuleHandler::parseFreqLimit(string& err_info, 
@@ -566,7 +566,7 @@ bool FlowCtrlRuleHandler::parseFreqLimit(string& err_info,
     std::sort(flowctrl_items.begin(), flowctrl_items.end(), compareFeqQueue);
   }
   err_info = "Ok";
-  return true;  
+  return true;
 }
 
 bool FlowCtrlRuleHandler::parseLowFetchLimit(string& err_info, 
@@ -659,7 +659,7 @@ bool FlowCtrlRuleHandler::parseLowFetchLimit(string& err_info,
         ss << ") of low fetch limit rule!";
         err_info = ss.str();
         return false;
-      }        
+      }
     }
     flowctrl_item.ResetFlowCtrlValue(3,norm_freq_ms,filter_freq_ms,min_filter_freq_ms);
     flowctrl_items.push_back(flowctrl_item);
@@ -769,14 +769,14 @@ bool FlowCtrlRuleHandler::parseTimeMember(string& err_info,
     ss << key;
     ss << " -hour value must in [0,23]!";
     err_info = ss.str();
-    return false;      
+    return false;
   }
   if (in_minute < 0 || in_minute > 59) {
     ss << "field ";
     ss << key;
     ss << " -minute value must in [0,59]!";
     err_info = ss.str();
-    return false;      
+    return false;
   }
   value = in_hour * 100 + in_minute;
   return true;

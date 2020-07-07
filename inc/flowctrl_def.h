@@ -20,13 +20,13 @@
 #ifndef _TUBEMQ_CLIENT_FLOW_CONTROL_H_
 #define _TUBEMQ_CLIENT_FLOW_CONTROL_H_
 
-#include <map>
+#include "atomic_def.h"
+#include <rapidjson/document.h>
+#include <algorithm>
 #include <list>
+#include <map>
 #include <string>
 #include <vector>
-#include <algorithm>
-#include "rapidjson/document.h"
-#include "atomic_def.h"
 
 
 
@@ -105,15 +105,15 @@ class FlowCtrlRuleHandler {
     int qrypriority_id, long flowctrl_id, const string& flowctrl_info);
   bool GetCurDataLimit(long last_datadlt,FlowCtrlResult& flowctrl_result);
   int GetCurFreqLimitTime(int msg_zero_cnt, int received_limit);
-  int GetMinZeroCnt() { return this->min_zero_cnt_.get();}
+  int GetMinZeroCnt() { return this->min_zero_cnt_.Get();}
   int GetQryPriorityId() { 
-    return this->qrypriority_id_.get();
+    return this->qrypriority_id_.Get();
   }
   void SetQryPriorityId(int qrypriority_id) { 
-    this->qrypriority_id_.set(qrypriority_id);
+    this->qrypriority_id_.Set(qrypriority_id);
   }
   long GetFlowCtrlId() { 
-    return this->flowctrl_id_.get();
+    return this->flowctrl_id_.Get();
   }
   const FlowCtrlItem& GetFilterCtrlItem() const {
     return this->filter_ctrl_item_;
@@ -137,7 +137,7 @@ class FlowCtrlRuleHandler {
   bool parseDataLimit(string& err_info, const rapidjson::Value& root, vector<FlowCtrlItem>& flowCtrlItems);
   bool parseFreqLimit(string& err_info, const rapidjson::Value& root, vector<FlowCtrlItem>& flowctrl_items);
   bool parseLowFetchLimit(string& err_info, const rapidjson::Value& root, vector<FlowCtrlItem>& flowctrl_items);
-  bool FlowCtrlRuleHandler::parseTimeMember(string& err_info, const rapidjson::Value& root, const char* key, int& value);
+  bool parseTimeMember(string& err_info, const rapidjson::Value& root, const char* key, int& value);
 
  private:
   AtomicLong    flowctrl_id_;

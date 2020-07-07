@@ -35,7 +35,7 @@ class Fileini {
   bool GetValue(string& err_info, const string& sector, 
                    const string& key, string& value, const string& def);
   bool GetValue(string& err_info, const string& sector, 
-                   const string& key, int& value, const int def);  
+                   const string& key, int& value, const int def);
 
  private:
   bool init_flag_;
@@ -43,7 +43,6 @@ class Fileini {
   map<string, map<string, string> > ini_map_;
 };
 
-  
 }
 
 #endif

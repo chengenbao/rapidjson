@@ -17,12 +17,12 @@
  * under the License.
  */
 
-#include <sstream> 
-#include <string.h> 
-
+#include "const_config.h"
 #include "message.h"
 #include "utils.h"
-#include "const_config.h"
+#include <string.h>
+#include <sstream>
+
 
 
 namespace tubemq {
@@ -141,7 +141,7 @@ bool Message::HasProperty(const string& key) {
       return true;
     }
   }
-  return false;  
+  return false;
 }
 
 bool Message::GetProperty(const string& key, string& value) {
@@ -154,7 +154,7 @@ bool Message::GetProperty(const string& key, string& value) {
       return true;
     }
   }
-  return false;  
+  return false;
 }
 
 bool Message::GetFilterItem(string& value) {

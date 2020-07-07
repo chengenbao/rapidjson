@@ -58,7 +58,7 @@ namespace rpc_config {
   static const int kBrokerMethoddConsumerRegister    = 15;
   static const int kBrokerMethoddConsumerHeatbeat    = 16;
   static const int kBrokerMethoddConsumerGetMsg      = 17;
-  static const int kBrokerMethoddConsumerCommit      = 18;  
+  static const int kBrokerMethoddConsumerCommit      = 18;
   static const int kBrokerMethoddConsumerClose       = 19; 
 
   // register operate type

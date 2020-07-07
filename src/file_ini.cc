@@ -18,11 +18,12 @@
  */
 
 #include <fstream>
-#include <sstream> 
+#include <sstream>
 #include <stdlib.h>
 #include "utils.h"
 #include "file_ini.h"
 #include "const_config.h"
+
 
 namespace tubemq {
 
@@ -107,7 +108,7 @@ bool Fileini::Loadini(string& err_info, const string& file_name) {
   return true;
 }
 
-bool Fileini::GetValue(string& err_info, const string& sector, 
+bool Fileini::GetValue(string& err_info, const string& sector,
                 const string& key, string& value, const string& def) {
   if (!this->init_flag_) {
     err_info = "Please load configure file first!";

@@ -20,10 +20,10 @@
 #ifndef _TUBEMQ_CLIENT_CONFIGURE_H_
 #define _TUBEMQ_CLIENT_CONFIGURE_H_
 
-#include <string>
 #include <stdio.h>
 #include <map>
 #include <set>
+#include <string>
 
 
 
@@ -48,7 +48,7 @@ class BaseConfig {
   const string& GetTrustStorePassword() const;
   bool IsAuthenticEnabled();
   const string& GetUsrName() const;
-  const string& GetUsrPassWord() const;            
+  const string& GetUsrPassWord() const;
   // set the rpc timout, unit second, duration [8, 300], default 15 seconds;
   void SetRpcReadTimeoutSec(int rpc_read_timeout_sec);
   int GetRpcReadTimeoutSec();

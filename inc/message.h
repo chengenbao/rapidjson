@@ -21,10 +21,10 @@
 #define _TUBEMQ_CLIENT_MESSAGE_H_
 
 
+#include <stdio.h>
 #include <list>
 #include <map>
 #include <string>
-#include <stdio.h>
 
 
 namespace tubemq {
@@ -52,11 +52,11 @@ class Message {
   bool HasProperty(const string& key);
   bool GetProperty(const string& key, string& value);
   bool GetFilterItem(string& value);
-  bool AddProperty(string& err_info, const string& key, const string& value);  
+  bool AddProperty(string& err_info, const string& key, const string& value);
 
  private:
   void clearData();
-  void copyData(const char* data, int datalen);  
+  void copyData(const char* data, int datalen);
   void copyProperties(const map<string, string>& properties);
 
   
@@ -65,7 +65,7 @@ class Message {
   char* data_;
   int   datalen_;
   long  message_id_;
-  int   flag_;  
+  int   flag_;
   map<string, string> properties_;
 };
 
