@@ -20,9 +20,9 @@
 #ifndef TUBEMQ_CLIENT_FILE_INI_H_
 #define TUBEMQ_CLIENT_FILE_INI_H_
 
+#include <stdint.h>
 #include <map>
 #include <string>
-#include <stdint.h>
 
 
 namespace tubemq {

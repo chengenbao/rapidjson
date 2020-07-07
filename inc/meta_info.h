@@ -20,6 +20,7 @@
 #ifndef TUBEMQ_CLIENT_META_INFO_H_
 #define TUBEMQ_CLIENT_META_INFO_H_
 
+#include <stdint.h>
 #include <list>
 #include <string>
 #include "flowctrl_def.h"
@@ -47,7 +48,7 @@ class NodeInfo {
   const uint32_t GetPort() const;
   const string& GetAddrInfo() const;
   const string& GetNodeInfo() const;
-      
+
  private:
   void buildStrInfo();
 

@@ -20,10 +20,11 @@
 #ifndef TUBEMQ_CLIENT_MESSAGE_H_
 #define TUBEMQ_CLIENT_MESSAGE_H_
 
+#include <stdio.h>
+#include <stdint.h>
 #include <list>
 #include <map>
 #include <string>
-#include <stdio.h>
 
 
 namespace tubemq {
@@ -37,20 +38,20 @@ class Message {
  public:
   Message();
   Message(const Message& target);
-  Message(const string& topic, const char* data, int datalen);
+  Message(const string& topic, const char* data, uint32_t datalen);
   virtual ~Message();
   Message& operator=(const Message& target);
-  const long GetMessageId() const;
-  void SetMessageId(long message_id);
+  const int64_t GetMessageId() const;
+  void SetMessageId(int64_t message_id);
   const string& GetTopic() const;
   void SetTopic(const string& topic);
   const char* GetData() const;
-  int GetDataLength() const;
+  uint32_t GetDataLength() const;
   void setData(const char* data, int datalen);
-  const int GetFlag() const;
-  void SetFlag(int flag);
+  const int32_t GetFlag() const;
+  void SetFlag(int32_t flag);
   const map<string, string>& GetProperties() const;
-  int GetProperties(string& attribute);
+  int32_t GetProperties(string& attribute);
   bool HasProperty(const string& key);
   bool GetProperty(const string& key, string& value);
   bool GetFilterItem(string& value);
@@ -58,16 +59,15 @@ class Message {
 
  private:
   void clearData();
-  void copyData(const char* data, int datalen);
+  void copyData(const char* data, uint32_t datalen);
   void copyProperties(const map<string, string>& properties);
 
-  
  private:
   string topic_;
   char* data_;
-  int   datalen_;
-  long  message_id_;
-  int   flag_;
+  uint32_t datalen_;
+  int64_t  message_id_;
+  int32_t  flag_;
   map<string, string> properties_;
 };
 

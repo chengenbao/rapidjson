@@ -18,13 +18,13 @@
  */
 
 #include "flowctrl_def.h"
-#include "const_config.h"
-#include "logger.h"
-#include "utils.h"
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
 #include <sstream>
+#include "const_config.h"
+#include "logger.h"
+#include "utils.h"
 
 
 
@@ -36,7 +36,7 @@ FlowCtrlResult::FlowCtrlResult() {
   this->freqms_limit_ = 0;
 }
 
-FlowCtrlResult::FlowCtrlResult(long datasize_limit, int freqms_limit) {
+FlowCtrlResult::FlowCtrlResult(int64_t datasize_limit, int32_t freqms_limit) {
   this->datasize_limit_ = datasize_limit;
   this->freqms_limit_ = freqms_limit;
 }
@@ -49,24 +49,24 @@ FlowCtrlResult& FlowCtrlResult::operator=(const FlowCtrlResult& target) {
   return *this;
 }
 
-void FlowCtrlResult::SetDataDltAndFreqLimit(long datasize_limit, int freqms_limit) {
+void FlowCtrlResult::SetDataDltAndFreqLimit(int64_t datasize_limit, int32_t freqms_limit) {
   this->datasize_limit_ = datasize_limit;
   this->freqms_limit_ = freqms_limit;
 }
 
-void FlowCtrlResult::SetDataSizeLimit(long datasize_limit) {
+void FlowCtrlResult::SetDataSizeLimit(int64_t datasize_limit) {
   this->datasize_limit_ = datasize_limit;
 }
 
-void FlowCtrlResult::SetFreqMsLimit(int freqms_limit) {
+void FlowCtrlResult::SetFreqMsLimit(int32_t freqms_limit) {
   this->freqms_limit_ = freqms_limit;
 }
 
-long FlowCtrlResult::GetDataSizeLimit() {
+int64_t FlowCtrlResult::GetDataSizeLimit() {
   return this->datasize_limit_;
 }
 
-int FlowCtrlResult::GetFreqMsLimit() {
+int32_t FlowCtrlResult::GetFreqMsLimit() {
   return this->freqms_limit_;
 }
 
@@ -81,7 +81,8 @@ FlowCtrlItem::FlowCtrlItem() {
   this->zero_cnt_       = config::kInvalidValue;
 }
 
-FlowCtrlItem::FlowCtrlItem(int type,int zero_cnt,int freqms_limit) {
+FlowCtrlItem::FlowCtrlItem(int32_t type,
+                       int32_t zero_cnt, int32_t freqms_limit) {
   this->type_           = type;
   this->start_time_     = 2500;
   this->end_time_       = config::kInvalidValue;
@@ -91,8 +92,8 @@ FlowCtrlItem::FlowCtrlItem(int type,int zero_cnt,int freqms_limit) {
   this->zero_cnt_       = zero_cnt;
 }
 
-FlowCtrlItem::FlowCtrlItem(int type, 
-  int datasize_limit,int freqms_limit,int min_data_filter_freqms) {
+FlowCtrlItem::FlowCtrlItem(int32_t type, int32_t datasize_limit,
+                      int32_t freqms_limit, int32_t min_data_filter_freqms) {
   this->type_           = type;
   this->start_time_     = 2500;
   this->end_time_       = config::kInvalidValue;
@@ -102,8 +103,8 @@ FlowCtrlItem::FlowCtrlItem(int type,
   this->zero_cnt_       = min_data_filter_freqms;
 }
 
-FlowCtrlItem::FlowCtrlItem(int type, int start_time, int end_time, 
-  long datadlt_m, long datasize_limit, int freqms_limit) {
+FlowCtrlItem::FlowCtrlItem(int32_t type, int32_t start_time, int32_t end_time,
+                      int64_t datadlt_m, int64_t datasize_limit, int32_t freqms_limit) {
   this->type_           = type;
   this->start_time_     = start_time;
   this->end_time_       = end_time;
@@ -126,7 +127,7 @@ FlowCtrlItem& FlowCtrlItem::operator=(const FlowCtrlItem& target) {
     return *this;
 }
 
-int FlowCtrlItem::GetFreLimit(int msg_zero_cnt) {
+int32_t FlowCtrlItem::GetFreLimit(int32_t msg_zero_cnt) {
   if (this->type_ != 1) {
     return -1;
   }
@@ -136,8 +137,8 @@ int FlowCtrlItem::GetFreLimit(int msg_zero_cnt) {
   return -1;
 }
 
-void FlowCtrlItem::ResetFlowCtrlValue(int type, 
-  int datasize_limit,int freqms_limit,int min_data_filter_freqms) {
+void FlowCtrlItem::ResetFlowCtrlValue(int32_t type, int32_t datasize_limit,
+                                  int32_t freqms_limit, int32_t min_data_filter_freqms) {
   this->type_           = type;
   this->start_time_     = 2500;
   this->end_time_       = config::kInvalidValue;
@@ -157,7 +158,7 @@ void FlowCtrlItem::Clear() {
   this->zero_cnt_       = config::kInvalidValue;
 }
 
-bool FlowCtrlItem::GetDataLimit(long datadlt_m, int curr_time, FlowCtrlResult& flowctrl_result) {
+bool FlowCtrlItem::GetDataLimit(int64_t datadlt_m, int32_t curr_time, FlowCtrlResult& flowctrl_result) {
   if (this->type_ != 0 || datadlt_m <= this->datadlt_m_ ) {
     return false;
   }
@@ -186,10 +187,10 @@ FlowCtrlRuleHandler::~FlowCtrlRuleHandler() {
   pthread_rwlock_destroy(&configrw_lock_);
 }
 
-void FlowCtrlRuleHandler::UpdateDefFlowCtrlInfo(bool is_default, 
-  int qrypriority_id, long flowctrl_id, const string& flowctrl_info) {
+void FlowCtrlRuleHandler::UpdateDefFlowCtrlInfo(bool is_default,
+                  int32_t qrypriority_id, int64_t flowctrl_id, const string& flowctrl_info) {
   bool result;
-  map<int, vector<FlowCtrlItem> > tmp_flowctrl_map;
+  map<int32_t, vector<FlowCtrlItem> > tmp_flowctrl_map;
   if (flowctrl_id == this->flowctrl_id_.Get()) {
       return;
   }
@@ -276,7 +277,7 @@ void FlowCtrlRuleHandler::clearStatisData() {
   this->filter_ctrl_item_.Clear();
 }
 
-bool FlowCtrlRuleHandler::GetCurDataLimit(long last_datadlt, FlowCtrlResult& flowctrl_result) {
+bool FlowCtrlRuleHandler::GetCurDataLimit(int64_t last_datadlt, FlowCtrlResult& flowctrl_result) {
   struct tm utc_tm;
   vector<FlowCtrlItem>::iterator it_vec;
   map<int, vector<FlowCtrlItem> >::iterator it_map;
@@ -301,7 +302,7 @@ bool FlowCtrlRuleHandler::GetCurDataLimit(long last_datadlt, FlowCtrlResult& flo
   return false;
 }
 
-int FlowCtrlRuleHandler::GetCurFreqLimitTime(int msg_zero_cnt, int received_limit)
+int FlowCtrlRuleHandler::GetCurFreqLimitTime(int32_t msg_zero_cnt, int32_t received_limit)
 {
   int rule_val = -2;
   vector<FlowCtrlItem>::iterator it_vec;
@@ -336,9 +337,9 @@ bool FlowCtrlRuleHandler::compareFeqQueue(const FlowCtrlItem& queue1, const Flow
     return (queue1.GetZeroCnt() < queue2.GetZeroCnt());
 }
 
-bool FlowCtrlRuleHandler::parseFlowCtrlInfo(const string& flowctrl_info, 
-                                map<int,vector<FlowCtrlItem> >& flowctrl_info_map) {
-  int type;
+bool FlowCtrlRuleHandler::parseFlowCtrlInfo(const string& flowctrl_info,
+                                map<int32_t,vector<FlowCtrlItem> >& flowctrl_info_map) {
+  int32_t type;
   string err_info;
   stringstream ss;
   rapidjson::Document doc;
@@ -355,7 +356,7 @@ bool FlowCtrlRuleHandler::parseFlowCtrlInfo(const string& flowctrl_info,
     LOG_ERROR("flowCtrlInfo's value must be array! flowctrl_info=%s\n",flowctrl_info.c_str()); 
     return false;
   }
-  for (unsigned int i = 0; i < doc.Size(); i++) {
+  for (uint32_t i = 0; i < doc.Size(); i++) {
     vector<FlowCtrlItem> flowctrl_item_vec;
     const rapidjson::Value& node_item = doc[i];
     if (!node_item.IsObject()) {
@@ -413,7 +414,7 @@ bool FlowCtrlRuleHandler::parseFlowCtrlInfo(const string& flowctrl_info,
   return true;
 }
 
-bool FlowCtrlRuleHandler::parseDataLimit(string& err_info, 
+bool FlowCtrlRuleHandler::parseDataLimit(string& err_info,
                            const rapidjson::Value& root, vector<FlowCtrlItem>& flowctrl_items) {
   int type_val;
   stringstream ss;
@@ -437,12 +438,12 @@ bool FlowCtrlRuleHandler::parseDataLimit(string& err_info,
   }
   // parse rule info
   const rapidjson::Value& obj_set = root["rule"];
-  for (unsigned int index = 0 ; index < obj_set.Size() ; index++) {
-    int start_time = 0;
-    int end_time = 0;
-    long datadlt_m = 0;
-    long datasize_limit = 0;
-    int freqms_limit = 0;
+  for (uint32_t index = 0 ; index < obj_set.Size() ; index++) {
+    int32_t start_time = 0;
+    int32_t end_time = 0;
+    int64_t datadlt_m = 0;
+    int64_t datasize_limit = 0;
+    int32_t freqms_limit = 0;
     const rapidjson::Value& node_item = obj_set[index];
     if (!node_item.IsObject()) {
         err_info = "Illegal rule'value item, must be dict type";
@@ -515,9 +516,9 @@ bool FlowCtrlRuleHandler::parseDataLimit(string& err_info,
   return true;
 }
 
-bool FlowCtrlRuleHandler::parseFreqLimit(string& err_info, 
+bool FlowCtrlRuleHandler::parseFreqLimit(string& err_info,
                            const rapidjson::Value& root, vector<FlowCtrlItem>& flowctrl_items) {
-  int type_val;
+  int32_t type_val;
   stringstream ss;
 
   if (!parseIntMember(err_info, root, "type", type_val, true, 1)) {
@@ -537,9 +538,9 @@ bool FlowCtrlRuleHandler::parseFreqLimit(string& err_info,
   }
   // parse rule info
   const rapidjson::Value& obj_set = root["rule"];
-  for (unsigned int i = 0 ; i < obj_set.Size() ; i++) {
-    int zeroCnt = -2;
-    int freqms_limit = -2;
+  for (uint32_t i = 0 ; i < obj_set.Size() ; i++) {
+    int32_t zeroCnt = -2;
+    int32_t freqms_limit = -2;
     const rapidjson::Value& node_item = obj_set[i];
     if (!node_item.IsObject()) {
       err_info = "Illegal rule'value item, must be dict type";
@@ -569,9 +570,9 @@ bool FlowCtrlRuleHandler::parseFreqLimit(string& err_info,
   return true;
 }
 
-bool FlowCtrlRuleHandler::parseLowFetchLimit(string& err_info, 
+bool FlowCtrlRuleHandler::parseLowFetchLimit(string& err_info,
                             const rapidjson::Value& root, vector<FlowCtrlItem>& flowctrl_items) {
-  int type_val;
+  int32_t type_val;
   stringstream ss;
   if (!parseIntMember(err_info, root, "type", type_val, true, 3)) {
     ss << "Decode Failure: ";
@@ -590,10 +591,10 @@ bool FlowCtrlRuleHandler::parseLowFetchLimit(string& err_info,
   }
   // parse rule info
   const rapidjson::Value& node_item = root["rule"];
-  for (unsigned int i = 0 ; i < node_item.Size() ; i++) {
-    int norm_freq_ms = 0;
-    int filter_freq_ms = 0;
-    int min_filter_freq_ms = 0;
+  for (uint32_t i = 0 ; i < node_item.Size() ; i++) {
+    int32_t norm_freq_ms = 0;
+    int32_t filter_freq_ms = 0;
+    int32_t min_filter_freq_ms = 0;
     FlowCtrlItem flowctrl_item;
     const rapidjson::Value& node_item = node_item[i];
     if (!node_item.IsObject()) {
@@ -668,8 +669,8 @@ bool FlowCtrlRuleHandler::parseLowFetchLimit(string& err_info,
   return true;
 }
 
-bool FlowCtrlRuleHandler::parseStringMember(string& err_info, const rapidjson::Value& root, 
-                            const char* key, string& value, bool compare_value, string required_val) {
+bool FlowCtrlRuleHandler::parseStringMember(string& err_info, const rapidjson::Value& root,
+                           const char* key, string& value, bool compare_value, string required_val) {
   // check key if exist
   if (!root.HasMember(key)) {
     err_info = "Field not existed";
@@ -690,8 +691,8 @@ bool FlowCtrlRuleHandler::parseStringMember(string& err_info, const rapidjson::V
   return true;
 }
 
-bool FlowCtrlRuleHandler::parseLongMember(string& err_info, const rapidjson::Value& root, 
-                            const char* key, long& value, bool compare_value, long required_val) {
+bool FlowCtrlRuleHandler::parseLongMember(string& err_info, const rapidjson::Value& root,
+                            const char* key, int64_t& value, bool compare_value, int64_t required_val) {
   if (!root.HasMember(key)) {
     err_info = "Field not existed";
     return false;
@@ -710,8 +711,8 @@ bool FlowCtrlRuleHandler::parseLongMember(string& err_info, const rapidjson::Val
   return true;
 }
 
-bool FlowCtrlRuleHandler::parseIntMember(string& err_info, const rapidjson::Value& root, 
-                            const char* key, int& value, bool compare_value, int required_val) {
+bool FlowCtrlRuleHandler::parseIntMember(string& err_info, const rapidjson::Value& root,
+                            const char* key, int32_t& value, bool compare_value, int32_t required_val) {
   if (!root.HasMember(key)) {
     err_info = "Field not existed";
     return false;
@@ -730,8 +731,8 @@ bool FlowCtrlRuleHandler::parseIntMember(string& err_info, const rapidjson::Valu
   return true;
 }
 
-bool FlowCtrlRuleHandler::parseTimeMember(string& err_info, 
-                           const rapidjson::Value& root, const char* key, int& value) {
+bool FlowCtrlRuleHandler::parseTimeMember(string& err_info,
+                            const rapidjson::Value& root, const char* key, int32_t& value) {
   // check key if exist
   stringstream ss;
   if (!root.HasMember(key)) {
@@ -762,8 +763,8 @@ bool FlowCtrlRuleHandler::parseTimeMember(string& err_info,
   string sub_str_1 = str_value.substr(0,pos1);
   string sub_str_2 = 
     str_value.substr(pos1+attr_sep.size(),str_value.size());
-  int in_hour = atoi(sub_str_1.c_str());
-  int in_minute = atoi(sub_str_2.c_str());
+  int32_t in_hour = atoi(sub_str_1.c_str());
+  int32_t in_minute = atoi(sub_str_2.c_str());
   if (in_hour < 0 || in_hour > 24) {
     ss << "field ";
     ss << key;

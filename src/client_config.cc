@@ -18,11 +18,11 @@
  */
 
 #include "client_config.h"
+#include <sstream>
+#include <vector>
 #include "const_config.h"
 #include "const_rpc.h"
 #include "utils.h"
-#include <sstream>
-#include <vector>
 
 
 namespace tubemq {
@@ -74,7 +74,7 @@ bool BaseConfig::SetMasterAddrInfo(string& err_info, const string& master_addrin
     stringstream ss;
     ss << "Illegal parameter: over max ";
     ss << config::kMasterAddrInfoMaxLength;
-    ss << " length of master_addrinfo parameter!";   
+    ss << " length of master_addrinfo parameter!";
     err_info = ss.str();
     return false;
   }
@@ -96,24 +96,24 @@ bool BaseConfig::SetTlsInfo(string& err_info, bool tls_enable,
                 const string& trust_store_path, const string& trust_store_password) {
   this->tls_enabled_ = tls_enable;
   if (tls_enable) {
-    string trimed_trust_store_path = Utils::Trim(trust_store_path);  
+    string trimed_trust_store_path = Utils::Trim(trust_store_path);
     if (trimed_trust_store_path.empty()) {
       err_info = "Illegal parameter: trust_store_path is empty!";
       return false;
     }
-    string trimed_trust_store_password = Utils::Trim(trust_store_password);  
+    string trimed_trust_store_password = Utils::Trim(trust_store_password);
     if (trimed_trust_store_password.empty()) {
       err_info = "Illegal parameter: trust_store_password is empty!";
       return false;
     }
       this->tls_trust_store_path_= trimed_trust_store_path;
-      this->tls_trust_store_password_= trimed_trust_store_password;    
+      this->tls_trust_store_password_= trimed_trust_store_password;
   } else {
     this->tls_trust_store_path_ = "";
     this->tls_trust_store_password_ = "";
   }
   err_info = "Ok";
-  return true;  
+  return true;
 }
 
 bool BaseConfig::SetAuthenticInfo(string& err_info, bool authentic_enable, 
@@ -125,7 +125,7 @@ bool BaseConfig::SetAuthenticInfo(string& err_info, bool authentic_enable,
       err_info = "Illegal parameter: usr_name is empty!";
       return false;
     }
-    string trimed_usr_password = Utils::Trim(usr_password);  
+    string trimed_usr_password = Utils::Trim(usr_password);
     if (trimed_usr_password.empty()) {
       err_info = "Illegal parameter: usr_password is empty!";
       return false;
@@ -178,31 +178,31 @@ void BaseConfig::SetRpcReadTimeoutSec(int rpc_read_timeout_sec) {
   }
 }
 
-int BaseConfig::GetRpcReadTimeoutSec() {
+int32_t BaseConfig::GetRpcReadTimeoutSec() {
   return this->rpc_read_timeout_sec_;
 }
 
-void BaseConfig::SetHeartbeatPeriodSec(int heartbeat_period_sec) {
+void BaseConfig::SetHeartbeatPeriodSec(int32_t heartbeat_period_sec) {
   this->heartbeat_period_sec_ = heartbeat_period_sec;
 }
 
-int BaseConfig::GetHeartbeatPeriodSec() {
+int32_t BaseConfig::GetHeartbeatPeriodSec() {
   return this->heartbeat_period_sec_;
 }
 
-void BaseConfig::SetMaxHeartBeatRetryTimes(int max_heartbeat_retry_times) {
+void BaseConfig::SetMaxHeartBeatRetryTimes(int32_t max_heartbeat_retry_times) {
   this->max_heartbeat_retry_times_ = max_heartbeat_retry_times;
 }
 
-int BaseConfig::GetMaxHeartBeatRetryTimes() {
+int32_t BaseConfig::GetMaxHeartBeatRetryTimes() {
   return this->max_heartbeat_retry_times_;
 }
 
-void BaseConfig::SetHeartbeatPeriodAftFailSec(int heartbeat_period_afterfail_sec) {
+void BaseConfig::SetHeartbeatPeriodAftFailSec(int32_t heartbeat_period_afterfail_sec) {
   this->heartbeat_period_afterfail_sec_ = heartbeat_period_afterfail_sec;
 }
 
-int BaseConfig::GetHeartbeatPeriodAftFailSec() {
+int32_t BaseConfig::GetHeartbeatPeriodAftFailSec() {
   return this->heartbeat_period_afterfail_sec_;
 }
 
@@ -239,7 +239,7 @@ string BaseConfig::ToString() {
    this->group_name_ = "";
    this->is_bound_consume_ = false;
    this->session_key_ = "";
-   this->source_count_ = -1;
+   this->source_count_ = 0;
    this->is_select_big_ = true;
    this->consume_position_ = kConsumeFromLatestOffset;
    this->is_confirm_in_local_ = false;
@@ -324,7 +324,7 @@ bool ConsumerConfig::SetGroupConsumeTarget(string& err_info,
 
 bool ConsumerConfig::SetGroupConsumeTarget(string& err_info, 
       const string& group_name, const map<string, set<string> >& subscribed_topic_and_filter_map,
-      const string& session_key, int source_count, bool is_select_big, const map<string, long>& part_offset_map) {
+      const string& session_key, uint32_t source_count, bool is_select_big, const map<string, long>& part_offset_map) {
   return setGroupConsumeTarget(err_info, true, 
     group_name, subscribed_topic_and_filter_map, 
     session_key, source_count, is_select_big, part_offset_map);
@@ -332,7 +332,7 @@ bool ConsumerConfig::SetGroupConsumeTarget(string& err_info,
 
 bool ConsumerConfig::setGroupConsumeTarget(string& err_info, bool is_bound_consume,
       const string& group_name, const map<string, set<string> >& subscribed_topic_and_filter_map,
-      const string& session_key, int source_count, bool is_select_big, const map<string, long>& part_offset_map) {
+      const string& session_key, uint32_t source_count, bool is_select_big, const map<string, long>& part_offset_map) {
   // check parameter group_name
   string tgt_group_name;
   bool is_success = Utils::ValidGroupName(err_info,group_name, tgt_group_name);
@@ -348,12 +348,12 @@ bool ConsumerConfig::setGroupConsumeTarget(string& err_info, bool is_bound_consu
   map<string, set<string> >::const_iterator it_map;
   for (it_map = subscribed_topic_and_filter_map.begin(); 
     it_map != subscribed_topic_and_filter_map.end(); ++it_map) {
-    int count=0;
+    uint32_t count=0;
     string tmp_filteritem;
     set<string> tgt_filters;
     // check topic_name info
     is_success = Utils::ValidString(err_info, it_map->first, 
-                         false, true, true, config::kTopicNameMaxLength);  
+                         false, true, true, config::kTopicNameMaxLength);
     if (!is_success) {
       stringstream ss;
       ss << "Check parameter subscribed_topic_and_filter_map error: topic ";
@@ -468,7 +468,7 @@ bool ConsumerConfig::setGroupConsumeTarget(string& err_info, bool is_bound_consu
   // set verified data
   this->is_bound_consume_ = true;
   this->group_name_ = tgt_group_name;
-  this->sub_topic_and_filter_map_ = tmp_sub_map;    
+  this->sub_topic_and_filter_map_ = tmp_sub_map;
   this->session_key_ = tgt_session_key;
   this->source_count_ = source_count;
   this->is_select_big_ = is_select_big;
@@ -584,12 +584,12 @@ string ConsumerConfig::ToString() {
   ss << "}, is_bound_consume_=";
   ss << this->is_bound_consume_;
   ss << ", session_key_='";
-  ss << this->session_key_;  
+  ss << this->session_key_;
   ss << "', source_count_=";
-  ss << this->source_count_;  
+  ss << this->source_count_;
   ss << ", is_select_big_=";
-  ss << this->is_select_big_;  
-  ss << ", part_offset_map_={";  
+  ss << this->is_select_big_;
+  ss << ", part_offset_map_={";
   i = 0;
   for (it = this->part_offset_map_.begin(); 
       it != this->part_offset_map_.end(); ++it) {

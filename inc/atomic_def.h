@@ -32,7 +32,7 @@ class AtomicInteger {
   AtomicInteger(){
     this->counter_ = 0;
   }
-            
+
   AtomicInteger(int initial_value) {
     this->counter_ = initial_value;
   }
@@ -121,7 +121,7 @@ class AtomicInteger {
       }
     }
   }
-            
+
  private:
   volatile int counter_;
 };

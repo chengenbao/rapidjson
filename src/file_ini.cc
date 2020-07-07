@@ -18,11 +18,9 @@
  */
 
 #include "file_ini.h"
-
+#include <stdlib.h>
 #include <fstream>
 #include <sstream>
-
-#include <stdlib.h>
 #include "const_config.h"
 #include "utils.h"
 

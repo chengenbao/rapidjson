@@ -20,11 +20,10 @@
 #ifndef TUBEMQ_CLIENT_UTILS_H_
 #define TUBEMQ_CLIENT_UTILS_H_
 
+#include <stdint.h>
 #include <map>
 #include <string>
 #include <vector>
-
-#include <stdint.h>
 
 
 namespace tubemq {

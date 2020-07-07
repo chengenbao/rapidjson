@@ -18,11 +18,11 @@
  */
 
 #include "meta_info.h"
-#include "const_config.h"
-#include "utils.h"
 #include <stdlib.h>
 #include <sstream>
 #include <vector>
+#include "const_config.h"
+#include "utils.h"
 
 
 namespace tubemq {
