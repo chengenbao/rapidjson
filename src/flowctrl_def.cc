@@ -214,9 +214,11 @@ void FlowCtrlRuleHandler::UpdateDefFlowCtrlInfo(bool is_default,
   this->last_update_time_ = Utils::GetCurrentTimeMillis();
   pthread_rwlock_unlock(&this->configrw_lock_);
   if (is_default) {
-    LOG_INFO("[Flow Ctrl] Default FlowCtrl's flowctrl_id from %ld to %ld\n", curr_flowctrl_id, flowctrl_id);
+    LOG_INFO("[Flow Ctrl] Default FlowCtrl's flowctrl_id from %ld to %ld\n",
+      curr_flowctrl_id, flowctrl_id);
   } else {
-    LOG_INFO("[Flow Ctrl] Group FlowCtrl's flowctrl_id from %ld to %ld\n", curr_flowctrl_id, flowctrl_id);
+    LOG_INFO("[Flow Ctrl] Group FlowCtrl's flowctrl_id from %ld to %ld\n",
+      curr_flowctrl_id, flowctrl_id);
   }
   return;
 }
@@ -373,10 +375,10 @@ bool FlowCtrlRuleHandler::parseFlowCtrlInfo(const string& flowctrl_info,
       ss << i;
       ss << ") of flowctrl_info value!";
       err_info = ss.str();
-      LOG_ERROR("parse flowCtrlInfo failure %s", err_info.c_str()); 
+      LOG_ERROR("parse flowCtrlInfo failure %s", err_info.c_str());
       return false;
     }
-    
+
     switch (type) {
       case 1: {
         if (FlowCtrlRuleHandler::parseFreqLimit(err_info, node_item, flowctrl_item_vec)) {
@@ -488,7 +490,7 @@ bool FlowCtrlRuleHandler::parseDataLimit(string& err_info,
       ss << ") of data limit rule!";
       err_info = ss.str();
       return false;
-    }    
+    }
     datasize_limit = datasize_limit * 1024 * 1024;
     if (!parseIntMember(err_info, node_item, "freqInMs", freqms_limit, false, -1)) {
       ss << "freqInMs key is required in index(";
@@ -669,8 +671,9 @@ bool FlowCtrlRuleHandler::parseLowFetchLimit(string& err_info,
   return true;
 }
 
-bool FlowCtrlRuleHandler::parseStringMember(string& err_info, const rapidjson::Value& root,
-                           const char* key, string& value, bool compare_value, string required_val) {
+bool FlowCtrlRuleHandler::parseStringMember(string& err_info,
+    const rapidjson::Value& root, const char* key, string& value,
+    bool compare_value, string required_val) {
   // check key if exist
   if (!root.HasMember(key)) {
     err_info = "Field not existed";
@@ -691,8 +694,9 @@ bool FlowCtrlRuleHandler::parseStringMember(string& err_info, const rapidjson::V
   return true;
 }
 
-bool FlowCtrlRuleHandler::parseLongMember(string& err_info, const rapidjson::Value& root,
-                            const char* key, int64_t& value, bool compare_value, int64_t required_val) {
+bool FlowCtrlRuleHandler::parseLongMember(string& err_info,
+      const rapidjson::Value& root, const char* key, int64_t& value,
+      bool compare_value, int64_t required_val) {
   if (!root.HasMember(key)) {
     err_info = "Field not existed";
     return false;
@@ -711,8 +715,9 @@ bool FlowCtrlRuleHandler::parseLongMember(string& err_info, const rapidjson::Val
   return true;
 }
 
-bool FlowCtrlRuleHandler::parseIntMember(string& err_info, const rapidjson::Value& root,
-                            const char* key, int32_t& value, bool compare_value, int32_t required_val) {
+bool FlowCtrlRuleHandler::parseIntMember(string& err_info,
+      const rapidjson::Value& root, const char* key, int32_t& value,
+      bool compare_value, int32_t required_val) {
   if (!root.HasMember(key)) {
     err_info = "Field not existed";
     return false;
@@ -732,7 +737,7 @@ bool FlowCtrlRuleHandler::parseIntMember(string& err_info, const rapidjson::Valu
 }
 
 bool FlowCtrlRuleHandler::parseTimeMember(string& err_info,
-                            const rapidjson::Value& root, const char* key, int32_t& value) {
+              const rapidjson::Value& root, const char* key, int32_t& value) {
   // check key if exist
   stringstream ss;
   if (!root.HasMember(key)) {

@@ -323,7 +323,8 @@ bool ConsumerConfig::SetGroupConsumeTarget(string& err_info,
 
 bool ConsumerConfig::SetGroupConsumeTarget(string& err_info,
       const string& group_name, const map<string, set<string> >& subscribed_topic_and_filter_map,
-      const string& session_key, uint32_t source_count, bool is_select_big, const map<string, int64_t>& part_offset_map) {
+      const string& session_key, uint32_t source_count, bool is_select_big,
+      const map<string, int64_t>& part_offset_map) {
   return setGroupConsumeTarget(err_info, true,
               group_name, subscribed_topic_and_filter_map,
               session_key, source_count, is_select_big, part_offset_map);
@@ -331,7 +332,8 @@ bool ConsumerConfig::SetGroupConsumeTarget(string& err_info,
 
 bool ConsumerConfig::setGroupConsumeTarget(string& err_info, bool is_bound_consume,
       const string& group_name, const map<string, set<string> >& subscribed_topic_and_filter_map,
-      const string& session_key, uint32_t source_count, bool is_select_big, const map<string, int64_t>& part_offset_map) {
+      const string& session_key, uint32_t source_count, bool is_select_big,
+      const map<string, int64_t>& part_offset_map) {
   // check parameter group_name
   string tgt_group_name;
   bool is_success = Utils::ValidGroupName(err_info, group_name, tgt_group_name);
@@ -365,7 +367,8 @@ bool ConsumerConfig::setGroupConsumeTarget(string& err_info, bool is_bound_consu
     string topic_name = Utils::Trim(it_map->first);
     // check filter info
     set<string> subscribed_filters = it_map->second;
-    for (set<string>::iterator it = subscribed_filters.begin(); it != subscribed_filters.end(); ++it) {
+    for (set<string>::iterator it = subscribed_filters.begin();
+          it != subscribed_filters.end(); ++it) {
       is_success = Utils::ValidFilterItem(err_info, *it, tmp_filteritem);
       if (!is_success) {
         stringstream ss;

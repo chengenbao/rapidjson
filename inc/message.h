@@ -20,8 +20,8 @@
 #ifndef TUBEMQ_CLIENT_MESSAGE_H_
 #define TUBEMQ_CLIENT_MESSAGE_H_
 
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <list>
 #include <map>
 #include <string>

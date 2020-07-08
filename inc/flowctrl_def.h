@@ -138,11 +138,16 @@ class FlowCtrlRuleHandler {
     const char* key, int64_t& value, bool compare_value, int64_t required_val);
   bool parseIntMember(string &err_info, const rapidjson::Value& root,
     const char* key, int32_t& value, bool compare_value, int32_t required_val);
-  bool parseFlowCtrlInfo(const string& flowctrl_info, map<int32_t, vector<FlowCtrlItem> >& flowctrl_info_map);
-  bool parseDataLimit(string& err_info, const rapidjson::Value& root, vector<FlowCtrlItem>& flowCtrlItems);
-  bool parseFreqLimit(string& err_info, const rapidjson::Value& root, vector<FlowCtrlItem>& flowctrl_items);
-  bool parseLowFetchLimit(string& err_info, const rapidjson::Value& root, vector<FlowCtrlItem>& flowctrl_items);
-  bool parseTimeMember(string& err_info, const rapidjson::Value& root, const char* key, int32_t& value);
+  bool parseFlowCtrlInfo(const string& flowctrl_info,
+                      map<int32_t, vector<FlowCtrlItem> >& flowctrl_info_map);
+  bool parseDataLimit(string& err_info,
+            const rapidjson::Value& root, vector<FlowCtrlItem>& flowCtrlItems);
+  bool parseFreqLimit(string& err_info,
+            const rapidjson::Value& root, vector<FlowCtrlItem>& flowctrl_items);
+  bool parseLowFetchLimit(string& err_info,
+            const rapidjson::Value& root, vector<FlowCtrlItem>& flowctrl_items);
+  bool parseTimeMember(string& err_info,
+            const rapidjson::Value& root, const char* key, int32_t& value);
 
  private:
   AtomicLong    flowctrl_id_;

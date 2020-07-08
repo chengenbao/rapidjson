@@ -142,6 +142,7 @@ class ConsumerEvent {
 };
 
 class PartitionExt : public Partition {
+ public:
   PartitionExt();
   
 

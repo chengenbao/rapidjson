@@ -20,8 +20,8 @@
 #ifndef TUBEMQ_CLIENT_CONFIGURE_H_
 #define TUBEMQ_CLIENT_CONFIGURE_H_
 
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <map>
 #include <set>
 #include <string>
@@ -103,7 +103,8 @@ class ConsumerConfig : public BaseConfig {
     const string& group_name, const map<string, set<string> >& subscribed_topic_and_filter_map);
   bool SetGroupConsumeTarget(string& err_info,
     const string& group_name, const map<string, set<string> >& subscribed_topic_and_filter_map,
-    const string& session_key, uint32_t source_count, bool is_select_big, const map<string, int64_t>& part_offset_map);
+    const string& session_key, uint32_t source_count, bool is_select_big,
+    const map<string, int64_t>& part_offset_map);
   const string& GetGroupName() const;
   const map<string, set<string> >& GetSubTopicAndFilterMap() const;
   void SetConsumePosition(ConsumePosition consume_from_where);
@@ -127,7 +128,8 @@ class ConsumerConfig : public BaseConfig {
  private:
   bool setGroupConsumeTarget(string& err_info, bool is_bound_consume,
     const string& group_name, const map<string, set<string> >& subscribed_topic_and_filter_map,
-    const string& session_key, int32_t source_count, bool is_select_big, const map<string, int64_t>& part_offset_map);
+    const string& session_key, int32_t source_count, bool is_select_big,
+    const map<string, int64_t>& part_offset_map);
 
  private:
   string group_name_;
