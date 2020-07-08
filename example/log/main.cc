@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 #include <chrono>
 #include <exception>
 #include <iostream>
@@ -43,4 +42,3 @@ int main() {
   t1.join();
   return 0;
 }
-

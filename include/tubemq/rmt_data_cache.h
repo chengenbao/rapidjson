@@ -17,18 +17,20 @@
  * under the License.
  */
 
-#ifndef TUBEMQ_CLIENT_VERSION_H_
-#define TUBEMQ_CLIENT_VERSION_H_
+#ifndef TUBEMQ_CLIENT_RMT_DATA_CACHE_H_
+#define TUBEMQ_CLIENT_RMT_DATA_CACHE_H_
 
-#include <string>
+#include <stdint.h>
+
+#include <atomic>
 
 namespace tubemq {
 
-using std::string;
+using namespace std;
 
-static const string kTubeMQClientVersion = "0.1.0-0.5.0";
+// consumer remote data cache
+class RmtDataCacheCsm {}
 
 }  // namespace tubemq
 
-#endif  // TUBEMQ_CLIENT_VERSION_H_
-
+#endif  // TUBEMQ_CLIENT_RMT_DATA_CACHE_H_
