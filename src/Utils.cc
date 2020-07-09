@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "utils.h"
+#include "tubemq/utils.h"
 
 #include <regex.h>
 #include <stdlib.h>
@@ -27,7 +27,7 @@
 #include <sstream>
 #include <vector>
 
-#include "const_config.h"
+#include "tubemq/const_config.h"
 
 namespace tubemq {
 

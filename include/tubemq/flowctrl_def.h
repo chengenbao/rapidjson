@@ -29,7 +29,7 @@
 #include <string>
 #include <vector>
 
-#include "atomic_def.h"
+#include "tubemq/atomic_def.h"
 
 namespace tubemq {
 
@@ -65,8 +65,9 @@ class FlowCtrlItem {
   void Clear();
   void ResetFlowCtrlValue(int32_t type, int32_t datasize_limit, int32_t freqms_limit,
                           int32_t min_data_filter_freqms);
-  int32_t GetFreLimit(int32_t msg_zero_cnt);
-  bool GetDataLimit(int64_t datadlt_m, int32_t curr_time, FlowCtrlResult& flowctrl_result);
+  int32_t GetFreLimit(int32_t msg_zero_cnt) const;
+  bool GetDataLimit(int64_t datadlt_m,
+    int32_t curr_time, FlowCtrlResult& flowctrl_result) const;
   const int32_t GetType() const { return type_; }
   const int32_t GetZeroCnt() const { return zero_cnt_; }
   const int32_t GetStartTime() const { return start_time_; }

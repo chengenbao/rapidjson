@@ -17,14 +17,14 @@
  * under the License.
  */
 
-#include "message.h"
+#include "tubemq/message.h"
 
 #include <string.h>
 
 #include <sstream>
 
-#include "const_config.h"
-#include "utils.h"
+#include "tubemq/const_config.h"
+#include "tubemq/utils.h"
 
 namespace tubemq {
 

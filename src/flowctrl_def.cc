@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "flowctrl_def.h"
+#include "tubemq/flowctrl_def.h"
 
 #include <stdio.h>
 #include <time.h>
@@ -25,9 +25,9 @@
 
 #include <sstream>
 
-#include "const_config.h"
-#include "logger.h"
-#include "utils.h"
+#include "tubemq/const_config.h"
+#include "tubemq/logger.h"
+#include "tubemq/utils.h"
 
 namespace tubemq {
 
@@ -119,7 +119,7 @@ FlowCtrlItem& FlowCtrlItem::operator=(const FlowCtrlItem& target) {
   return *this;
 }
 
-int32_t FlowCtrlItem::GetFreLimit(int32_t msg_zero_cnt) {
+int32_t FlowCtrlItem::GetFreLimit(int32_t msg_zero_cnt) const {
   if (this->type_ != 1) {
     return -1;
   }
@@ -151,7 +151,7 @@ void FlowCtrlItem::Clear() {
 }
 
 bool FlowCtrlItem::GetDataLimit(int64_t datadlt_m, int32_t curr_time,
-                                FlowCtrlResult& flowctrl_result) {
+                                FlowCtrlResult& flowctrl_result) const {
   if (this->type_ != 0 || datadlt_m <= this->datadlt_m_) {
     return false;
   }
@@ -268,8 +268,8 @@ void FlowCtrlRuleHandler::clearStatisData() {
 
 bool FlowCtrlRuleHandler::GetCurDataLimit(int64_t last_datadlt, FlowCtrlResult& flowctrl_result) const {
   struct tm utc_tm;
-  vector<FlowCtrlItem>::iterator it_vec;
-  map<int, vector<FlowCtrlItem> >::iterator it_map;
+  vector<FlowCtrlItem>::const_iterator it_vec;
+  map<int, vector<FlowCtrlItem> >::const_iterator it_map;
   time_t cur_time = time(NULL);
 
   gmtime_r(&cur_time, &utc_tm);
@@ -293,8 +293,8 @@ bool FlowCtrlRuleHandler::GetCurDataLimit(int64_t last_datadlt, FlowCtrlResult& 
 
 int32_t FlowCtrlRuleHandler::GetCurFreqLimitTime(int32_t msg_zero_cnt, int32_t received_limit) const {
   int32_t rule_val = -2;
-  vector<FlowCtrlItem>::iterator it_vec;
-  map<int, vector<FlowCtrlItem> >::iterator it_map;
+  vector<FlowCtrlItem>::const_iterator it_vec;
+  map<int, vector<FlowCtrlItem> >::const_iterator it_map;
 
   if (msg_zero_cnt < this->min_zero_cnt_.Get()) {
     return received_limit;
