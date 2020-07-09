@@ -157,6 +157,8 @@ class PartitionExt : public Partition {
 
  private:
   void resetParameters();
+  void updateStrategyData(const FlowCtrlRuleHandler& def_flowctrl_handler,
+    const FlowCtrlRuleHandler& group_flowctrl_handler, int32_t msg_size, int64_t last_datadlt);
 
  private:
   bool is_last_consumed_;

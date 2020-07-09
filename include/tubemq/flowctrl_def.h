@@ -91,12 +91,12 @@ class FlowCtrlRuleHandler {
   ~FlowCtrlRuleHandler();
   void UpdateDefFlowCtrlInfo(bool is_default, int32_t qrypriority_id, int64_t flowctrl_id,
                              const string& flowctrl_info);
-  bool GetCurDataLimit(int64_t last_datadlt, FlowCtrlResult& flowctrl_result);
-  int32_t GetCurFreqLimitTime(int32_t msg_zero_cnt, int32_t received_limit);
-  int32_t GetMinZeroCnt() { return this->min_zero_cnt_.Get(); }
-  int32_t GetQryPriorityId() { return this->qrypriority_id_.Get(); }
+  bool GetCurDataLimit(int64_t last_datadlt, FlowCtrlResult& flowctrl_result) const;
+  int32_t GetCurFreqLimitTime(int32_t msg_zero_cnt, int32_t received_limit) const;
+  int32_t GetMinZeroCnt() const { return this->min_zero_cnt_.Get(); }
+  int32_t GetQryPriorityId() const { return this->qrypriority_id_.Get(); }
   void SetQryPriorityId(int32_t qrypriority_id) { this->qrypriority_id_.Set(qrypriority_id); }
-  int64_t GetFlowCtrlId() { return this->flowctrl_id_.Get(); }
+  int64_t GetFlowCtrlId() const { return this->flowctrl_id_.Get(); }
   const FlowCtrlItem& GetFilterCtrlItem() const { return this->filter_ctrl_item_; }
   const string& GetFlowCtrlInfo() const { return this->flowctrl_info_; }
 
