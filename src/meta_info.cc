@@ -423,6 +423,7 @@ int64_t PartitionExt::ProcConsumeResult(const FlowCtrlRuleHandler& def_flowctrl_
   const FlowCtrlRuleHandler& group_flowctrl_handler, bool filter_consume, bool last_consumed,
   int32_t errcode, int32_t msg_size, bool req_esc_limit, int64_t rsp_dlt_limit,
   int64_t last_datadlt, bool require_slow) {
+  // #lizard forgives
   // record consume status
   this->is_last_consumed_ = last_consumed;
   // Update strategy data values
@@ -504,7 +505,7 @@ void PartitionExt::updateStrategyData(const FlowCtrlRuleHandler& def_flowctrl_ha
   bool result = false;
   // Accumulated data received
   this->cur_stage_msgsize_ += msg_size;
-  this->cur_slice_msgsize_ += msg_size;  
+  this->cur_slice_msgsize_ += msg_size;
   int64_t curr_time = Utils::GetCurrentTimeMillis();
   // Update strategy data values
   if (curr_time > this->next_stage_updtime_) {

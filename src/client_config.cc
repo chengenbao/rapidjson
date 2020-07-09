@@ -335,8 +335,8 @@ bool ConsumerConfig::setGroupConsumeTarget(
     string tmp_filteritem;
     set<string> tgt_filters;
     // check topic_name info
-    is_success =
-        Utils::ValidString(err_info, it_map->first, false, true, true, tb_config::kTopicNameMaxLength);
+    is_success = Utils::ValidString(err_info,
+                          it_map->first, false, true, true, tb_config::kTopicNameMaxLength);
     if (!is_success) {
       stringstream ss;
       ss << "Check parameter subscribed_topic_and_filter_map error: topic ";

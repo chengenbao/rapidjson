@@ -266,7 +266,8 @@ void FlowCtrlRuleHandler::clearStatisData() {
   this->filter_ctrl_item_.Clear();
 }
 
-bool FlowCtrlRuleHandler::GetCurDataLimit(int64_t last_datadlt, FlowCtrlResult& flowctrl_result) const {
+bool FlowCtrlRuleHandler::GetCurDataLimit(int64_t last_datadlt,
+                                  FlowCtrlResult& flowctrl_result) const {
   struct tm utc_tm;
   vector<FlowCtrlItem>::const_iterator it_vec;
   map<int, vector<FlowCtrlItem> >::const_iterator it_map;
@@ -291,7 +292,8 @@ bool FlowCtrlRuleHandler::GetCurDataLimit(int64_t last_datadlt, FlowCtrlResult& 
   return false;
 }
 
-int32_t FlowCtrlRuleHandler::GetCurFreqLimitTime(int32_t msg_zero_cnt, int32_t received_limit) const {
+int32_t FlowCtrlRuleHandler::GetCurFreqLimitTime(int32_t msg_zero_cnt,
+                                                   int32_t received_limit) const {
   int32_t rule_val = -2;
   vector<FlowCtrlItem>::const_iterator it_vec;
   map<int, vector<FlowCtrlItem> >::const_iterator it_map;
