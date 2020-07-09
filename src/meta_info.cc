@@ -401,10 +401,10 @@ PartitionExt::~PartitionExt() {
 }
 
 void PartitionExt::BookConsumeData(int32_t errcode, int32_t msg_size,
-  bool req_esc_limit, int64_t rsp_dlt_limit, long last_datadlt, bool require_slow) {
-  this->booked_time_ =Utils::GetCurrentTimeMillis();
+  bool req_esc_limit, int64_t rsp_dlt_limit, int64_t last_datadlt, bool require_slow) {
+  this->booked_time_ = Utils::GetCurrentTimeMillis();
   this->booked_errcode_ = errcode;
-  this->booked_esc_limit_= req_esc_limit;
+  this->booked_esc_limit_ = req_esc_limit;
   this->booked_msgsize_ = msg_size;
   this->booked_dlt_limit_ = rsp_dlt_limit;
   this->booked_curdata_dlt_ = last_datadlt;
@@ -450,7 +450,7 @@ int64_t PartitionExt::ProcConsumeResult(const FlowCtrlRuleHandler& def_flowctrl_
     this->limit_slice_msgsize_ = this->cur_flowctrl_.GetDataSizeLimit() / 12;
     this->next_stage_updtime_ = curr_time + 60000;
     this->next_slice_updtime_ = curr_time + 5000;
-  } else if(curr_time > this->next_slice_updtime_) {
+  } else if (curr_time > this->next_slice_updtime_) {
     this->cur_slice_msgsize_ = 0;
     this->next_slice_updtime_ = curr_time + 5000;
   }
@@ -519,7 +519,7 @@ void PartitionExt::resetParameters() {
   this->total_zero_cnt_ = 0;
   this->booked_time_ = 0;
   this->booked_errcode_ = 0;
-  this->booked_esc_limit_= false;
+  this->booked_esc_limit_ = false;
   this->booked_msgsize_ = 0;
   this->booked_dlt_limit_ = 0;
   this->booked_curdata_dlt_ = 0;
