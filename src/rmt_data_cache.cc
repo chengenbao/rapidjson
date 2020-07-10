@@ -18,12 +18,14 @@
  */
 
 #include "tubemq/rmt_data_cache.h"
+
+#include <string>
+
 #include "tubemq/meta_info.h"
 
 
 
 namespace tubemq {
- 
 
 RmtDataCacheCsm::RmtDataCacheCsm() {
   pthread_rwlock_init(&meta_rw_lock_, NULL);
@@ -74,7 +76,7 @@ void RmtDataCacheCsm::AddNewPartition(const PartitionExt& partition_ext) {
     }
   }
   // check partition_key status
-  if (partition_useds_.find(partition_key) == partition_useds_.end() 
+  if (partition_useds_.find(partition_key) == partition_useds_.end()
     && partition_timeouts_.find(partition_key) == partition_timeouts_.end()) {
     index_partitions_.remove(partition_key);
     index_partitions_.push_back(partition_key);

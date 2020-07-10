@@ -20,8 +20,8 @@
 #ifndef TUBEMQ_CLIENT_RMT_DATA_CACHE_H_
 #define TUBEMQ_CLIENT_RMT_DATA_CACHE_H_
 
-#include <stdint.h>
 #include <pthread.h>
+#include <stdint.h>
 
 #include <atomic>
 #include <list>
