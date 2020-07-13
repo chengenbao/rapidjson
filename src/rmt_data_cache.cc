@@ -38,6 +38,8 @@ RmtDataCacheCsm::RmtDataCacheCsm(const string& client_id,
                                       const string& group_name) {
   consumer_id_ = client_id;
   group_name_ = group_name;
+  under_groupctrl_.Set(false);
+  last_checktime_.Set(0);
   pthread_rwlock_init(&meta_rw_lock_, NULL);
   pthread_mutex_init(&part_mutex_, NULL);
   pthread_mutex_init(&data_book_mutex_, NULL);
@@ -54,6 +56,43 @@ RmtDataCacheCsm::~RmtDataCacheCsm() {
   pthread_mutex_destroy(&part_mutex_);
   pthread_rwlock_destroy(&meta_rw_lock_);
 }
+
+void RmtDataCacheCsm::UpdateDefFlowCtrlInfo(int64_t flowctrl_id,
+                                                 const string& flowctrl_info) {
+  if (flowctrl_id != def_flowctrl_handler_.GetFlowCtrlId()) {
+    def_flowctrl_handler_.UpdateDefFlowCtrlInfo(true, 
+      tb_config::kInvalidValue, flowctrl_id, flowctrl_info);
+  }
+}
+void RmtDataCacheCsm::UpdateGroupFlowCtrlInfo(int32_t qyrpriority_id,
+                             int64_t flowctrl_id, const string& flowctrl_info) {
+  if (flowctrl_id != group_flowctrl_handler_.GetFlowCtrlId()) {
+    group_flowctrl_handler_.UpdateDefFlowCtrlInfo(false, 
+                qyrpriority_id, flowctrl_id, flowctrl_info);
+  }
+  if (qyrpriority_id != group_flowctrl_handler_.GetQryPriorityId()) {
+    this->group_flowctrl_handler_.SetQryPriorityId(qyrpriority_id);
+
+  }
+  // update current if under group flowctrl 
+  int64_t cur_time = Utils::GetCurrentTimeMillis();
+  if (cur_time - last_checktime_.Get() > 10000) {
+    FlowCtrlResult flowctrl_result;
+    this->under_groupctrl_.Set(
+      group_flowctrl_handler_.GetCurDataLimit(
+        tb_config::kMaxLongValue, flowctrl_result));
+    last_checktime_.Set(cur_time);
+  }
+}
+
+const int64_t RmtDataCacheCsm::GetGroupQryPriorityId() const {
+  return this->group_flowctrl_handler_.GetQryPriorityId();
+}
+
+bool RmtDataCacheCsm::IsUnderGroupCtrl() {
+  return this->under_groupctrl_.Get();
+}
+
 
 void RmtDataCacheCsm::AddNewPartition(const PartitionExt& partition_ext) {
   //
@@ -269,6 +308,28 @@ void RmtDataCacheCsm::GetRegBrokers(list<NodeInfo>& brokers) {
   pthread_rwlock_unlock(&meta_rw_lock_);
 }
 
+void RmtDataCacheCsm::GetPartitionByBroker(const NodeInfo& broker_info,
+                                            list<PartitionExt>& partition_list) {
+  set<string>::iterator it_key;
+  map<NodeInfo, set<string> >::iterator it_broker;
+  map<string, PartitionExt>::iterator it_part;
+  
+  partition_list.clear();
+  pthread_rwlock_rdlock(&meta_rw_lock_);
+  it_broker = broker_partition_.find(broker_info);
+  if (it_broker != broker_partition_.end()) {
+    for (it_key = it_broker->second.begin();
+    it_key != it_broker->second.end(); it_key++) {
+      it_part = partitions_.find(*it_key);
+      if (it_part != partitions_.end()) {
+        partition_list.push_back(it_part->second);
+      }
+    }
+  }
+  pthread_rwlock_unlock(&meta_rw_lock_);
+}
+
+
 void RmtDataCacheCsm::GetCurPartitionOffsets(map<string, int64_t> part_offset_map) {
   map<string, int64_t>::iterator it;
 
@@ -309,7 +370,9 @@ void RmtDataCacheCsm::RemovePartition(const list<PartitionExt>& partition_list) 
   for (it_lst = partition_list.begin(); it_lst != partition_list.end(); it_lst++) {
     partition_keys.insert(it_lst->GetPartitionKey());
   }
-  RemovePartition(partition_keys);
+  if (!partition_keys.empty()) {
+    RemovePartition(partition_keys);
+  }
 }
 
 void RmtDataCacheCsm::RemovePartition(const set<string>& partition_keys) {
@@ -329,6 +392,53 @@ void RmtDataCacheCsm::RemovePartition(const set<string>& partition_keys) {
   }
   pthread_rwlock_unlock(&meta_rw_lock_);
 }
+
+void RmtDataCacheCsm::RemoveAndGetPartition(const list<SubscribeInfo>& subscribe_infos,
+        bool is_processing_rollback, map<NodeInfo, list<PartitionExt> >& broker_parts) {
+  //
+  string part_key;
+  list<SubscribeInfo>::const_iterator it;
+  map<string, PartitionExt>::iterator it_part;
+  map<NodeInfo, list<PartitionExt> >::iterator it_broker;
+
+  broker_parts.clear();
+  // check if empty
+  if (subscribe_infos.empty()) {
+    return;
+  }
+  pthread_rwlock_wrlock(&meta_rw_lock_);
+  pthread_mutex_lock(&part_mutex_);
+  for (it = subscribe_infos.begin(); it != subscribe_infos.end(); ++it) {
+    part_key = it->GetPartitionExt().GetPartitionKey();
+    it_part = partitions_.find(part_key);
+    if (it_part != partitions_.end()) {
+      if (partition_useds_.find(part_key) != partition_useds_.end()) {
+        if (is_processing_rollback) {
+          it_part->second.SetLastConsumed(false);
+        } else {
+          it_part->second.SetLastConsumed(true);
+        }
+      }
+      it_broker = broker_parts.find(it_part->second.GetBrokerInfo());
+      if (it_broker == broker_parts.end()) {
+        list<PartitionExt> tmp_part_list;
+        tmp_part_list.push_back(it_part->second);
+        broker_parts[it_part->second.GetBrokerInfo()] = tmp_part_list;
+      } else {
+        it_broker->second.push_back(it_part->second);
+      }
+      rmvMetaInfo(part_key);  
+    }
+    partition_useds_.erase(part_key);
+    index_partitions_.remove(part_key);
+    // todo need modify if timer build finished
+    partition_timeouts_.erase(part_key);
+    // end todo
+  }
+  pthread_mutex_unlock(&part_mutex_);
+  pthread_rwlock_unlock(&meta_rw_lock_);
+}
+
 
 
 bool RmtDataCacheCsm::BookPartition(const string& partition_key) {
