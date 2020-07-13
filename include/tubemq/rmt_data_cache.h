@@ -26,6 +26,7 @@
 #include <list>
 #include <map>
 #include <set>
+#include <string>
 
 #include "tubemq/flowctrl_def.h"
 #include "tubemq/meta_info.h"
@@ -54,7 +55,7 @@ class RmtDataCacheCsm {
   bool RelPartition(string &err_info, bool filter_consume,
                          const string& confirm_context, bool is_consumed);
   bool RelPartition(string &err_info, const string& confirm_context, bool is_consumed);
-  bool RelPartition(string &err_info, bool filter_consume, 
+  bool RelPartition(string &err_info, bool filter_consume,
                          const string& confirm_context, bool is_consumed,
                          int64_t curr_offset, int32_t err_code, bool esc_limit,
                          int32_t msg_size, int64_t limit_dlt, int64_t cur_data_dlt);
@@ -89,7 +90,7 @@ class RmtDataCacheCsm {
 
   // timer end
   string consumer_id_;
-  string group_name_;  
+  string group_name_;
   // flow ctrl
   FlowCtrlRuleHandler group_flowctrl_handler_;
   FlowCtrlRuleHandler def_flowctrl_handler_;
