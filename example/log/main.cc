@@ -23,20 +23,22 @@
 #include <string>
 #include <thread>
 
+#include "tubemq/atomic_def.h"
 #include "tubemq/logger.h"
-
 
 using namespace std;
 using namespace tubemq;
 
+AtomicInteger ati;
+
 void log() {
-  int i = 0;
   while (1) {
-    LOG_ERROR("threadid:%ld, i:%d", std::this_thread::get_id(), i++);
+    LOG_ERROR("atomic:%d", ati.IncrementAndGet());
   }
 }
 
 int main() {
+  ati.GetAndSet(1);
   std::thread t1(log);
   std::thread t2(log);
   std::thread t3(log);
