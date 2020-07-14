@@ -18,12 +18,12 @@
 #
 
 
-cmake_minimum_required (VERSION 3.1)
+#!/bin/bash
 
+git submodule foreach --recursive git submodule init 
+git submodule foreach --recursive git submodule update 
 
-AUX_SOURCE_DIRECTORY(. CURRENT_DIR_SRCS)                                        
-ADD_LIBRARY(tubemq STATIC ${CURRENT_DIR_SRCS})   
-TARGET_LINK_LIBRARIES (tubemq)
-
-
-
+mkdir build
+cd build
+cmake ../
+make
