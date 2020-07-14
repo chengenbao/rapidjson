@@ -54,13 +54,14 @@ void ClientSubInfo::SetConsumeTarget(bool bound_consume,
   topic_conds_.clear();
   set<string>::iterator it_set;
   map<string, set<string> >::const_iterator it_topic;
-  for (it_topic = topic_and_filter_map.begin(); 
+  for (it_topic = topic_and_filter_map.begin();
       it_topic != topic_and_filter_map.end(); it_topic++) {
     topics_.push_back(it_topic->first);
     if (it_topic->second.empty()) {
       topic_filter_map_[it_topic->first] = false;
     } else {
       topic_filter_map_[it_topic->first] = true;
+
       //build topic conditions
       count = 0;
       tmpstr = it_topic->first;
@@ -75,6 +76,7 @@ void ClientSubInfo::SetConsumeTarget(bool bound_consume,
       topic_conds_.push_back(tmpstr);
     }
   }
+
   //build bound_partition info
   if (bound_consume) {
     session_key_ = session_key;
@@ -83,7 +85,7 @@ void ClientSubInfo::SetConsumeTarget(bool bound_consume,
     assigned_part_map_ = part_offset_map;
     count = 0;
     bound_partions_ = "";
-    map<string, int64_t>::const_iterator it; 
+    map<string, int64_t>::const_iterator it;
     for (it = part_offset_map.begin(); it != part_offset_map.end(); it++) {
       if (count++ > 0) {
         bound_partions_ += delimiter::kDelimiterComma;

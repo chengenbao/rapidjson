@@ -53,12 +53,11 @@ class ClientSubInfo {
   bool IsFilterConsume(const string& topic);
   void GetAssignedPartOffset(const string& partition_key, int64_t& offset);
   const string& GetBoundPartInfo() const { return bound_partions_; }
-  const list<string>& GetSubTopics() const { return topics_; };
-  const list<string>& GetTopicConds() const { return topic_conds_; };
+  const list<string>& GetSubTopics() const { return topics_; }
+  const list<string>& GetTopicConds() const { return topic_conds_; }
   const map<string, set<string> >& GetTopicFilterMap() const;
-  
+
  private:
-  
   bool bound_consume_;
   AtomicBoolean first_registered_;
   AtomicBoolean not_allocated_;
@@ -76,9 +75,6 @@ class ClientSubInfo {
 };
 
 }  // namespace tubemq
-
-
-
 
 
 #endif  // TUBEMQ_CLIENT_SUBINFO_H_
