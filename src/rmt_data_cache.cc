@@ -71,7 +71,6 @@ void RmtDataCacheCsm::UpdateGroupFlowCtrlInfo(int32_t qyrpriority_id,
   }
   if (qyrpriority_id != group_flowctrl_handler_.GetQryPriorityId()) {
     this->group_flowctrl_handler_.SetQryPriorityId(qyrpriority_id);
-
   }
   // update current if under group flowctrl
   int64_t cur_time = Utils::GetCurrentTimeMillis();
