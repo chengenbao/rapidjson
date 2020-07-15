@@ -48,7 +48,7 @@ class RmtDataCacheCsm {
  public:
   RmtDataCacheCsm(const string& client_id, const string& group_name);
   ~RmtDataCacheCsm();
-  void UpdateDefFlowCtrlInfo(int64_t flowctrl_id, 
+  void UpdateDefFlowCtrlInfo(int64_t flowctrl_id,
                                      const string& flowctrl_info);
   void UpdateGroupFlowCtrlInfo(int32_t qyrpriority_id,
                  int64_t flowctrl_id, const string& flowctrl_info);
