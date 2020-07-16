@@ -44,7 +44,7 @@ class Atomic {
 
   inline T GetAndSet(T new_value) { return counter_.exchange(new_value); }
 
-  inline bool CompareAndSet(T expect, T update) {
+  inline bool CompareAndSet(T& expect, T update) {
     return counter_.compare_exchange_strong(expect, update, std::memory_order_relaxed);
   }
 
@@ -70,7 +70,26 @@ class Atomic {
 
 using AtomicInteger = Atomic<int32_t>;
 using AtomicLong = Atomic<int64_t>;
-using AtomicBoolean = Atomic<bool>;
+
+class AtomicBoolean {
+ public:
+  AtomicBoolean() : counter_(false) {}
+  explicit AtomicBoolean(bool initial_value) : counter_(initial_value) {}
+
+  inline bool Get() const { return counter_.load(std::memory_order_relaxed); }
+  inline void Set(bool new_value) { counter_.store(new_value, std::memory_order_relaxed); }
+
+  // return old value
+  inline bool GetAndSet(bool new_value) { return counter_.exchange(new_value); }
+
+  // CAS SET
+  inline bool CompareAndSet(bool& expect, bool update) {
+    return counter_.compare_exchange_strong(expect, update, std::memory_order_relaxed);
+  }
+
+ private:
+  std::atomic<bool> counter_;
+};
 
 }  // namespace tubemq
 
