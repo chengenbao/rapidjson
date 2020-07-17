@@ -25,7 +25,7 @@
 #include <vector>
 
 #include "tubemq/const_config.h"
-#include "tubemq/const_errcode.h"
+#include "tubemq/tubemq_errcode.h"
 #include "tubemq/utils.h"
 
 namespace tubemq {
@@ -408,9 +408,9 @@ void PartitionExt::updateStrategyData(const FlowCtrlRuleHandler& def_flowctrl_ha
           this->cur_flowctrl_.SetDataDltAndFreqLimit(tb_config::kMaxLongValue, 0);
         }
       }
-      this->cur_freqctrl_ = group_flowctrl_handler.GetFilterCtrlItem();
+      group_flowctrl_handler.GetFilterCtrlItem(this->cur_freqctrl_);
       if (this->cur_freqctrl_.GetFreqMsLimit() < 0) {
-        this->cur_freqctrl_ = def_flowctrl_handler.GetFilterCtrlItem();
+        def_flowctrl_handler.GetFilterCtrlItem(this->cur_freqctrl_);
       }
       curr_time = Utils::GetCurrentTimeMillis();
     }

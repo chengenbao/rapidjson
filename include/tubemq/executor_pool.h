@@ -40,7 +40,6 @@ typedef std::shared_ptr<asio::ssl::stream<asio::ip::tcp::socket &> > TlsSocketPt
 typedef std::shared_ptr<asio::ip::tcp::resolver> TcpResolverPtr;
 typedef std::shared_ptr<asio::steady_timer> SteadyTimerPtr;
 
-
 class Executor : noncopyable {
  public:
   Executor();
