@@ -20,11 +20,13 @@
 #ifndef TUBEMQ_CLIENT_BASE_CLIENT_H_
 #define TUBEMQ_CLIENT_BASE_CLIENT_H_
 
+#include <mutex>
 #include <stdint.h>
 #include <string>
 #include <thread>
 
 #include "tubemq/atomic_def.h"
+#include "tubemq/file_ini.h"
 #include "tubemq/rmt_data_cache.h"
 #include "tubemq/singleton.h"
 #include "tubemq/tubemq_message.h"
@@ -37,13 +39,16 @@
 namespace tubemq {
 
 using std::map;
+using std::mutex;
 using std::string;
 using std::thread;
+
 
 class BaseClient {
  public:
   BaseClient(bool is_producer);
   virtual ~BaseClient();
+  virtual void ShutDown();
   void SetClientIndex(int32_t client_index) { client_index_ = client_index; }
   bool IsProducer() { return is_producer_; }
   const int32_t GetClientIndex() { return client_index_; }
@@ -54,32 +59,35 @@ class BaseClient {
 };
 
 
-enum ServiceStatus {
-  kServiceReady = 0,
-  kServiceRunning = 1,
-  kServiceStop = 2,
-};  // enum ServiceStatus
-
-
-class TubeMQService : public Singleton {
+class TubeMQService : public Singleton<TubeMQService> {
  public:
   TubeMQService();
+  ~TubeMQService();
   bool Start(string& err_info, string conf_file = "../conf/tubemqclient.conf");
   bool Stop(string& err_info);
   bool IsRunning();
-  const ServiceStatus  getServiceStatus() { return service_status_.Get(); }
-  int32_t AddClientObj(BaseClient* client_obj);
-  BaseClient* GetClientObj(int32_t client_index);
+  const int32_t  GetServiceStatus() const { return service_status_.Get(); }
+  bool AddClientObj(string& err_info,
+         BaseClient* client_obj, int32_t& client_index);
+  BaseClient* GetClientObj(int32_t client_index) const;
+  BaseClient* RmvClientObj(int32_t client_index);
+  const ExecutorPoolPtr& GetTimerExecutor() const { return timer_executor_; }
+  const ExecutorPoolPtr& GetNetWorkExecutor() const { return network_executor_; }
+
+ private:
+  void iniLogger(const Fileini& fileini, const string& sector);
+  void shutDownClinets() const;
 
  private:
   AtomicInteger service_status_;
-  pthread_mutex_t mutex_;
   AtomicInteger client_index_base_;
+  mutable mutex mutex_;
   map<int32_t, BaseClient*> clients_map_;
-  ExecutorPtr timer_executor_;
-  ExecutorPtr network_executor_;
+  ExecutorPoolPtr timer_executor_;
+  ExecutorPoolPtr network_executor_;
 };
 
+}  // namespace tubemq
 
 #endif  // TUBEMQ_CLIENT_BASE_CLIENT_H_
 
