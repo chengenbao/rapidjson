@@ -22,26 +22,7 @@ cmake_minimum_required (VERSION 3.1)
 
 project (TubeMQ)
 
-set (CXX_FLAGS
-    -g
-    -fPIC
-    -Wall
-    -D__STDC_FORMAT_MACROS
-    -Wno-unused-parameter
-    -Wno-unused-function
-    -Wunused-variable
-    -Wunused-value
-    -Wshadow
-    -Wcast-qual
-    -Wcast-align
-    -Wwrite-strings
-    -Wsign-compare
-    -Winvalid-pch
-    -fms-extensions
-    -Wfloat-equal
-    -Wextra
-    -std=c++11
-    )
+set(CMAKE_CXX_FLAGS "-std=c++11 -O2 -g -Wall -Werror -Wsign-compare -Wfloat-equal -fno-strict-aliasing -fPIC -DASIO_STANDALONE")
 
 INCLUDE_DIRECTORIES(include)
 

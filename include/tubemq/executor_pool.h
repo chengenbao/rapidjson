@@ -30,7 +30,6 @@
 #include <thread>
 #include <vector>
 
-
 #include "tubemq/noncopyable.h"
 
 namespace tubemq {
@@ -73,6 +72,12 @@ class ExecutorPool : noncopyable {
   explicit ExecutorPool(int nthreads = 2);
 
   ExecutorPtr Get();
+
+  // Resize executor thread
+  void Resize(int nthreads) {
+    Lock lock(mutex_);
+    executors_.resize(nthreads);
+  }
 
   void Close();
 

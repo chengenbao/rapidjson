@@ -29,11 +29,9 @@
 
 namespace tubemq {
 
-Logger tubemq_logger;
-
-Logger& GetLogger() { return tubemq_logger; }
-
 static const uint32_t kMBSize = 1024 * 1024;
+
+Logger& GetLogger() { return Singleton<Logger>::Instance(); }
 
 bool Logger::Init(const std::string& path, Logger::Level level, uint32_t file_max_size,
                   uint32_t file_num) {
