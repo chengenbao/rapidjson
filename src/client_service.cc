@@ -41,7 +41,7 @@ BaseClient::~BaseClient() {
   // no code
 }
 
-
+/*
 TubeMQService::TubeMQService() {
   service_status_.Set(0);
   client_index_base_.Set(0);
@@ -51,6 +51,7 @@ TubeMQService::~TubeMQService() {
   string err_info;
   Stop(err_info);
 }
+*/
 
 bool TubeMQService::Start(string& err_info, string conf_file) {
   // check configure file
@@ -77,8 +78,8 @@ bool TubeMQService::Start(string& err_info, string conf_file) {
 bool TubeMQService::Stop(string& err_info) {
   if (service_status_.CompareAndSet(2, -1)) {
     shutDownClinets();
-    timer_executor_.Close();
-    network_executor_.Close();
+    timer_executor_->Close();
+    network_executor_->Close();
   }
   err_info = "OK!";
   return true;
@@ -101,6 +102,13 @@ void TubeMQService::iniLogger(const Fileini& fileini, const string& sector) {
   log_level = TUBEMQ_MID(log_level, 0, 4);
   GetLogger().Init(log_path, Logger::Level(log_level), log_size, log_num);
 }
+
+
+int32_t TubeMQService::GetClientObjCnt() {
+  lock_guard<mutex> lck(mutex_);
+  return clients_map_.size();
+}
+
 
 bool TubeMQService::AddClientObj(string& err_info,
            BaseClient* client_obj, int32_t& client_index) {

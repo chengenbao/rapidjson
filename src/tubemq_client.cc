@@ -19,8 +19,33 @@
 
 #include "tubemq/tubemq_client.h"
 
+#include <signal.h>
+#include <sstream>
+#include "tubemq/client_service.h"
+
+
 namespace tubemq {
 
+using std::stringstream;
+
+
+bool StartTubeMQService(string& err_info, string& conf_file) {
+  signal(SIGPIPE, SIG_IGN);
+  return TubeMQService::Instance()->Start(err_info, conf_file);
+}
+
+bool StopTubeMQService(string& err_info) {
+  int32_t count = TubeMQService::Instance()->GetClientObjCnt();
+  if (count > 0) {
+    stringstream ss;
+    ss << "Check found ";
+    ss << count;
+    ss << " clients not shutdown, please shutdown clients first!";
+    err_info = ss.str();
+    return false;
+  }
+  return TubeMQService::Instance()->Stop(err_info);
+}
 
 TubeMQConsumer::TubeMQConsumer() : BaseClient(false) {
   status_.Set(0);
@@ -48,23 +73,22 @@ bool BaseConsumerClient::Start(string& err_info, const ConsumerConfig& config) {
   //
   
   
-	_clientLocId = TimeService::instance()->GetAndAddIndex();
-	_clientStrId = genClientStrId();
-    SetInterval(_clientConfig.getHeartbeatTimeout());
-	if(TimeService::instance()->AddTaskAndRun(_clientLocId, this))
-	{
-    	this->_clientStatusId.set(READY);
-		errInfo = "The client CB has existed!";
-		return false;
-	}
-    if(!register2Master(errInfo,false)) 
-    {
-    	this->_clientStatusId.set(READY);
-        return false;        
-    }
-    SetFlag(true);
-    errInfo = "Ok";
-    return true;  
+  clientLocId = TimeService::instance()->GetAndAddIndex();
+  clientStrId = genClientStrId();
+  SetInterval(_clientConfig.getHeartbeatTimeout());
+  if(TimeService::instance()->AddTaskAndRun(_clientLocId, this)) {
+    this->_clientStatusId.set(READY);
+    errInfo = "The client CB has existed!";
+    return false;
+  }
+
+  if(!register2Master(errInfo,false)) {
+    this->_clientStatusId.set(READY);
+    return false;        
+  }
+  SetFlag(true);
+  errInfo = "Ok";
+  return true;  
 }
 
 
