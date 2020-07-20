@@ -85,6 +85,7 @@ bool TubeMQConsumer::Start(string& err_info, const ConsumerConfig& config) {
   this->config_ = config;
   this->client_uuid_ = buildUUID();
   this->sub_info_.SetConsumeTarget(this->config_);
+  this->rmtdata_cache_.SetConsumerInfo(client_uuid_, config_.GetGroupName());
   // initial resource
 
   // register to master

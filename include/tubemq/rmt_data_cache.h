@@ -63,6 +63,8 @@ class RmtDataCacheCsm {
   void UpdateGroupFlowCtrlInfo(int32_t qyrpriority_id,
                  int64_t flowctrl_id, const string& flowctrl_info);
   const int64_t GetGroupQryPriorityId() const;
+  const int64_t GetDefFlowCtrlId() const { return def_flowctrl_handler_.GetFlowCtrlId(); }
+  const int64_t GetGroupFlowCtrlId() const { return group_flowctrl_handler_.GetFlowCtrlId(); }
   bool IsUnderGroupCtrl();
   void AddNewPartition(const PartitionExt& partition_ext);
   bool SelectPartition(string &err_info,
