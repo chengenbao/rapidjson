@@ -91,7 +91,7 @@ class RmtDataCacheCsm {
   bool RemovePartition(string &err_info, const string& confirm_context);
   void RemoveAndGetPartition(const list<SubscribeInfo>& subscribe_infos,
         bool is_processing_rollback, map<NodeInfo, list<PartitionExt> >& broker_parts);
-  bool BookPartition(const string& partition_key);
+  bool IsPartitionFirstReg(const string& partition_key);
   void OfferEvent(const ConsumerEvent& event);
   void TakeEvent(ConsumerEvent& event);
   void ClearEvent();
@@ -112,8 +112,6 @@ class RmtDataCacheCsm {
 
 
  private:
-  // timer executor
-  ExecutorPool executor_;
   // 
   string consumer_id_;
   string group_name_;

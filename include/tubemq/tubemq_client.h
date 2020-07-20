@@ -52,15 +52,19 @@ class TubeMQConsumer : public BaseClient {
   TubeMQConsumer();
   ~TubeMQConsumer();
   bool Start(string& err_info, const ConsumerConfig& config);
+  void ShutDown();
   bool GetMessage(ConsumerResult& result);
   bool Confirm(const string& confirm_context,
          bool is_consumed, ConsumerResult& result);
-  bool Stop();
+
   
  private:
   
   TubeMQConsumer(const TubeMQConsumer&) {};
   TubeMQConsumer& operator=(const TubeMQConsumer&) {};
+  string buildUUID();
+  bool register2Master(string& err_info, bool need_change);
+  
   
   private:
    string client_uuid_;
