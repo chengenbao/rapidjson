@@ -28,12 +28,12 @@ namespace tubemq {
 
 class UniqueSeqId {
  public:
-  UniqueSeqId() : id(0) {}
+  UniqueSeqId() : id_(0) {}
 
-  uint32_t Next() { return id.fetch_add(1, std::memory_order_relaxed); }
+  uint32_t Next() { return id_.fetch_add(1, std::memory_order_relaxed); }
 
  protected:
-  std::atomic<uint32_t> id;
+  std::atomic<uint32_t> id_;
 };
 
 }  // namespace tubemq
