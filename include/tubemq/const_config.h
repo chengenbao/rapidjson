@@ -36,10 +36,15 @@ using std::string;
 
 // configuration value setting
 namespace tb_config {
+// rpc timeout define
+static const int32_t kRpcTimoutDefMs = 15000;
+static const int32_t kRpcTimoutMaxMs = 300000;
+static const int32_t kRpcTimoutMinMs = 8000;
+
 // heartbeat period define
-static const int32_t kHeartBeatPeriodDef = 10;
+static const int32_t kHeartBeatPeriodDefMs = 10000;
 static const int32_t kHeartBeatFailRetryTimesDef = 5;
-static const int32_t kHeartBeatSleepPeriodDef = 60;
+static const int32_t kHeartBeatSleepPeriodDefMs = 60000;
 // max masterAddrInfo length
 static const int32_t kMasterAddrInfoMaxLength = 1024;
 

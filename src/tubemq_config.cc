@@ -40,10 +40,10 @@ BaseConfig::BaseConfig() {
   this->tls_enabled_ = false;
   this->tls_trust_store_path_ = "";
   this->tls_trust_store_password_ = "";
-  this->rpc_read_timeout_sec_ = rpc_config::kRpcTimoutDefSec;
-  this->heartbeat_period_sec_ = tb_config::kHeartBeatPeriodDef;
+  this->rpc_read_timeout_ms_ = tb_config::kRpcTimoutDefMs;
+  this->heartbeat_period_ms_ = tb_config::kHeartBeatPeriodDefMs;
   this->max_heartbeat_retry_times_ = tb_config::kHeartBeatFailRetryTimesDef;
-  this->heartbeat_period_afterfail_sec_ = tb_config::kHeartBeatSleepPeriodDef;
+  this->heartbeat_period_afterfail_ms_ = tb_config::kHeartBeatSleepPeriodDefMs;
 }
 
 BaseConfig::~BaseConfig() {
@@ -59,10 +59,10 @@ BaseConfig& BaseConfig::operator=(const BaseConfig& target) {
     this->tls_enabled_ = target.tls_enabled_;
     this->tls_trust_store_path_ = target.tls_trust_store_path_;
     this->tls_trust_store_password_ = target.tls_trust_store_password_;
-    this->rpc_read_timeout_sec_ = target.rpc_read_timeout_sec_;
-    this->heartbeat_period_sec_ = target.heartbeat_period_sec_;
+    this->rpc_read_timeout_ms_ = target.rpc_read_timeout_ms_;
+    this->heartbeat_period_ms_ = target.heartbeat_period_ms_;
     this->max_heartbeat_retry_times_ = target.max_heartbeat_retry_times_;
-    this->heartbeat_period_afterfail_sec_ = target.heartbeat_period_afterfail_sec_;
+    this->heartbeat_period_afterfail_ms_ = target.heartbeat_period_afterfail_ms_;
   }
   return *this;
 }
@@ -158,23 +158,23 @@ const string& BaseConfig::GetUsrName() const { return this->auth_usrname_; }
 
 const string& BaseConfig::GetUsrPassWord() const { return this->auth_usrpassword_; }
 
-void BaseConfig::SetRpcReadTimeoutSec(int rpc_read_timeout_sec) {
-  if (rpc_read_timeout_sec >= rpc_config::kRpcTimoutMaxSec) {
-    this->rpc_read_timeout_sec_ = rpc_config::kRpcTimoutMaxSec;
-  } else if (rpc_read_timeout_sec <= rpc_config::kRpcTimoutMinSec) {
-    this->rpc_read_timeout_sec_ = rpc_config::kRpcTimoutMinSec;
+void BaseConfig::SetRpcReadTimeoutMs(int rpc_read_timeout_ms) {
+  if (rpc_read_timeout_ms >= tb_config::kRpcTimoutMaxMs) {
+    this->rpc_read_timeout_ms_ = tb_config::kRpcTimoutMaxMs;
+  } else if (rpc_read_timeout_ms <= tb_config::kRpcTimoutMinMs) {
+    this->rpc_read_timeout_ms_ = tb_config::kRpcTimoutMinMs;
   } else {
-    this->rpc_read_timeout_sec_ = rpc_read_timeout_sec;
+    this->rpc_read_timeout_ms_ = rpc_read_timeout_ms;
   }
 }
 
-int32_t BaseConfig::GetRpcReadTimeoutSec() { return this->rpc_read_timeout_sec_; }
+int32_t BaseConfig::GetRpcReadTimeoutMs() { return this->rpc_read_timeout_ms_; }
 
-void BaseConfig::SetHeartbeatPeriodSec(int32_t heartbeat_period_sec) {
-  this->heartbeat_period_sec_ = heartbeat_period_sec;
+void BaseConfig::SetHeartbeatPeriodMs(int32_t heartbeat_period_ms) {
+  this->heartbeat_period_ms_ = heartbeat_period_ms;
 }
 
-int32_t BaseConfig::GetHeartbeatPeriodSec() { return this->heartbeat_period_sec_; }
+int32_t BaseConfig::GetHeartbeatPeriodMs() { return this->heartbeat_period_ms_; }
 
 void BaseConfig::SetMaxHeartBeatRetryTimes(int32_t max_heartbeat_retry_times) {
   this->max_heartbeat_retry_times_ = max_heartbeat_retry_times;
@@ -182,11 +182,11 @@ void BaseConfig::SetMaxHeartBeatRetryTimes(int32_t max_heartbeat_retry_times) {
 
 int32_t BaseConfig::GetMaxHeartBeatRetryTimes() { return this->max_heartbeat_retry_times_; }
 
-void BaseConfig::SetHeartbeatPeriodAftFailSec(int32_t heartbeat_period_afterfail_sec) {
-  this->heartbeat_period_afterfail_sec_ = heartbeat_period_afterfail_sec;
+void BaseConfig::SetHeartbeatPeriodAftFailMs(int32_t heartbeat_period_afterfail_ms) {
+  this->heartbeat_period_afterfail_ms_ = heartbeat_period_afterfail_ms;
 }
 
-int32_t BaseConfig::GetHeartbeatPeriodAftFailSec() { return this->heartbeat_period_afterfail_sec_; }
+int32_t BaseConfig::GetHeartbeatPeriodAftFailMs() { return this->heartbeat_period_afterfail_ms_; }
 
 string BaseConfig::ToString() {
   stringstream ss;
@@ -204,14 +204,14 @@ string BaseConfig::ToString() {
   ss << this->tls_trust_store_path_;
   ss << "', tls_trust_store_password_='";
   ss << this->tls_trust_store_password_;
-  ss << "', rpc_read_timeout_sec_=";
-  ss << this->rpc_read_timeout_sec_;
-  ss << ", heartbeat_period_sec_=";
-  ss << this->heartbeat_period_sec_;
+  ss << "', rpc_read_timeout_ms_=";
+  ss << this->rpc_read_timeout_ms_;
+  ss << ", heartbeat_period_ms_=";
+  ss << this->heartbeat_period_ms_;
   ss << ", max_heartbeat_retry_times_=";
   ss << this->max_heartbeat_retry_times_;
-  ss << ", heartbeat_period_afterfail_sec_=";
-  ss << this->heartbeat_period_afterfail_sec_;
+  ss << ", heartbeat_period_afterfail_ms_=";
+  ss << this->heartbeat_period_afterfail_ms_;
   ss << "}";
   return ss.str();
 }

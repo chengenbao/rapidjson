@@ -51,16 +51,18 @@ class BaseConfig {
   bool IsAuthenticEnabled();
   const string& GetUsrName() const;
   const string& GetUsrPassWord() const;
-  // set the rpc timout, unit second, duration [8, 300], default 15 seconds;
-  void SetRpcReadTimeoutSec(int32_t rpc_read_timeout_sec);
-  int32_t GetRpcReadTimeoutSec();
-  // Set the duration of the client's heartbeat cycle, in seconds, the default is 10 seconds
-  void SetHeartbeatPeriodSec(int32_t heartbeat_period_sec);
-  int32_t GetHeartbeatPeriodSec();
+  // set the rpc timout, unit Millis-second, duration [8000, 300000],
+  // default 15000 Millis-seconds;
+  void SetRpcReadTimeoutMs(int32_t rpc_read_timeout_ms);
+  int32_t GetRpcReadTimeoutMs();
+  // Set the duration of the client's heartbeat cycle, in Millis-seconds,
+  // the default is 10000 Millis-seconds
+  void SetHeartbeatPeriodMs(int32_t heartbeat_period_ms);
+  int32_t GetHeartbeatPeriodMs();
   void SetMaxHeartBeatRetryTimes(int32_t max_heartbeat_retry_times);
   int32_t GetMaxHeartBeatRetryTimes();
-  void SetHeartbeatPeriodAftFailSec(int32_t heartbeat_period_afterfail_sec);
-  int32_t GetHeartbeatPeriodAftFailSec();
+  void SetHeartbeatPeriodAftFailMs(int32_t heartbeat_period_afterfail_ms);
+  int32_t GetHeartbeatPeriodAftFailMs();
   string ToString();
 
  private:
@@ -74,10 +76,10 @@ class BaseConfig {
   string tls_trust_store_path_;
   string tls_trust_store_password_;
   // other setting
-  int32_t rpc_read_timeout_sec_;
-  int32_t heartbeat_period_sec_;
+  int32_t rpc_read_timeout_ms_;
+  int32_t heartbeat_period_ms_;
   int32_t max_heartbeat_retry_times_;
-  int32_t heartbeat_period_afterfail_sec_;
+  int32_t heartbeat_period_afterfail_ms_;
 };
 
 enum ConsumePosition {

@@ -33,8 +33,8 @@
 
 #include <sstream>
 #include <vector>
-
 #include "tubemq/const_config.h"
+#include "tubemq/const_rpc.h"
 
 namespace tubemq {
 
@@ -342,6 +342,40 @@ bool Utils::GetLocalIPV4Address(string& err_info, string& localhost) {
   close(sockfd);
   err_info = "Not found the localHost in local OS";
   return false;
+}
+
+int32_t Utils::GetServiceTypeByMethodId(int32_t method_id) {
+  switch(method_id) {
+    // broker write service
+    case rpc_config::kBrokerMethoddProducerRegister:
+    case rpc_config::kBrokerMethoddProducerHeatbeat:
+    case rpc_config::kBrokerMethoddProducerSendMsg:
+    case rpc_config::kBrokerMethoddProducerClose: {
+      return rpc_config::kBrokerWriteService;
+    }
+    // broker read service
+    case rpc_config::kBrokerMethoddConsumerRegister:
+    case rpc_config::kBrokerMethoddConsumerHeatbeat:
+    case rpc_config::kBrokerMethoddConsumerGetMsg:
+    case rpc_config::kBrokerMethoddConsumerCommit:
+    case rpc_config::kBrokerMethoddConsumerClose: {
+      return rpc_config::kBrokerReadService;
+    }
+    // master service
+    case rpc_config::kMasterMethoddProducerRegister:
+    case rpc_config::kMasterMethoddProducerHeatbeat:
+    case rpc_config::kMasterMethoddProducerClose:
+    case rpc_config::kMasterMethoddConsumerRegister:
+    case rpc_config::kMasterMethoddConsumerHeatbeat:
+    case rpc_config::kMasterMethoddConsumerClose:
+    default: {
+      return rpc_config::kMasterService;
+    }
+}
+
+
+
+
 }
 
 
