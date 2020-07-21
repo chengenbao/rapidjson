@@ -32,6 +32,7 @@ namespace tubemq {
 
 template <typename T>
 class Singleton : noncopyable {
+ public:
   static T& Instance() {
     std::call_once(once_, Singleton::init);
     assert(value_ != nullptr);

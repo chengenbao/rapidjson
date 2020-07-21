@@ -27,6 +27,9 @@
 
 #include <string>
 
+#include "tubemq/singleton.h"
+
+
 namespace tubemq {
 
 static const uint32_t kMBSize = 1024 * 1024;
