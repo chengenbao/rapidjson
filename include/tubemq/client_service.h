@@ -71,8 +71,8 @@ class TubeMQService : public noncopyable {
   BaseClient* GetClientObj(int32_t client_index) const;
   BaseClient* RmvClientObj(int32_t client_index);
   const string& GetLocalHost() const { return local_host_; }
-  const ExecutorPool& GetTimerExecutorPool() const { return timer_executor_; }
-  const ExecutorPool& GetNetWorkExecutorPool() const { return network_executor_; }
+  ExecutorPool& GetTimerExecutorPool() { return timer_executor_; }
+  ExecutorPool& GetNetWorkExecutorPool() { return network_executor_; }
 
  private:
   TubeMQService();

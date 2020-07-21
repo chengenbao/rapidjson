@@ -57,21 +57,16 @@ class TubeMQConsumer : public BaseClient {
   bool Confirm(const string& confirm_context,
          bool is_consumed, ConsumerResult& result);
 
-  
  private:
-  
-  TubeMQConsumer(const TubeMQConsumer&) {};
-  TubeMQConsumer& operator=(const TubeMQConsumer&) {};
   string buildUUID();
   bool register2Master(string& err_info, bool need_change);
-  
-  
-  private:
-   string client_uuid_;
-   AtomicInteger status_;
-   ConsumerConfig config_;
-   ClientSubInfo sub_info_;
-   RmtDataCacheCsm rmtdata_cache_;
+
+ private:
+  string client_uuid_;
+  AtomicInteger status_;
+  ConsumerConfig config_;
+  ClientSubInfo sub_info_;
+  RmtDataCacheCsm rmtdata_cache_;
 };
 
 

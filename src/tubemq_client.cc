@@ -25,6 +25,11 @@
 #include "tubemq/client_service.h"
 #include "tubemq/utils.h"
 #include "tubemq/version.h"
+#include "RPC.pb.h"
+#include "MasterService.pb.h"
+#include "BrokerService.pb.h"
+
+
 
 
 namespace tubemq {
@@ -108,9 +113,45 @@ void TubeMQConsumer::ShutDown() {
 }
 
 
-bool TubeMQConsumer::register2Master(string& err_info, bool need_change) {
 
+
+bool TubeMQConsumer::register2Master(string& err_info, bool need_change) {
+  // register function
 }
+
+RegisterRequestC2M TubeMQConsumer::buidRegisterRequestC2M() {
+  RegisterRequestC2M c2m_request;
+  list<string>::iterator it_topics;
+  list<SubscribeInfo>::iterator it_sub;
+  c2m_request.set_clientid(this->client_uuid_);
+  c2m_request.set_hostname(TubeMQService::Instance()->GetLocalHost());
+  c2m_request.set_requirebound(this->sub_info_.IsBoundConsume());
+  c2m_request.set_groupname(this->config_.GetGroupName());
+  c2m_request.set_sessiontime(this->sub_info_.GetSubscribedTime());
+  // subscribed topic list
+  list<string> sub_topics = this->sub_info_.GetSubTopics();
+  for (it_topics = sub_topics.begin(); it_topics != sub_topics.end(); ++it_topics) {
+    c2m_request.add_topiclist(*it_topics);
+  }
+  c2m_request.set_defflowcheckid(this->rmtdata_cache_.GetDefFlowCtrlId());
+  c2m_request.set_groupflowcheckid(this->rmtdata_cache_.GetGroupFlowCtrlId());
+  c2m_request.set_qrypriorityid(this->rmtdata_cache_.GetGroupQryPriorityId());
+  // reported subscribed info
+  list<SubscribeInfo> subscribe_lst;
+  this->rmtdata_cache_.GetSubscribedInfo(subscribe_lst);
+  for (it_sub = subscribe_lst.begin(); it_sub != subscribe_lst.end(); ++it_sub) {
+    c2m_request.add_subscribeinfo(*it_sub);
+  }
+  // get topic conditions
+  list<string> topic_conds =  this->sub_info_.GetTopicConds();
+  for (it_topics = topic_conds.begin(); it_topics != topic_conds.end(); ++it_topics) {
+    c2m_request.add_topiccondition(*it_topics);
+  }
+  // authenticate info
+  // end
+  return c2m_request;
+}
+
 
 string TubeMQConsumer::buildUUID() {
   stringstream ss;
