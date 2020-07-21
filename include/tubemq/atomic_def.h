@@ -29,7 +29,7 @@ namespace tubemq {
 template <class T>
 class Atomic {
  public:
-  explicit Atomic() : counter_(0) {}
+  Atomic() : counter_(0) {}
   explicit Atomic(T initial_value) : counter_(initial_value) {}
 
   inline T Get() const { return counter_.load(std::memory_order_relaxed); }
@@ -73,7 +73,7 @@ using AtomicLong = Atomic<int64_t>;
 
 class AtomicBoolean {
  public:
-  explicit AtomicBoolean() : counter_(false) {}
+  AtomicBoolean() : counter_(false) {}
   explicit AtomicBoolean(bool initial_value) : counter_(initial_value) {}
 
   inline bool Get() const { return counter_.load(std::memory_order_relaxed); }

@@ -20,8 +20,9 @@
 #ifndef TUBEMQ_CLIENT_BASE_CLIENT_H_
 #define TUBEMQ_CLIENT_BASE_CLIENT_H_
 
-#include <mutex>
 #include <stdint.h>
+#include <map>
+#include <mutex>
 #include <string>
 #include <thread>
 
@@ -29,8 +30,8 @@
 #include "tubemq/file_ini.h"
 #include "tubemq/noncopyable.h"
 #include "tubemq/rmt_data_cache.h"
-#include "tubemq/tubemq_message.h"
 #include "tubemq/tubemq_config.h"
+#include "tubemq/tubemq_message.h"
 #include "tubemq/tubemq_return.h"
 
 
@@ -46,7 +47,7 @@ using std::thread;
 
 class BaseClient {
  public:
-  BaseClient(bool is_producer);
+  explicit BaseClient(bool is_producer);
   virtual ~BaseClient();
   virtual void ShutDown();
   void SetClientIndex(int32_t client_index) { client_index_ = client_index; }
@@ -82,7 +83,7 @@ class TubeMQService : public noncopyable {
 
  private:
   static TubeMQService* _instance;
-  string local_host_;  
+  string local_host_;
   AtomicInteger service_status_;
   AtomicInteger client_index_base_;
   mutable mutex mutex_;

@@ -31,7 +31,7 @@ MasterAddrInfo::MasterAddrInfo() {
   master_addr_.clear();
 }
 
-bool MasterAddrInfo::InitMasterAddress(string& err_info, 
+bool MasterAddrInfo::InitMasterAddress(string& err_info,
                                        const string& master_info) {
   master_addr_.clear();
   Utils::Split(master_info, master_addr_, delimiter::kDelimiterComma,
@@ -50,7 +50,7 @@ bool MasterAddrInfo::InitMasterAddress(string& err_info,
 void MasterAddrInfo::GetNextMasterAddr(string& ipaddr, int32_t& port) {
   map<string, int32_t>::iterator it;
   it = master_addr_.find(curr_master_addr_);
-  if(it != master_addr_.end()) {
+  if (it != master_addr_.end()) {
     it++;
     if (it == master_addr_.end()) {
       it = master_addr_.begin();
@@ -64,8 +64,8 @@ void MasterAddrInfo::GetNextMasterAddr(string& ipaddr, int32_t& port) {
 }
 
 void MasterAddrInfo::GetCurrentMasterAddr(string& ipaddr, int32_t& port) {
-   ipaddr = curr_master_addr_;
-   port = master_addr_[curr_master_addr_];
+  ipaddr = curr_master_addr_;
+  port = master_addr_[curr_master_addr_];
 }
 
 

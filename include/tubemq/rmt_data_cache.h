@@ -31,9 +31,9 @@
 #include <tuple>
 
 #include "tubemq/atomic_def.h"
+#include "tubemq/executor_pool.h"
 #include "tubemq/flowctrl_def.h"
 #include "tubemq/meta_info.h"
-#include "tubemq/executor_pool.h"
 #include "tubemq/tubemq_errcode.h"
 
 
@@ -114,7 +114,7 @@ class RmtDataCacheCsm {
 
 
  private:
-  // 
+  //
   string consumer_id_;
   string group_name_;
   // flow ctrl
@@ -151,7 +151,6 @@ class RmtDataCacheCsm {
   mutable mutex event_write_mutex_;
   list<ConsumerEvent> rebalance_results_;
 };
-
 
 }  // namespace tubemq
 

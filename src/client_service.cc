@@ -46,9 +46,9 @@ TubeMQService* TubeMQService::_instance = NULL;
 mutex tubemq_mutex_service_;
 
 TubeMQService* TubeMQService::Instance() {
-  if(NULL == _instance) {
+  if (NULL == _instance) {
     lock_guard<mutex> lck(tubemq_mutex_service_);
-    if(NULL == _instance) {
+    if (NULL == _instance) {
       _instance = new TubeMQService;
     }
   }
@@ -69,7 +69,7 @@ bool TubeMQService::Start(string& err_info, string conf_file) {
   // check configure file
   bool result = false;
   Fileini fileini;
-  string sector = "TubeMQ";  
+  string sector = "TubeMQ";
 
   result = Utils::ValidConfigFile(err_info, conf_file);
   if (!result) {
@@ -83,7 +83,7 @@ bool TubeMQService::Start(string& err_info, string conf_file) {
   if (!result) {
     return result;
   }
-  if (!service_status_.CompareAndSet(0,1)) {
+  if (!service_status_.CompareAndSet(0, 1)) {
     err_info = "TubeMQ Service has startted or Stopped!";
     return false;
   }
@@ -144,7 +144,7 @@ bool TubeMQService::AddClientObj(string& err_info, BaseClient* client_obj) {
 BaseClient* TubeMQService::GetClientObj(int32_t client_index) const {
   BaseClient* client_obj = NULL;
   map<int32_t, BaseClient*>::const_iterator it;
-  
+
   lock_guard<mutex> lck(mutex_);
   it = clients_map_.find(client_index);
   if (it != clients_map_.end()) {
@@ -156,7 +156,7 @@ BaseClient* TubeMQService::GetClientObj(int32_t client_index) const {
 BaseClient* TubeMQService::RmvClientObj(int32_t client_index) {
   BaseClient* client_obj = NULL;
   map<int32_t, BaseClient*>::iterator it;
-  
+
   lock_guard<mutex> lck(mutex_);
   it = clients_map_.find(client_index);
   if (it != clients_map_.end()) {

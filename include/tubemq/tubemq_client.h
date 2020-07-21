@@ -28,11 +28,11 @@
 #include "tubemq/atomic_def.h"
 #include "tubemq/client_service.h"
 #include "tubemq/client_subinfo.h"
+#include "tubemq/MasterService.pb.h"
+#include "tubemq/rmt_data_cache.h"
 #include "tubemq/tubemq_message.h"
 #include "tubemq/tubemq_config.h"
 #include "tubemq/tubemq_return.h"
-#include "tubemq/rmt_data_cache.h"
-#include "tubemq/MasterService.pb.h"
 
 
 
@@ -68,7 +68,7 @@ class TubeMQConsumer : public BaseClient {
                            char** out_msg, int& out_length);
   bool buidHeartRequestC2M(string& err_info,
                            char** out_msg, int& out_length);
-  bool buidCloseRequestC2M(string& err_info, 
+  bool buidCloseRequestC2M(string& err_info,
                            char** out_msg, int& out_length);
   bool processRegisterResponseM2C(
                     const RegisterResponseM2C& response);

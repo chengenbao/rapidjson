@@ -19,17 +19,17 @@
 
 #include "tubemq/tubemq_client.h"
 
-#include <unistd.h>
 #include <signal.h>
+#include <unistd.h>
 #include <sstream>
+#include "tubemq/RPC.pb.h"
+#include "tubemq/MasterService.pb.h"
+#include "tubemq/BrokerService.pb.h"
 #include "tubemq/const_rpc.h"
 #include "tubemq/client_service.h"
 #include "tubemq/meta_info.h"
 #include "tubemq/utils.h"
 #include "tubemq/version.h"
-#include "tubemq/RPC.pb.h"
-#include "tubemq/MasterService.pb.h"
-#include "tubemq/BrokerService.pb.h"
 
 
 
@@ -64,12 +64,12 @@ TubeMQConsumer::TubeMQConsumer() : BaseClient(false) {
 }
 
 TubeMQConsumer::~TubeMQConsumer() {
-
+  //
 }
 
 bool TubeMQConsumer::Start(string& err_info, const ConsumerConfig& config) {
   ConsumerConfig tmp_config;
-  if(!this->status_.CompareAndSet(0, 1)) {
+  if (!this->status_.CompareAndSet(0, 1)) {
     err_info = "Ok";
     return true;
   }
@@ -95,13 +95,13 @@ bool TubeMQConsumer::Start(string& err_info, const ConsumerConfig& config) {
   // initial resource
 
   // register to master
-  if(!register2Master(err_info, false)) {
+  if (!register2Master(err_info, false)) {
     this->status_.CompareAndSet(1, 0);
-    return false;        
+    return false;
   }
   this->status_.CompareAndSet(1, 2);
   err_info = "Ok";
-  return true;  
+  return true;
 }
 
 
@@ -111,9 +111,6 @@ void TubeMQConsumer::ShutDown() {
   }
   // process resuorce release
 }
-
-
-
 
 bool TubeMQConsumer::register2Master(string& err_info, bool need_change) {
   // register function
@@ -197,8 +194,8 @@ bool TubeMQConsumer::buidHeartRequestC2M(string& err_info,
         event_proto->add_subscribeinfo(it->ToString());
       }
     }
-    if(!subscribe_info_lst.empty()) {
-      for(it = subscribe_info_lst.begin(); it != subscribe_info_lst.end(); it++) {
+    if (!subscribe_info_lst.empty()) {
+      for (it = subscribe_info_lst.begin(); it != subscribe_info_lst.end(); it++) {
         c2m_request.add_subscribeinfo(it->ToString());
       }
     }
@@ -213,7 +210,7 @@ bool TubeMQConsumer::buidHeartRequestC2M(string& err_info,
   return result;
 }
 
-bool TubeMQConsumer::buidCloseRequestC2M(string& err_info, 
+bool TubeMQConsumer::buidCloseRequestC2M(string& err_info,
                                    char** out_msg, int& out_length) {
   string close_msg;
   CloseRequestC2M c2m_request;
@@ -242,7 +239,7 @@ bool TubeMQConsumer::getSerializedMsg(string& err_info,
   RpcConnHeader rpc_header;
   rpc_header.set_flag(rpc_config::kRpcFlagMsgRequest);
   // process serial
-  
+
   return true;
 }
 

@@ -42,7 +42,7 @@ RmtDataCacheCsm::RmtDataCacheCsm() {
 }
 
 RmtDataCacheCsm::~RmtDataCacheCsm() {
-  // 
+  //
 }
 
 void RmtDataCacheCsm::SetConsumerInfo(const string& client_id,
@@ -458,17 +458,18 @@ void RmtDataCacheCsm::HandleTimeout(const string partition_key,
 
 void RmtDataCacheCsm::addDelayTimer(const string& partition_key, int64_t delay_time) {
   // add timer
-  tuple<int64_t, SteadyTimerPtr> timer = 
+  tuple<int64_t, SteadyTimerPtr> timer =
       std::make_tuple(Utils::GetCurrentTimeMillis(),
       TubeMQService::Instance()->GetTimerExecutorPool().Get()->CreateSteadyTimer());
   std::get<1>(timer)->expires_after(std::chrono::milliseconds(delay_time));
-  std::get<1>(timer)->async_wait(std::bind(&RmtDataCacheCsm::HandleTimeout, this, partition_key, _1));
-  partition_timeouts_.insert(std::make_pair(partition_key, timer));          
+  std::get<1>(timer)->async_wait(std::bind(&RmtDataCacheCsm::HandleTimeout,
+                                  this, partition_key, _1));
+  partition_timeouts_.insert(std::make_pair(partition_key, timer));
 }
 
 void RmtDataCacheCsm::resetIdlePartition(const string& partition_key, bool need_reuse) {
   map<string, PartitionExt>::iterator it_map;
-  map<string, tuple<int64_t, SteadyTimerPtr> >::iterator it_timeout; 
+  map<string, tuple<int64_t, SteadyTimerPtr> >::iterator it_timeout;
   partition_useds_.erase(partition_key);
   it_timeout = partition_timeouts_.find(partition_key);
   if (it_timeout != partition_timeouts_.end()) {
@@ -538,7 +539,7 @@ bool RmtDataCacheCsm::inRelPartition(string &err_info, bool need_delay_check,
   string  partition_key;
   map<string, PartitionExt>::iterator it_part;
   map<string, int64_t>::iterator it_used;
-  // parse confirm context  
+  // parse confirm context
   bool result = parseConfirmContext(err_info,
                       confirm_context, partition_key, booked_time);
   if (!result) {

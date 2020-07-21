@@ -285,7 +285,7 @@ bool FlowCtrlRuleHandler::GetCurDataLimit(int64_t last_datadlt,
   lock_guard<mutex> lck(config_lock_);
   it_map = this->flowctrl_rules_.find(0);
   if (it_map != this->flowctrl_rules_.end()) {
-    for (it_vec = it_map->second.begin();it_vec != it_map->second.end(); ++it_vec) {
+    for (it_vec = it_map->second.begin(); it_vec != it_map->second.end(); ++it_vec) {
       if (it_vec->GetDataLimit(last_datadlt, curr_time, flowctrl_result)) {
         result = true;
         break;
