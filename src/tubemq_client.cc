@@ -19,9 +19,12 @@
 
 #include "tubemq/tubemq_client.h"
 
+#include <unistd.h>
 #include <signal.h>
 #include <sstream>
 #include "tubemq/client_service.h"
+#include "tubemq/utils.h"
+#include "tubemq/version.h"
 
 
 namespace tubemq {
@@ -52,11 +55,11 @@ TubeMQConsumer::TubeMQConsumer() : BaseClient(false) {
   client_uuid_ = "";
 }
 
-BaseConsumerClient::~TubeBaseConsumer() {
+TubeMQConsumer::~TubeMQConsumer() {
 
 }
 
-bool BaseConsumerClient::Start(string& err_info, const ConsumerConfig& config) {
+bool TubeMQConsumer::Start(string& err_info, const ConsumerConfig& config) {
   bool result;
   ConsumerConfig tmp_config;
   
@@ -71,27 +74,59 @@ bool BaseConsumerClient::Start(string& err_info, const ConsumerConfig& config) {
     return false;
   }
   //
-  
-  
-  clientLocId = TimeService::instance()->GetAndAddIndex();
-  clientStrId = genClientStrId();
-  SetInterval(_clientConfig.getHeartbeatTimeout());
-  if(TimeService::instance()->AddTaskAndRun(_clientLocId, this)) {
-    this->_clientStatusId.set(READY);
-    errInfo = "The client CB has existed!";
+  if (!TubeMQService::Instance()->IsRunning()) {
+    err_info = "TubeMQ Service not startted!";
     return false;
   }
+  if (!TubeMQService::Instance()->AddClientObj(err_info, this)) {
+    this->status_.CompareAndSet(1, 0);
+    return false;
+  }
+  this->config_ = config;
+  this->client_uuid_ = buildUUID();
+  this->sub_info_.SetConsumeTarget(this->config_);
+  this->rmtdata_cache_.SetConsumerInfo(client_uuid_, config_.GetGroupName());
+  // initial resource
 
-  if(!register2Master(errInfo,false)) {
-    this->_clientStatusId.set(READY);
+  // register to master
+  if(!register2Master(err_info, false)) {
+    this->status_.CompareAndSet(1, 0);
     return false;        
   }
-  SetFlag(true);
-  errInfo = "Ok";
+  this->status_.CompareAndSet(1, 2);
+  err_info = "Ok";
   return true;  
 }
 
 
+void TubeMQConsumer::ShutDown() {
+  if (!this->status_.CompareAndSet(2, 0)) {
+    err_info = "Ok";
+    return true;
+  }
+  // process resuorce release
+}
+
+
+bool TubeMQConsumer::register2Master(string& err_info, bool need_change) {
+
+}
+
+string TubeMQConsumer::buildUUID() {
+  stringstream ss;
+  ss << this->config_.GetGroupName();
+  ss << "_";
+  ss << TubeMQService::Instance()->GetLocalHost();
+  ss << "-";
+  ss << getpid();
+  ss << "-";
+  ss << Utils::GetCurrentTimeMillis();
+  ss << "-";
+  ss << this->GetClientIndex();
+  ss << "-";
+  ss << kTubeMQClientVersion;
+  return ss.str();
+}
 
 
 
