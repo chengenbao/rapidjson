@@ -27,8 +27,8 @@
 
 #include "tubemq/atomic_def.h"
 #include "tubemq/file_ini.h"
+#include "tubemq/noncopyable.h"
 #include "tubemq/rmt_data_cache.h"
-#include "tubemq/singleton.h"
 #include "tubemq/tubemq_message.h"
 #include "tubemq/tubemq_config.h"
 #include "tubemq/tubemq_return.h"
@@ -59,10 +59,9 @@ class BaseClient {
 };
 
 
-class TubeMQService : public Singleton<TubeMQService> {
+class TubeMQService : public noncopyable {
  public:
-  // TubeMQService();
-  // ~TubeMQService();
+  static TubeMQService* Instance();
   bool Start(string& err_info, string conf_file = "../conf/tubemqclient.conf");
   bool Stop(string& err_info);
   bool IsRunning();
@@ -76,10 +75,13 @@ class TubeMQService : public Singleton<TubeMQService> {
   const ExecutorPool& GetNetWorkExecutorPool() const { return network_executor_; }
 
  private:
+  TubeMQService();
+  ~TubeMQService();
   void iniLogger(const Fileini& fileini, const string& sector);
   void shutDownClinets() const;
 
  private:
+  static TubeMQService* _instance;
   string local_host_;  
   AtomicInteger service_status_;
   AtomicInteger client_index_base_;

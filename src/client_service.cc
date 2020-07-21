@@ -41,7 +41,20 @@ BaseClient::~BaseClient() {
   // no code
 }
 
-/*
+TubeMQService* TubeMQService::_instance = NULL;
+
+mutex tubemq_mutex_service_;
+
+TubeMQService* TubeMQService::Instance() {
+  if(NULL == _instance) {
+    lock_guard<mutex> lck(tubemq_mutex_service_);
+    if(NULL == _instance) {
+      _instance = new TubeMQService;
+    }
+  }
+  return _instance;
+}
+
 TubeMQService::TubeMQService() {
   service_status_.Set(0);
   client_index_base_.Set(0);
@@ -51,7 +64,6 @@ TubeMQService::~TubeMQService() {
   string err_info;
   Stop(err_info);
 }
-*/
 
 bool TubeMQService::Start(string& err_info, string conf_file) {
   // check configure file

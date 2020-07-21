@@ -460,7 +460,7 @@ void RmtDataCacheCsm::addDelayTimer(const string& partition_key, int64_t delay_t
   // add timer
   tuple<int64_t, SteadyTimerPtr> timer = 
       std::make_tuple(Utils::GetCurrentTimeMillis(),
-      TubeMQService::Instance().GetTimerExecutorPool().Get()->CreateSteadyTimer());
+      TubeMQService::Instance()->GetTimerExecutorPool().Get()->CreateSteadyTimer());
   std::get<1>(timer)->expires_after(std::chrono::milliseconds(delay_time));
   std::get<1>(timer)->async_wait(std::bind(&RmtDataCacheCsm::HandleTimeout, this, partition_key, _1));
   partition_timeouts_.insert(std::make_pair(partition_key, timer));          
