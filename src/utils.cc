@@ -286,8 +286,8 @@ bool Utils::ValidConfigFile(string& err_info, const string& conf_file) {
     err_info = "Configure file is blank";
     return false;
   }  
-  fp = fopen(conf_file.c_str(),"r");
-  if(fp == NULL) {
+  fp = fopen(conf_file.c_str(), "r");
+  if (fp == NULL) {
     err_info = "Open configure file Failed!";
     return false;
   }
@@ -321,7 +321,7 @@ bool Utils::GetLocalIPV4Address(string& err_info, string& localhost) {
     if (0 == strncmp(&ifreq->ifr_name[0], "lo", sizeof("lo"))) {
       continue;
     }
-    memcpy(&if_flag.ifr_name[0],&ifreq->ifr_name[0],sizeof(ifreq->ifr_name));
+    memcpy(&if_flag.ifr_name[0], &ifreq->ifr_name[0], sizeof(ifreq->ifr_name));
     if ((ioctl(sockfd, SIOCGIFFLAGS, (char *) &if_flag)) < 0) {
       continue;
     }
@@ -329,8 +329,8 @@ bool Utils::GetLocalIPV4Address(string& err_info, string& localhost) {
       || !(if_flag.ifr_flags & IFF_UP)) {
       continue;
     }
-    
-    if (!strncmp(inet_ntoa(((struct sockaddr_in*)&(ifreq->ifr_addr))->sin_addr), 
+
+    if (!strncmp(inet_ntoa(((struct sockaddr_in*)&(ifreq->ifr_addr))->sin_addr),
       "127.0.0.1", 7)) {
       continue;
     }
@@ -345,7 +345,7 @@ bool Utils::GetLocalIPV4Address(string& err_info, string& localhost) {
 }
 
 int32_t Utils::GetServiceTypeByMethodId(int32_t method_id) {
-  switch(method_id) {
+  switch (method_id) {
     // broker write service
     case rpc_config::kBrokerMethoddProducerRegister:
     case rpc_config::kBrokerMethoddProducerHeatbeat:
@@ -373,11 +373,7 @@ int32_t Utils::GetServiceTypeByMethodId(int32_t method_id) {
     }
 }
 
-
-
-
 }
-
 
 }  // namespace tubemq
 

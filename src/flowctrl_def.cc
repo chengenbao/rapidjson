@@ -175,7 +175,7 @@ FlowCtrlRuleHandler::FlowCtrlRuleHandler() {
 }
 
 FlowCtrlRuleHandler::~FlowCtrlRuleHandler() {
-  // 
+  //
 }
 
 void FlowCtrlRuleHandler::UpdateDefFlowCtrlInfo(bool is_default, int32_t qrypriority_id,
@@ -251,7 +251,7 @@ void FlowCtrlRuleHandler::initialStatisData() {
         continue;
       }
       it_vec->GetDataSizeLimit();
-      this->filter_ctrl_item_.ResetFlowCtrlValue(3, (int)(it_vec->GetDataSizeLimit()),
+      this->filter_ctrl_item_.ResetFlowCtrlValue(3, (int32_t)(it_vec->GetDataSizeLimit()),
                                                  it_vec->GetFreqMsLimit(), it_vec->GetZeroCnt());
     }
   }

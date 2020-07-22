@@ -33,7 +33,7 @@ namespace tubemq {
 
 using std::lock_guard;
 using std::unique_lock;
-using namespace std::placeholders;
+using std::placeholders;
 
 
 RmtDataCacheCsm::RmtDataCacheCsm() {

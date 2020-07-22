@@ -22,11 +22,11 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sstream>
+#include "tubemq/BrokerService.pb.h"
 #include "tubemq/RPC.pb.h"
 #include "tubemq/MasterService.pb.h"
-#include "tubemq/BrokerService.pb.h"
-#include "tubemq/const_rpc.h"
 #include "tubemq/client_service.h"
+#include "tubemq/const_rpc.h"
 #include "tubemq/meta_info.h"
 #include "tubemq/utils.h"
 #include "tubemq/version.h"
@@ -74,7 +74,7 @@ bool TubeMQConsumer::Start(string& err_info, const ConsumerConfig& config) {
     return true;
   }
   // check configure
-  if (config.GetGroupName().length() == 0 
+  if (config.GetGroupName().length() == 0
     || config.GetMasterAddrInfo().length() == 0) {
     err_info = "Parameter error: not set master address info or group name!";
     return false;
@@ -164,7 +164,7 @@ bool TubeMQConsumer::processRegisterResponseM2C(
   return true;
 }
 
-bool TubeMQConsumer::buidHeartRequestC2M(string& err_info, 
+bool TubeMQConsumer::buidHeartRequestC2M(string& err_info,
                                    char** out_msg, int& out_length) {
   string hb_msg;
   HeartRequestC2M c2m_request;
@@ -180,7 +180,7 @@ bool TubeMQConsumer::buidHeartRequestC2M(string& err_info,
   list<SubscribeInfo> subscribe_info_lst;
   bool has_event = rmtdata_cache_.PollEventResult(event);
   // judge if report subscribe info
-  if ( has_event || ++cur_report_times_ > config_.GetMaxSubinfoReportIntvl()) {
+  if ((has_event)||(++cur_report_times_ > config_.GetMaxSubinfoReportIntvl())) {
     cur_report_times_ = 0;
     c2m_request.set_reportsubscribeinfo(true);
     this->rmtdata_cache_.GetSubscribedInfo(subscribe_info_lst);
@@ -190,7 +190,7 @@ bool TubeMQConsumer::buidHeartRequestC2M(string& err_info,
       event_proto->set_optype(event.GetEventType());
       event_proto->set_status(event.GetEventStatus());
       list<SubscribeInfo> event_sub = event.GetSubscribeInfoList();
-      for(it = event_sub.begin(); it != event_sub.end(); it++) {
+      for (it = event_sub.begin(); it != event_sub.end(); it++) {
         event_proto->add_subscribeinfo(it->ToString());
       }
     }
