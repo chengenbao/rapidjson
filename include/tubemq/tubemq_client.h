@@ -25,13 +25,13 @@
 #include <list>
 #include <string>
 
+#include "tubemq/MasterService.pb.h"
 #include "tubemq/atomic_def.h"
 #include "tubemq/client_service.h"
 #include "tubemq/client_subinfo.h"
-#include "tubemq/MasterService.pb.h"
 #include "tubemq/rmt_data_cache.h"
-#include "tubemq/tubemq_message.h"
 #include "tubemq/tubemq_config.h"
+#include "tubemq/tubemq_message.h"
 #include "tubemq/tubemq_return.h"
 
 
@@ -86,9 +86,6 @@ class TubeMQConsumer : public BaseClient {
 };
 
 
-
-
-
-}
+}  // namespace tubemq
 
 #endif  // TUBEMQ_CLIENT_API_H_

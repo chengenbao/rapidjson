@@ -26,7 +26,7 @@
 #include <mutex>
 #include <vector>
 
-#include "tubemq_errcode.h"
+#include "tubemq/tubemq_errcode.h"
 
 namespace tubemq {
 
@@ -74,7 +74,7 @@ class Future {
   }
 
  private:
-  Future(FutureInnerStatePtr state) : state_(state) {}
+  explicit Future(FutureInnerStatePtr state) : state_(state) {}
 
   std::shared_ptr<FutureInnerState<Value> > state_;
   typedef std::unique_lock<std::mutex> Lock;

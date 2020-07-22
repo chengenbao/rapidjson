@@ -25,8 +25,8 @@
 #include <list>
 #include <string>
 
-#include "tubemq/tubemq_message.h"
 #include "tubemq/meta_info.h"
+#include "tubemq/tubemq_message.h"
 
 
 
@@ -89,7 +89,7 @@ class ConsumerResult {
   list<Message> message_list_;
 };
 
-}
+}  // namespace tubemq
 
 #endif  // TUBEMQ_CLIENT_RETURN_H_
 

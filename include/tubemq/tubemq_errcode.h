@@ -20,6 +20,8 @@
 #ifndef TUBEMQ_CLIENT_CONST_ERR_CODE_H_
 #define TUBEMQ_CLIENT_CONST_ERR_CODE_H_
 
+#include <string>
+
 namespace tubemq {
 
 namespace err_code {
