@@ -23,14 +23,13 @@
 #include <linux/if.h>
 #include <netinet/in.h>
 #include <regex.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <unistd.h>
-
 #include <sstream>
 #include <vector>
 #include "tubemq/const_config.h"
@@ -281,11 +280,11 @@ int64_t Utils::GetCurrentTimeMillis() {
 
 bool Utils::ValidConfigFile(string& err_info, const string& conf_file) {
   FILE *fp = NULL;
-  
+
   if (conf_file.length() == 0) {
     err_info = "Configure file is blank";
     return false;
-  }  
+  }
   fp = fopen(conf_file.c_str(), "r");
   if (fp == NULL) {
     err_info = "Open configure file Failed!";
@@ -371,8 +370,7 @@ int32_t Utils::GetServiceTypeByMethodId(int32_t method_id) {
     default: {
       return rpc_config::kMasterService;
     }
-}
-
+  }
 }
 
 }  // namespace tubemq

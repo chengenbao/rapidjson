@@ -180,7 +180,7 @@ bool TubeMQConsumer::buidHeartRequestC2M(string& err_info,
   list<SubscribeInfo> subscribe_info_lst;
   bool has_event = rmtdata_cache_.PollEventResult(event);
   // judge if report subscribe info
-  if ((has_event)||(++cur_report_times_ > config_.GetMaxSubinfoReportIntvl())) {
+  if ((has_event) || (++cur_report_times_ > config_.GetMaxSubinfoReportIntvl())) {
     cur_report_times_ = 0;
     c2m_request.set_reportsubscribeinfo(true);
     this->rmtdata_cache_.GetSubscribedInfo(subscribe_info_lst);
