@@ -21,36 +21,35 @@
 #define _TUBEMQ_EXECUTOR_POOL_
 
 #include <stdlib.h>
-#include <memory>
 
+#include <asio.hpp>
+#include <asio/ssl.hpp>
 #include <functional>
+#include <memory>
 #include <mutex>
 #include <thread>
 #include <vector>
 
-#include <asio.hpp>
-#include <asio/ssl.hpp>
 #include "tubemq/noncopyable.h"
 
 namespace tubemq {
 
-typedef std::shared_ptr<asio::ip::tcp::socket> SocketPtr;
-typedef std::shared_ptr<asio::ssl::stream<asio::ip::tcp::socket &> > TlsSocketPtr;
-typedef std::shared_ptr<asio::ip::tcp::resolver> TcpResolverPtr;
-typedef std::shared_ptr<asio::steady_timer> SteadyTimerPtr;
+using TcpSocketPtr = std::shared_ptr<asio::ip::tcp::socket>;
+using TlsSocketPtr = std::shared_ptr<asio::ssl::stream<asio::ip::tcp::socket &> >;
+using TcpResolverPtr = std::shared_ptr<asio::ip::tcp::resolver>;
+using SteadyTimerPtr = std::shared_ptr<asio::steady_timer>;
 
 class Executor : noncopyable {
  public:
   Executor();
   ~Executor();
 
-  SocketPtr CreateSocket();
-  TlsSocketPtr CreateTlsSocket(SocketPtr &socket, asio::ssl::context &ctx);
+  TcpSocketPtr CreateTcpSocket();
+  TlsSocketPtr CreateTlsSocket(TcpSocketPtr &socket, asio::ssl::context &ctx);
   TcpResolverPtr CreateTcpResolver();
   SteadyTimerPtr CreateSteadyTimer();
-  using func = std::function<void(void)>;
 
-  void Post(func task);
+  inline void Post(std::function<void(void)> task) { io_context_->post(task); }
 
   std::shared_ptr<asio::io_context> GetIoContext() { return io_context_; }
 

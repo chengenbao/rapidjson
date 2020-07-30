@@ -26,7 +26,7 @@
 #include <mutex>
 #include <vector>
 
-#include "tubemq/tubemq_errcode.h"
+#include "tubemq_errcode.h"
 
 namespace tubemq {
 
@@ -36,22 +36,22 @@ struct FutureInnerState {
   std::condition_variable condition_;
   ErrorCode error_code_;
   Value value_;
-  bool complete_ = false;
+  bool ready_ = false;
   bool failed_ = false;
-  using FutureCallBackFunc = std::function < void(ErrorCode, const Value&);
+  using FutureCallBackFunc = std::function<void(ErrorCode, const Value&)>;
   std::vector<FutureCallBackFunc> callbacks_;
 };
-
-using FutureInnerStatePtr = std::shared_ptr<FutureInnerState<Value> >;
 
 template <typename Value>
 class Future {
  public:
+  using FutureInnerStatePtr = std::shared_ptr<FutureInnerState<Value> >;
+  using FutureCallBackFunc = std::function<void(ErrorCode, const Value&)>;
   Future& AddCallBack(FutureCallBackFunc callback) {
     Lock lock(state_->mutex_);
 
     if (state_->ready_) {
-      lock_.unlock();
+      lock.unlock();
       callback(state_->error_code_, state_->value_);
     } else {
       state_->callbacks_.push_back(callback);
@@ -70,15 +70,13 @@ class Future {
     }
 
     value = state_->value_;
-    return state->error_code_;
+    return state_->error_code_;
   }
 
  private:
-  explicit Future(FutureInnerStatePtr state) : state_(state) {}
-
-  std::shared_ptr<FutureInnerState<Value> > state_;
-  typedef std::unique_lock<std::mutex> Lock;
-  using FutureCallBackFunc = std::function < void(ErrorCode, const Value&);
+  using Lock = std::unique_lock<std::mutex>;
+  Future(FutureInnerStatePtr state) : state_(state) {}
+  FutureInnerStatePtr state_;
 
   template <typename V>
   friend class Promise;
@@ -87,6 +85,8 @@ class Future {
 template <typename Value>
 class Promise {
  public:
+  using FutureInnerStatePtr = std::shared_ptr<FutureInnerState<Value> >;
+  using FutureCallBackFunc = std::function<void(ErrorCode, const Value&)>;
   Promise() : state_(std::make_shared<FutureInnerState<Value> >()) {}
 
   bool SetValue(const Value& value) {
@@ -110,9 +110,9 @@ class Promise {
       return false;
     }
 
-    state->error_code_ = error_code_;
-    state->ready_ = true;
-    state->failed_ = true;
+    state_->error_code_ = error_code_;
+    state_->ready_ = true;
+    state_->failed_ = true;
 
     callbackAndNotify();
     return true;
@@ -126,17 +126,16 @@ class Promise {
 
  private:
   void callbackAndNotify() {
-    for (auto callback : callbacks_) {
+    for (auto callback : state_->callbacks_) {
       callback(state_->error_code_, state_->value_);
     }
     state_->callbacks_.clear();
-    state_->condition.notify_all();
+    state_->condition_.notify_all();
   }
 
  private:
+  using Lock = std::unique_lock<std::mutex>;
   FutureInnerStatePtr state_;
-  typedef std::unique_lock<std::mutex> Lock;
-  using FutureCallBackFunc = std::function < void(ErrorCode, const Value&);
 };
 
 } /* namespace tubemq */
