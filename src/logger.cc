@@ -29,7 +29,6 @@
 
 #include "tubemq/singleton.h"
 
-
 namespace tubemq {
 
 static const uint32_t kMBSize = 1024 * 1024;
@@ -68,6 +67,7 @@ void Logger::setup() {
   bool immediate_fush = true;
   std::string pattern = "[%D{%Y-%m-%d %H:%M:%S.%q}][tid:%t]%m%n";
   auto logger_d = log4cplus::Logger::getInstance(instance_);
+  logger_d.removeAllAppenders();
   logger_d.setLogLevel(log4cplus::TRACE_LOG_LEVEL);
   log4cplus::helpers::SharedObjectPtr<log4cplus::Appender> append_d(
       new log4cplus::RollingFileAppender(base_path_ + ".log", file_max_size_ * kMBSize, file_num_,
