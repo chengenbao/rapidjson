@@ -50,6 +50,8 @@ enum Result {
   kErrServiceUnavilable = 503,
   kErrServerMsgsetNullError = 510,
   kErrWaitServerRspTimeout = 550,
+  kErrNetWorkTimeout = 1000,
+  kErrNetworkError = 1001,
 };
 }  // namespace err_code
 
