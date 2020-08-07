@@ -290,7 +290,7 @@ class Buffer {
 
   size_t PrependableBytes() const { return read_index_; }
 
- private:
+ public:
   char* begin() { return buffer_; }
 
   const char* begin() const { return buffer_; }

@@ -47,6 +47,7 @@ enum Result {
   kErrConsumeContentForbidden = 455,
 
   kErrServerError = 500,
+  kErrRcvThrowError = 501,
   kErrServiceUnavilable = 503,
   kErrServerMsgsetNullError = 510,
   kErrWaitServerRspTimeout = 550,

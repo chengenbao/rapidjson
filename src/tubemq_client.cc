@@ -151,7 +151,7 @@ bool TubeMQConsumer::buidRegisterRequestC2M(string& err_info,
   //
   c2m_request.SerializeToString(&reg_msg);
   // begin get serial no from network
-  int32_t serial_no;
+  int32_t serial_no = -1;
   // end get serial no from network
   bool result = getSerializedMsg(err_info, out_msg, out_length,
              reg_msg, rpc_config::kMasterMethoddConsumerHeatbeat, serial_no);
@@ -203,7 +203,7 @@ bool TubeMQConsumer::buidHeartRequestC2M(string& err_info,
   c2m_request.SerializeToString(&hb_msg);
   //
   // begin get serial no from network
-  int32_t serial_no;
+  int32_t serial_no = -1;
   // end get serial no from network
   bool result = getSerializedMsg(err_info, out_msg, out_length,
                      hb_msg, rpc_config::kMasterMethoddConsumerHeatbeat, serial_no);
@@ -218,7 +218,7 @@ bool TubeMQConsumer::buidCloseRequestC2M(string& err_info,
   c2m_request.set_groupname(this->config_.GetGroupName());
   c2m_request.SerializeToString(&close_msg);
   // begin get serial no from network
-  int32_t serial_no;
+  int32_t serial_no = -1;
   // end get serial no from network
   bool result = getSerializedMsg(err_info, out_msg, out_length,
               close_msg, rpc_config::kMasterMethoddConsumerClose, serial_no);
@@ -242,6 +242,8 @@ bool TubeMQConsumer::getSerializedMsg(string& err_info,
 
   return true;
 }
+
+
 
 string TubeMQConsumer::buildUUID() {
   stringstream ss;

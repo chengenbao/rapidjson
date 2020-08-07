@@ -49,7 +49,7 @@ int main() {
   std::cout << "startsyncwait" << endl;
   timer->async_wait(std::bind(handler, 5, _1));
   std::cout << "endsyncwait" << endl;
-  std::this_thread::sleep_for(5s);
+  std::this_thread::sleep_for(std::chrono::seconds(5));
   return 0;
 }
 
