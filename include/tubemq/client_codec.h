@@ -32,9 +32,9 @@
 #include "tubemq/buffer.h"
 #include "tubemq/codec_protocol.h"
 #include "tubemq/tubemq_return.h"
-#include "tubemq/BrokerService.pb.h"
-#include "tubemq/RPC.pb.h"
 #include "tubemq/MasterService.pb.h"
+#include "tubemq/RPC.pb.h"
+#include "tubemq/BrokerService.pb.h"
 
 
 
