@@ -33,14 +33,14 @@ using std::exception;
 ResponseContext::ResponseContext() {
   success_ = false;
   code_ = err_code::kErrForbidden;
-  serial_no_ = tb_config::kInvalidValue; 
+  serial_no_ = tb_config::kInvalidValue;
 }
 
-ResponseContext::ResponseContext(bool success, 
+ResponseContext::ResponseContext(bool success,
   int32_t code, const string& error_msg) {
   success_ = success;
   code_ = code;
-  error_msg_ = error_msg; 
+  error_msg_ = error_msg;
 }
 
 
@@ -69,7 +69,7 @@ int32_t DecEncoder::Check(BufferPtr &in, Any &out,
   has_request_id = true;
   // check list size
   int32_t list_size = in->ReadInt32();
-  if (list_size <= 0 
+  if (list_size <= 0
     || (uint32_t)list_size > rpc_config::kRpcMaxFrameListCnt) {
     return -1;
   }
@@ -118,7 +118,7 @@ int32_t DecEncoder::Check(BufferPtr &in, Any &out,
 }
 
 
-bool DecEncoder::parseProtobufRsp(int32_t serial_no, 
+bool DecEncoder::parseProtobufRsp(int32_t serial_no,
                              char* message, int32_t msgLen, Any &out) {
   RpcConnHeader   rpc_header;
   ResponseHeader  rsp_header;
@@ -135,7 +135,7 @@ bool DecEncoder::parseProtobufRsp(int32_t serial_no,
     }
     rsp_context.SetSerialNo(serial_no);
     ResponseHeader_Status rspStatus = rsp_header.status();
-    if (rspStatus == ResponseHeader_Status_SUCCESS){
+    if (rspStatus == ResponseHeader_Status_SUCCESS) {
       RspResponseBody response_body;
       rsp_context.SetSuccess(true);
       rsp_context.SetErrCode(err_code::kErrSuccess);
@@ -163,7 +163,7 @@ bool DecEncoder::parseProtobufRsp(int32_t serial_no,
   } catch (exception &err) {
     return false;
   }
-  return true;  
+  return true;
 }
 
 bool DecEncoder::readDelimitedFrom(

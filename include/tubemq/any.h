@@ -63,7 +63,7 @@ class Any {
   template <typename ValueType>
   explicit Any(const ValueType& value) : content_(new Holder<ValueType>(value)) {}
 
-  Any(const Any& other) : content_(other.content_ ? other.content_->clone() : nullptr) {}
+  explicit Any(const Any& other) : content_(other.content_ ? other.content_->clone() : nullptr) {}
 
  public:
   Any& swap(Any& rhs) {
@@ -113,7 +113,7 @@ class Any {
   template <typename ValueType>
   class Holder : public PlaceHolder {
    public:
-    Holder(const ValueType& value) : held_(value) {}
+    explicit Holder(const ValueType& value) : held_(value) {}
 
     virtual const std::type_info& GetType() const { return typeid(ValueType); }
 

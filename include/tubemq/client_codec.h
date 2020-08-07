@@ -20,13 +20,13 @@
 #ifndef TUBEMQ_CLIENT_CODEC_H_
 #define TUBEMQ_CLIENT_CODEC_H_
 
-#include <string>
-
 #include <google/protobuf/message.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
 #include <google/protobuf/io/zero_copy_stream.h>
-#include <google/protobuf/io/coded_stream.h> 
+#include <google/protobuf/io/coded_stream.h>
+
+#include <string>
 
 #include "tubemq/any.h"
 #include "tubemq/buffer.h"
@@ -41,7 +41,6 @@
 namespace tubemq {
 
 using std::string;
-
 
 class ResponseContext {
  public:
@@ -74,7 +73,6 @@ class ResponseContext {
 
 
 class DecEncoder : public CodecProtocol {
-
  public:
   DecEncoder();
   ~DecEncoder();
@@ -98,9 +96,6 @@ class DecEncoder : public CodecProtocol {
     google::protobuf::io::ZeroCopyOutputStream* rawOutput);
 };
 
-
-
-
-}  // namespace tubemq 
+}  // namespace tubemq
 
 #endif  // TUBEMQ_CLIENT_CODEC_H_

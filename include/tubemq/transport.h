@@ -57,4 +57,5 @@ struct ResponseContext {
 };
 
 }  // namespace tubemq
-#endif
+
+#endif  // _TUBEMQ_TRANSPORT_H_
