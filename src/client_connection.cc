@@ -174,7 +174,7 @@ void ClientConnection::checkPackageDone() {
     LOG_ERROR("check codec func not set");
     return;
   }
-  uint32_t request_id = 0;
+  int32_t request_id = 0;
   bool has_request_id = false;
   auto buff = recv_buffer_->Slice();
   Any check_out;
