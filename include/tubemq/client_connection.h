@@ -30,6 +30,7 @@
 #include <list>
 #include <memory>
 #include <sstream>
+#include <string>
 #include <unordered_map>
 
 #include "asio.hpp"

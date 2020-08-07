@@ -28,6 +28,7 @@
 #include <exception>
 #include <functional>
 #include <iostream>
+#include <string>
 #include <unordered_map>
 
 #include "asio.hpp"

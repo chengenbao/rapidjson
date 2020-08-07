@@ -20,11 +20,11 @@
 #ifndef TUBEMQ_CLIENT_CODEC_H_
 #define TUBEMQ_CLIENT_CODEC_H_
 
-#include <google/protobuf/message.h>
+#include <google/protobuf/io/coded_stream.h>
+#include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
-#include <google/protobuf/io/zero_copy_stream.h>
-#include <google/protobuf/io/coded_stream.h>
+#include <google/protobuf/message.h>
 
 #include <string>
 
