@@ -39,7 +39,7 @@
 namespace tubemq {
 class ConnectionPool : noncopyable {
  public:
-  ConnectionPool(ExecutorPoolPtr& executor_pool)
+  explicit ConnectionPool(ExecutorPoolPtr& executor_pool)
       : executor_pool_(executor_pool), regular_timer_(executor_pool_->Get()->CreateSteadyTimer()) {}
   ~ConnectionPool() { Clear(); }
 

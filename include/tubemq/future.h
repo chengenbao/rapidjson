@@ -75,7 +75,7 @@ class Future {
 
  private:
   using Lock = std::unique_lock<std::mutex>;
-  Future(FutureInnerStatePtr state) : state_(state) {}
+  explicit Future(FutureInnerStatePtr state) : state_(state) {}
   FutureInnerStatePtr state_;
 
   template <typename V>
