@@ -77,6 +77,10 @@ static const int32_t kRegOpTypeUnReg = 32;
 // rpc connect node timeout
 static const int32_t kRpcConnectTimeoutMs = 3000;
 
+static const int32_t kConsumeStatusNormal = 0;
+static const int32_t kConsumeStatusFromMax = 1;
+static const int32_t kConsumeStatusFromMaxAlways = 2;
+
 }  // namespace rpc_config
 
 }  // namespace tubemq

@@ -154,13 +154,13 @@ bool ClientSubInfo::IsFilterConsume(const string& topic) {
 
 void ClientSubInfo::GetAssignedPartOffset(const string& partition_key, int64_t& offset) {
   map<string, int64_t>::iterator it;
+  offset = tb_config::kInvalidValue;
   if (first_registered_.Get() && bound_consume_ && not_allocated_.Get()) {
     it = assigned_part_map_.find(partition_key);
     if (it != assigned_part_map_.end()) {
       offset = it->second;
     }
   }
-  offset = tb_config::kInvalidValue;
 }
 
 const map<string, set<string> >& ClientSubInfo::GetTopicFilterMap() const {

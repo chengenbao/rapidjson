@@ -25,10 +25,13 @@
 #include <list>
 #include <string>
 
+#include "tubemq/BrokerService.pb.h"
+#include "tubemq/RPC.pb.h"
 #include "tubemq/MasterService.pb.h"
 #include "tubemq/atomic_def.h"
 #include "tubemq/client_service.h"
 #include "tubemq/client_subinfo.h"
+#include "tubemq/meta_info.h"
 #include "tubemq/rmt_data_cache.h"
 #include "tubemq/tubemq_config.h"
 #include "tubemq/tubemq_message.h"
@@ -61,7 +64,9 @@ class TubeMQConsumer : public BaseClient {
 
  private:
   string buildUUID();
+  int32_t getConsumeReadStatus(bool is_first_reg);
   bool register2Master(string& err_info, bool need_change);
+  void genBrokerAuthenticInfo(AuthorizedInfo* p_authInfo, bool force);
 
  private:
   bool buidRegisterRequestC2M(string& err_info,
@@ -72,6 +77,16 @@ class TubeMQConsumer : public BaseClient {
                            char** out_msg, int& out_length);
   bool processRegisterResponseM2C(
                     const RegisterResponseM2C& response);
+  bool buidRegisterRequestC2B(const PartitionExt& partition,
+    string& err_info, char** out_msg, int& out_length);
+  bool buidUnRegRequestC2B(const PartitionExt& partition,
+    bool is_last_consumed, string& err_info, char** out_msg, int& out_length);
+  bool buidHeartBeatC2B(const list<PartitionExt>& partitions,
+    string& err_info, char** out_msg, int& out_length);
+  bool buidGetMessageC2B(const PartitionExt& partition,
+    bool is_last_consumed, string& err_info, char** out_msg, int& out_length);
+  bool buidCommitC2B(const PartitionExt& partition,
+    bool is_last_consumed, string& err_info, char** out_msg, int& out_length);
   bool getSerializedMsg(string& err_info,
     char** out_msg, int& out_length, const string& req_msg,
     const int32_t method_id, int32_t serial_no);
@@ -82,6 +97,8 @@ class TubeMQConsumer : public BaseClient {
   ConsumerConfig config_;
   ClientSubInfo sub_info_;
   RmtDataCacheCsm rmtdata_cache_;
+  AtomicLong visit_token_;
+  AtomicBoolean nextauth_2B;
   int32_t cur_report_times_;
 };
 

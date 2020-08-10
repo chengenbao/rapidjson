@@ -373,5 +373,11 @@ int32_t Utils::GetServiceTypeByMethodId(int32_t method_id) {
   }
 }
 
+string Utils::GenBrokerAuthenticateToken(const string& username,
+  const string& usrpassword) {
+  return "";
+}
+
+
 }  // namespace tubemq
 

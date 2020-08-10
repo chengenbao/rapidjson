@@ -22,12 +22,11 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sstream>
-#include "tubemq/BrokerService.pb.h"
-#include "tubemq/RPC.pb.h"
-#include "tubemq/MasterService.pb.h"
 #include "tubemq/client_service.h"
+#include "tubemq/const_config.h"
 #include "tubemq/const_rpc.h"
-#include "tubemq/meta_info.h"
+#include "tubemq/logger.h"
+#include "tubemq/tubemq_config.h"
 #include "tubemq/utils.h"
 #include "tubemq/version.h"
 
@@ -61,6 +60,8 @@ TubeMQConsumer::TubeMQConsumer() : BaseClient(false) {
   status_.Set(0);
   cur_report_times_ = 0;
   client_uuid_ = "";
+  visit_token_.Set(tb_config::kInvalidValue);
+  nextauth_2B.Set(false);
 }
 
 TubeMQConsumer::~TubeMQConsumer() {
@@ -225,6 +226,133 @@ bool TubeMQConsumer::buidCloseRequestC2M(string& err_info,
   return result;
 }
 
+bool TubeMQConsumer::buidRegisterRequestC2B(const PartitionExt& partition, 
+                                   string& err_info, char** out_msg, int& out_length) {
+  bool is_first_reg;
+  int64_t part_offset;
+  set<string> filter_cond_set;
+  map<string, set<string> > filter_map;
+  string register_msg;
+  RegisterRequestC2B c2b_request;
+  c2b_request.set_clientid(this->client_uuid_);
+  c2b_request.set_groupname(this->config_.GetGroupName());
+  c2b_request.set_optype(rpc_config::kRegOpTypeRegister);
+  c2b_request.set_topicname(partition.GetTopic());
+  c2b_request.set_partitionid(partition.GetPartitionId());
+  c2b_request.set_qrypriorityid(rmtdata_cache_.GetGroupQryPriorityId());
+  is_first_reg = rmtdata_cache_.IsPartitionFirstReg(partition.GetPartitionKey());
+  c2b_request.set_readstatus(getConsumeReadStatus(is_first_reg));
+  if (sub_info_.IsFilterConsume(partition.GetTopic())) {
+    filter_map = sub_info_.GetTopicFilterMap();
+    if (filter_map.find(partition.GetTopic()) != filter_map.end()) {
+      filter_cond_set = filter_map[partition.GetTopic()];
+      for (set<string>::iterator it_cond = filter_cond_set.begin();
+        it_cond != filter_cond_set.end(); it_cond++) {
+          c2b_request.add_filtercondstr(*it_cond);
+      }
+    }
+  }
+  if (is_first_reg 
+    && sub_info_.IsBoundConsume() 
+    && sub_info_.IsNotAllocated()) {
+    sub_info_.GetAssignedPartOffset(partition.GetPartitionKey(), part_offset);
+    if (part_offset != tb_config::kInvalidValue) {
+      c2b_request.set_curroffset(part_offset);
+    }
+  }
+  AuthorizedInfo* p_authInfo = c2b_request.mutable_authinfo();
+  genBrokerAuthenticInfo(p_authInfo, true);
+  c2b_request.SerializeToString(&register_msg);
+  // begin get serial no from network
+  int32_t serial_no = -1;
+  // end get serial no from network
+  bool result = getSerializedMsg(err_info, out_msg, out_length,
+              register_msg, rpc_config::kBrokerMethoddConsumerRegister, serial_no);
+  return result;
+}
+
+bool TubeMQConsumer::buidUnRegRequestC2B(const PartitionExt& partition,
+    bool is_last_consumed, string& err_info, char** out_msg, int& out_length) {
+  string unreg_msg;
+  RegisterRequestC2B c2b_request;
+  c2b_request.set_clientid(this->client_uuid_);
+  c2b_request.set_groupname(this->config_.GetGroupName());
+  c2b_request.set_optype(rpc_config::kRegOpTypeUnReg);
+  c2b_request.set_topicname(partition.GetTopic());
+  c2b_request.set_partitionid(partition.GetPartitionId());
+  c2b_request.set_readstatus(is_last_consumed ? 0 : 1);
+  AuthorizedInfo* p_authInfo = c2b_request.mutable_authinfo();
+  genBrokerAuthenticInfo(p_authInfo, true);
+  c2b_request.SerializeToString(&unreg_msg);
+  // begin get serial no from network
+  int32_t serial_no = -1;
+  // end get serial no from network
+  bool result = getSerializedMsg(err_info, out_msg, out_length,
+              unreg_msg, rpc_config::kBrokerMethoddConsumerRegister, serial_no);
+  return result;
+}
+
+bool TubeMQConsumer::buidHeartBeatC2B(const list<PartitionExt>& partitions,
+  string& err_info, char** out_msg, int& out_length) {
+  string hb_msg;
+  HeartBeatRequestC2B c2b_request;
+  list<PartitionExt>::const_iterator it_part;
+  c2b_request.set_clientid(this->client_uuid_);
+  c2b_request.set_groupname(this->config_.GetGroupName());
+  c2b_request.set_readstatus(getConsumeReadStatus(false));
+  c2b_request.set_qrypriorityid(rmtdata_cache_.GetGroupQryPriorityId());
+  for (it_part = partitions.begin(); it_part != partitions.end(); ++it_part) {
+    c2b_request.add_partitioninfo(it_part->ToString());
+  }
+  AuthorizedInfo* p_authInfo = c2b_request.mutable_authinfo();
+  genBrokerAuthenticInfo(p_authInfo, true);
+  c2b_request.SerializeToString(&hb_msg);
+  // begin get serial no from network
+  int32_t serial_no = -1;
+  // end get serial no from network
+  bool result = getSerializedMsg(err_info, out_msg, out_length,
+              hb_msg, rpc_config::kBrokerMethoddConsumerHeatbeat, serial_no);
+  return result;
+}
+
+bool TubeMQConsumer::buidGetMessageC2B(const PartitionExt& partition,
+  bool is_last_consumed, string& err_info, char** out_msg, int& out_length) {
+  string get_msg;
+  GetMessageRequestC2B c2b_request;
+  c2b_request.set_clientid(this->client_uuid_);
+  c2b_request.set_groupname(this->config_.GetGroupName());
+  c2b_request.set_topicname(partition.GetTopic());
+  c2b_request.set_escflowctrl(rmtdata_cache_.IsUnderGroupCtrl());
+  c2b_request.set_partitionid(partition.GetPartitionId());
+  c2b_request.set_lastpackconsumed(is_last_consumed);
+  c2b_request.set_manualcommitoffset(false);
+  c2b_request.SerializeToString(&get_msg);
+  // begin get serial no from network
+  int32_t serial_no = -1;
+  // end get serial no from network
+  bool result = getSerializedMsg(err_info, out_msg, out_length,
+              get_msg, rpc_config::kBrokerMethoddConsumerGetMsg, serial_no);
+  return result;
+}
+
+bool TubeMQConsumer::buidCommitC2B(const PartitionExt& partition,
+  bool is_last_consumed, string& err_info, char** out_msg, int& out_length) {
+  string commit_msg;
+  CommitOffsetRequestC2B c2b_request;
+  c2b_request.set_clientid(this->client_uuid_);
+  c2b_request.set_groupname(this->config_.GetGroupName());
+  c2b_request.set_topicname(partition.GetTopic());
+  c2b_request.set_partitionid(partition.GetPartitionId());
+  c2b_request.set_lastpackconsumed(is_last_consumed);
+  c2b_request.SerializeToString(&commit_msg);
+  // begin get serial no from network
+  int32_t serial_no = -1;
+  // end get serial no from network
+  bool result = getSerializedMsg(err_info, out_msg, out_length,
+              commit_msg, rpc_config::kBrokerMethoddConsumerCommit, serial_no);
+  return result;
+}
+
 bool TubeMQConsumer::getSerializedMsg(string& err_info,
   char** out_msg, int& out_length, const string& req_msg,
   const int32_t method_id, int32_t serial_no) {
@@ -239,7 +367,6 @@ bool TubeMQConsumer::getSerializedMsg(string& err_info,
   RpcConnHeader rpc_header;
   rpc_header.set_flag(rpc_config::kRpcFlagMsgRequest);
   // process serial
-
   return true;
 }
 
@@ -261,7 +388,41 @@ string TubeMQConsumer::buildUUID() {
   return ss.str();
 }
 
+int32_t TubeMQConsumer::getConsumeReadStatus(bool is_first_reg) {
+  int32_t readStatus = rpc_config::kConsumeStatusNormal;
+  if (is_first_reg) {
+    if(this->config_.GetConsumePosition() == 0) {
+      readStatus = rpc_config::kConsumeStatusFromMax;
+      LOG_INFO("[Consumer From Max Offset], clientId=%s",
+        this->client_uuid_.c_str());
+    } else if(this->config_.GetConsumePosition() > 0) {
+      readStatus = rpc_config::kConsumeStatusFromMaxAlways;
+      LOG_INFO("[Consumer From Max Offset Always], clientId=%s",
+        this->client_uuid_.c_str());
+    }
+  }
+  return readStatus;
+}
 
+void TubeMQConsumer::genBrokerAuthenticInfo(AuthorizedInfo* p_authInfo, bool force) {
+  bool needAdd = false;
+  p_authInfo->set_visitauthorizedtoken(visit_token_.Get());
+  if (config_.IsAuthenticEnabled()) {
+    if (force) {
+      needAdd = true;
+      nextauth_2B.Set(false);
+    } else if (nextauth_2B.Get()) {
+      if (nextauth_2B.CompareAndSet(true, false)) {
+        needAdd = true;
+      }
+    }
+    if (needAdd) {
+      string auth_token = Utils::GenBrokerAuthenticateToken(
+        config_.GetUsrName(), config_.GetUsrPassWord());
+      p_authInfo->set_authauthorizedtoken(auth_token);
+    }
+  }
+}
 
 }  // namespace tubemq
 
