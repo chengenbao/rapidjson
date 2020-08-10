@@ -66,6 +66,7 @@ class TubeMQConsumer : public BaseClient {
   string buildUUID();
   int32_t getConsumeReadStatus(bool is_first_reg);
   bool register2Master(string& err_info, bool need_change);
+  bool needGenMasterCertificateInfo(bool force);
   void genBrokerAuthenticInfo(AuthorizedInfo* p_authInfo, bool force);
 
  private:
@@ -87,6 +88,8 @@ class TubeMQConsumer : public BaseClient {
     bool is_last_consumed, string& err_info, char** out_msg, int& out_length);
   bool buidCommitC2B(const PartitionExt& partition,
     bool is_last_consumed, string& err_info, char** out_msg, int& out_length);
+  void genMasterAuthenticateToken(AuthenticateInfo* pauthinfo,
+    const string& username, const string usrpassword);
   bool getSerializedMsg(string& err_info,
     char** out_msg, int& out_length, const string& req_msg,
     const int32_t method_id, int32_t serial_no);
@@ -98,7 +101,8 @@ class TubeMQConsumer : public BaseClient {
   ClientSubInfo sub_info_;
   RmtDataCacheCsm rmtdata_cache_;
   AtomicLong visit_token_;
-  AtomicBoolean nextauth_2B;
+  AtomicBoolean nextauth_2_master;
+  AtomicBoolean nextauth_2_broker;
   int32_t cur_report_times_;
 };
 

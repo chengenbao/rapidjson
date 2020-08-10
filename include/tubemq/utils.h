@@ -54,6 +54,7 @@ class Utils {
   static bool ValidConfigFile(string& err_info, const string& conf_file);
   static bool GetLocalIPV4Address(string& err_info, string& localhost);
   static int32_t GetServiceTypeByMethodId(int32_t method_id);
+
   static string GenBrokerAuthenticateToken(const string& username, const string& usrpassword);
 };
 

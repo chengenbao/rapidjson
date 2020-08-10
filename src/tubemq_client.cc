@@ -61,7 +61,8 @@ TubeMQConsumer::TubeMQConsumer() : BaseClient(false) {
   cur_report_times_ = 0;
   client_uuid_ = "";
   visit_token_.Set(tb_config::kInvalidValue);
-  nextauth_2B.Set(false);
+  nextauth_2_master.Set(false);
+  nextauth_2_broker.Set(false);
 }
 
 TubeMQConsumer::~TubeMQConsumer() {
@@ -149,6 +150,12 @@ bool TubeMQConsumer::buidRegisterRequestC2M(string& err_info,
     c2m_request.add_topiccondition(*it_topics);
   }
   // authenticate info
+  if (needGenMasterCertificateInfo(true)) {
+    MasterCertificateInfo* pmst_certinfo = c2m_request.mutable_authinfo();
+    AuthenticateInfo* pauthinfo = pmst_certinfo->mutable_authinfo();
+    genMasterAuthenticateToken(pauthinfo,
+      config_.GetUsrName(), config_.GetUsrPassWord());
+  }
   //
   c2m_request.SerializeToString(&reg_msg);
   // begin get serial no from network
@@ -201,6 +208,12 @@ bool TubeMQConsumer::buidHeartRequestC2M(string& err_info,
       }
     }
   }
+  if (needGenMasterCertificateInfo(true)) {
+    MasterCertificateInfo* pmst_certinfo = c2m_request.mutable_authinfo();
+    AuthenticateInfo* pauthinfo = pmst_certinfo->mutable_authinfo();
+    genMasterAuthenticateToken(pauthinfo,
+      config_.GetUsrName(), config_.GetUsrPassWord());
+  }
   c2m_request.SerializeToString(&hb_msg);
   //
   // begin get serial no from network
@@ -217,6 +230,12 @@ bool TubeMQConsumer::buidCloseRequestC2M(string& err_info,
   CloseRequestC2M c2m_request;
   c2m_request.set_clientid(this->client_uuid_);
   c2m_request.set_groupname(this->config_.GetGroupName());
+  if (needGenMasterCertificateInfo(true)) {
+    MasterCertificateInfo* pmst_certinfo = c2m_request.mutable_authinfo();
+    AuthenticateInfo* pauthinfo = pmst_certinfo->mutable_authinfo();
+    genMasterAuthenticateToken(pauthinfo,
+      config_.GetUsrName(), config_.GetUsrPassWord());
+  }
   c2m_request.SerializeToString(&close_msg);
   // begin get serial no from network
   int32_t serial_no = -1;
@@ -404,15 +423,30 @@ int32_t TubeMQConsumer::getConsumeReadStatus(bool is_first_reg) {
   return readStatus;
 }
 
+bool TubeMQConsumer::needGenMasterCertificateInfo(bool force) {
+  bool needAdd = false;
+  if (config_.IsAuthenticEnabled()) {
+    if (force) {
+      needAdd = true;
+      nextauth_2_master.Set(false);
+    } else if (nextauth_2_master.Get()) {
+      if (nextauth_2_master.CompareAndSet(true, false)) {
+        needAdd = true;
+      }      
+    }
+  }
+  return needAdd;
+}
+
 void TubeMQConsumer::genBrokerAuthenticInfo(AuthorizedInfo* p_authInfo, bool force) {
   bool needAdd = false;
   p_authInfo->set_visitauthorizedtoken(visit_token_.Get());
   if (config_.IsAuthenticEnabled()) {
     if (force) {
       needAdd = true;
-      nextauth_2B.Set(false);
-    } else if (nextauth_2B.Get()) {
-      if (nextauth_2B.CompareAndSet(true, false)) {
+      nextauth_2_broker.Set(false);
+    } else if (nextauth_2_broker.Get()) {
+      if (nextauth_2_broker.CompareAndSet(true, false)) {
         needAdd = true;
       }
     }
@@ -423,6 +457,12 @@ void TubeMQConsumer::genBrokerAuthenticInfo(AuthorizedInfo* p_authInfo, bool for
     }
   }
 }
+
+void TubeMQConsumer::genMasterAuthenticateToken(AuthenticateInfo* pauthinfo,
+  const string& username, const string usrpassword) {
+  //
+}
+
 
 }  // namespace tubemq
 
