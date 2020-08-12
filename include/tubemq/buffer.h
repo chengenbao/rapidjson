@@ -194,6 +194,12 @@ class Buffer {
  public:
   // Peek int32_t/int16_t/int8_t with network endian
 
+  uint32_t ReadUint32() {
+    uint32_t result = PeekUint32();
+    Skip(sizeof result);
+    return result;
+  }
+
   int32_t ReadInt32() {
     int32_t result = PeekInt32();
     Skip(sizeof result);
@@ -236,6 +242,13 @@ class Buffer {
   // Peek
  public:
   // Peek int64_t/int32_t/int16_t/int8_t with network endian
+
+  uint32_t PeekUint32() const {
+    assert(length() >= sizeof(uint32_t));
+    uint32_t be32 = 0;
+    ::memcpy(&be32, data(), sizeof be32);
+    return ntohl(be32);
+  }
 
   int32_t PeekInt32() const {
     assert(length() >= sizeof(int32_t));
