@@ -42,10 +42,28 @@ namespace tubemq {
 
 using std::string;
 
-class ResponseContext {
+
+class RequestWrapper {
  public:
-  ResponseContext();
-  ResponseContext(bool success, int32_t code, const string& error_msg);
+  RequestWrapper();
+  RequestWrapper(int32_t method_id, google::protobuf::Message prot_msg);
+  void setRequestId(uint32_t request_id) { this.request_id_ = request_id; }
+  uint32_t getRequestId() const { return this.request_id_; }
+  void setMessageInfo(int32_t method_id, google::protobuf::Message prot_msg);
+  int32_t GetMethodId() const { return method_id_; }
+  const google::protobuf::Message& GetMessage() const { return prot_msg_; }
+  
+ private:
+  uint32_t request_id_;
+  int32_t method_id_;
+  google::protobuf::Message prot_msg_;
+};
+
+
+class ResponseWrapper {
+ public:
+  ResponseWrapper();
+  ResponseWrapper(bool success, int32_t code, const string& error_msg);
   int32_t GetSerialNo() const { return serial_no_; }
   void SetSerialNo(int32_t serial) { serial_no_ = serial; }
   bool IsSuccess() const { return success_; }
@@ -82,12 +100,12 @@ class DecEncoder : public CodecProtocol {
   // return code: -1 failed; 0-Unfinished; > 0 package buffer size
   int32_t Check(BufferPtr &in, Any &out, int32_t &request_id, bool &has_request_id);
   // get protocol request id
-  int32_t GetRequestId(int32_t &request_id, const Any &rsp) const;
+  int32_t GetRequestId(uint32_t &request_id, const Any &rsp) const;
   // set protocol request request id
-  int32_t SetRequestId(int32_t request_id, Any &req);
+  int32_t SetRequestId(uint32_t request_id, Any &req);
 
  private:
-  bool parseProtobufRsp(int32_t serial_no, char* message, int32_t msgLen, Any &out);
+  bool parseProtobufRsp(uint32_t serial_no, char* message, int32_t msgLen, Any &out);
   bool readDelimitedFrom(
     google::protobuf::io::ZeroCopyInputStream* rawInput,
     google::protobuf::MessageLite* message);

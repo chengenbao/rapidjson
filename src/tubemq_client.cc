@@ -355,7 +355,7 @@ bool TubeMQConsumer::buidGetMessageC2B(const PartitionExt& partition,
 }
 
 bool TubeMQConsumer::buidCommitC2B(const PartitionExt& partition,
-  bool is_last_consumed, string& err_info, char** out_msg, int& out_length) {
+  bool is_last_consumed, RequestWrapper& reqWapper) {
   string commit_msg;
   CommitOffsetRequestC2B c2b_request;
   c2b_request.set_clientid(this->client_uuid_);
@@ -364,12 +364,8 @@ bool TubeMQConsumer::buidCommitC2B(const PartitionExt& partition,
   c2b_request.set_partitionid(partition.GetPartitionId());
   c2b_request.set_lastpackconsumed(is_last_consumed);
   c2b_request.SerializeToString(&commit_msg);
-  // begin get serial no from network
-  int32_t serial_no = -1;
-  // end get serial no from network
-  bool result = getSerializedMsg(err_info, out_msg, out_length,
-              commit_msg, rpc_config::kBrokerMethoddConsumerCommit, serial_no);
-  return result;
+  reqWapper.setMessageInfo(rpc_config::kBrokerMethoddConsumerCommit, c2b_request);
+  return true;
 }
 
 bool TubeMQConsumer::getSerializedMsg(string& err_info,
@@ -385,6 +381,7 @@ bool TubeMQConsumer::getSerializedMsg(string& err_info,
   req_header.set_protocolver(2);
   RpcConnHeader rpc_header;
   rpc_header.set_flag(rpc_config::kRpcFlagMsgRequest);
+  
   // process serial
   return true;
 }

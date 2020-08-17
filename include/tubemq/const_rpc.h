@@ -69,6 +69,8 @@ static const int32_t kBrokerMethoddConsumerHeatbeat = 16;
 static const int32_t kBrokerMethoddConsumerGetMsg = 17;
 static const int32_t kBrokerMethoddConsumerCommit = 18;
 static const int32_t kBrokerMethoddConsumerClose = 19;
+static const int32_t kMethodInvalid = 99999;
+
 
 // register operate type
 static const int32_t kRegOpTypeRegister = 31;
