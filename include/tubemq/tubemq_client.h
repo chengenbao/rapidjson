@@ -70,8 +70,7 @@ class TubeMQConsumer : public BaseClient {
   void genBrokerAuthenticInfo(AuthorizedInfo* p_authInfo, bool force);
 
  private:
-  bool buidRegisterRequestC2M(string& err_info,
-                           char** out_msg, int& out_length);
+  bool buidRegisterRequestC2M(RequestWrapper& reqWapper);
   bool buidHeartRequestC2M(string& err_info,
                            char** out_msg, int& out_length);
   bool buidCloseRequestC2M(string& err_info,

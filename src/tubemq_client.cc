@@ -119,8 +119,7 @@ bool TubeMQConsumer::register2Master(string& err_info, bool need_change) {
   return true;
 }
 
-bool TubeMQConsumer::buidRegisterRequestC2M(string& err_info,
-                                       char** out_msg, int& out_length) {
+bool TubeMQConsumer::buidRegisterRequestC2M(RequestWrapper& reqWapper) {
   string reg_msg;
   RegisterRequestC2M c2m_request;
   list<string>::iterator it_topics;
@@ -158,12 +157,9 @@ bool TubeMQConsumer::buidRegisterRequestC2M(string& err_info,
   }
   //
   c2m_request.SerializeToString(&reg_msg);
-  // begin get serial no from network
-  int32_t serial_no = -1;
-  // end get serial no from network
-  bool result = getSerializedMsg(err_info, out_msg, out_length,
-             reg_msg, rpc_config::kMasterMethoddConsumerHeatbeat, serial_no);
-  return result;
+  reqWapper.setMessageInfo(rpc_config::kMasterMethoddConsumerHeatbeat, reg_msg);
+  //
+  return true;
 }
 
 
