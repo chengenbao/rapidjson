@@ -33,16 +33,15 @@ using std::exception;
 
 RequestWrapper::RequestWrapper() {
   this->method_id_ = rpc_config::kMethodInvalid;
+  this->rpc_read_timeout_ = tb_config::kRpcTimoutDefMs;
 }
 
-RequestWrapper::RequestWrapper(int32_t method_id,
-  google::protobuf::Message prot_msg) {
+RequestWrapper::RequestWrapper(int32_t method_id, const string &prot_msg) {
   this->method_id_ = method_id;
   this->prot_msg_ = prot_msg;
 }
 
-void RequestWrapper::setMessageInfo(int32_t method_id,
-  google::protobuf::Message prot_msg) {
+void RequestWrapper::setMessageInfo(int32_t method_id, const string &prot_msg) {
   this->method_id_ = method_id;
   this->prot_msg_ = prot_msg;
 }
@@ -63,19 +62,14 @@ ResponseWrapper::ResponseWrapper(bool success,
 
 
 bool DecEncoder::Encode(const Any &in, BufferPtr &buff) {
-  string msg_req;
-  RequestWrapper req_wapper = (RequestWrapper)in;
-  bool result = req_wapper.GetMessage().SerializeToString(msg_req);
-  if (!result) {
-    return result;
-  }
+  RequestWrapper req_wapper = (RequestWrapper) &in;
   //
   string body_str;
   RequestBody req_body;
   req_body.set_method(req_wapper.GetMethodId());
-  req_body.set_timeout(this->config_.GetRpcReadTimeoutMs());
-  req_body.set_request(msg_req);
-  result = req_body.SerializeToString(body_str);
+  req_body.set_timeout(req_wapper.GetRpcTimeoutMs());
+  req_body.set_request(req_wapper.GetMessage());
+  bool result = req_body.SerializeToString(&body_str);
   if (!result) {
     return result;
   }
@@ -84,7 +78,7 @@ bool DecEncoder::Encode(const Any &in, BufferPtr &buff) {
   RequestHeader req_header;
   req_header.set_servicetype(Utils::GetServiceTypeByMethodId(req_wapper.GetMethodId()));
   req_header.set_protocolver(2);
-  result = req_header.SerializeToString(req_str);
+  result = req_header.SerializeToString(&req_str);
   if (!result) {
     return result;
   }
@@ -92,7 +86,7 @@ bool DecEncoder::Encode(const Any &in, BufferPtr &buff) {
   string rpc_str;
   RpcConnHeader rpc_header;
   rpc_header.set_flag(rpc_config::kRpcFlagMsgRequest);
-  result = rpc_header.SerializeToString(rpc_str);
+  result = rpc_header.SerializeToString(&rpc_str);
   if (!result) {
     return result;
   }
@@ -104,7 +98,7 @@ bool DecEncoder::Encode(const Any &in, BufferPtr &buff) {
   //
   buff = std::make_shared<Buffer>();
   buff->AppendInt32((int32_t) rpc_config::kRpcPrtBeginToken);
-  buff->AppendInt32((int32_t) req_wapper->getRequestId());
+  buff->AppendInt32((int32_t) req_wapper.getRequestId());
   buff->AppendInt32(list_size);
   appendContent(buff, rpc_str);
   appendContent(buff, req_str);
@@ -113,11 +107,11 @@ bool DecEncoder::Encode(const Any &in, BufferPtr &buff) {
 }
 
 void DecEncoder::appendContent(BufferPtr &buff, string &content_str) {
-  int32_t remain = 0;
-  int32_t step_len = 0;
-  int32_t buff_cnt = 0;
+  uint32_t remain = 0;
+  uint32_t step_len = 0;
+  uint32_t buff_cnt = 0;
   buff_cnt = calcBlockCount(content_str.length());
-  for (int32_t i = 0; i < buff_cnt; i++) {
+  for (uint32_t i = 0; i < buff_cnt; i++) {
     remain = content_str.length() - i * (Buffer::kInitialSize - 4);
     if (remain > Buffer::kInitialSize - 4) {
       step_len = Buffer::kInitialSize - 4;
@@ -130,9 +124,9 @@ void DecEncoder::appendContent(BufferPtr &buff, string &content_str) {
 }
 
 
-int32_t DecEncoder::calcBlockCount(int32_t content_len) {
-  int32_t block_cnt = content_len / Buffer::kInitialSize;
-  int32_t remain_size = content_len % Buffer::kInitialSize;
+uint32_t DecEncoder::calcBlockCount(uint32_t content_len) {
+  uint32_t block_cnt = content_len / Buffer::kInitialSize;
+  uint32_t remain_size = content_len % Buffer::kInitialSize;
   if (remain_size > 0) {
     block_cnt++;
   }
@@ -210,14 +204,14 @@ int32_t DecEncoder::Check(BufferPtr &in, Any &out,
     return -1;
   }
   // check data list
-  int32_t item_len = 0;
+  uint32_t item_len = 0;
   int32_t read_len = 12;
   BufferPtr buf = std::make_shared<Buffer>();
   for (uint32_t i = 0; i < list_size; i++) {
     if (in->length() < 4) {
       return 0;
     }
-    item_len = in->ReadInt32();
+    item_len = in->ReadUint32();
     if (item_len < 0) {
         return -1;
     }

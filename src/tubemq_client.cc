@@ -364,7 +364,8 @@ bool TubeMQConsumer::buidCommitC2B(const PartitionExt& partition,
   c2b_request.set_partitionid(partition.GetPartitionId());
   c2b_request.set_lastpackconsumed(is_last_consumed);
   c2b_request.SerializeToString(&commit_msg);
-  reqWapper.setMessageInfo(rpc_config::kBrokerMethoddConsumerCommit, c2b_request);
+  reqWapper.SetRpcTimeoutMs(this->config_.GetRpcReadTimeoutMs());
+  reqWapper.setMessageInfo(rpc_config::kBrokerMethoddConsumerCommit, commit_msg);
   return true;
 }
 

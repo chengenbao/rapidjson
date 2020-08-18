@@ -87,7 +87,7 @@ class TubeMQConsumer : public BaseClient {
   bool buidGetMessageC2B(const PartitionExt& partition,
     bool is_last_consumed, string& err_info, char** out_msg, int& out_length);
   bool buidCommitC2B(const PartitionExt& partition,
-    bool is_last_consumed, string& err_info, char** out_msg, int& out_length);
+    bool is_last_consumed, RequestWrapper& reqWapper);
   void genMasterAuthenticateToken(AuthenticateInfo* pauthinfo,
     const string& username, const string usrpassword);
   bool getSerializedMsg(string& err_info,
