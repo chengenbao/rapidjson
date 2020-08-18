@@ -97,7 +97,6 @@ bool DecEncoder::Encode(const Any &in, BufferPtr &buff) {
     return result;
   }
   // calc total list size 
-  int32_t buff_cnt = 0;
   int32_t list_size =
     calcBlockCount(rpc_str.length())
     + calcBlockCount(req_str.length())
