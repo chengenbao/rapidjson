@@ -22,18 +22,18 @@
 using namespace tubemq;
 
 template <class ReqBody, class RspBody, class Head>
-bool TubeMQCodec<Head, Body>::Decode(const BufferPtr &buff, Any &out) {
+bool TubeMQCodec<ReqBody, RspBody, Head>::Decode(const BufferPtr &buff, Any &out) {
   return true;
 }
 
 template <class ReqBody, class RspBody, class Head>
-bool TubeMQCodec<Head, Body>::Encode(const Any &in, BufferPtr &buff) {
+bool TubeMQCodec<ReqBody, RspBody, Head>::Encode(const Any &in, BufferPtr &buff) {
   return true;
 }
 
 // return code: -1 failed; 0-Unfinished; > 0 package buffer size
 template <class ReqBody, class RspBody, class Head>
-int32_t TubeMQCodec<Head, Body>::Check(BufferPtr &in, Any &out, uint32_t &request_id,
-                                       bool &has_request_id) {
+int32_t TubeMQCodec<ReqBody, RspBody, Head>::Check(BufferPtr &in, Any &out, uint32_t &request_id,
+                                                   bool &has_request_id) {
   return in.length();
 }
