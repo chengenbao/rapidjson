@@ -20,8 +20,11 @@
 #ifndef _TUBEMQ_TUBEMQ_TRANSPORT_H_
 #define _TUBEMQ_TUBEMQ_TRANSPORT_H_
 
+#include "tubemq/codec_protocol.h"
 #include "tubemq/connection_pool.h"
+#include "tubemq/executor_pool.h"
 #include "tubemq/future.h"
+#include "tubemq/logger.h"
 #include "tubemq/transport.h"
 #include "tubemq/tubemq_codec.h"
 

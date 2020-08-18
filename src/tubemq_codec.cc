@@ -23,17 +23,22 @@ using namespace tubemq;
 
 template <class ReqBody, class RspBody, class Head>
 bool TubeMQCodec<ReqBody, RspBody, Head>::Decode(const BufferPtr &buff, Any &out) {
+  RspProtocolPtr rsp = GetRspProtocol();
+  out = rsp;
+  // TODO
   return true;
 }
 
 template <class ReqBody, class RspBody, class Head>
 bool TubeMQCodec<ReqBody, RspBody, Head>::Encode(const Any &in, BufferPtr &buff) {
+  // TODO
+  ReqProtocolPtr req = any_cast<ReqProtocolPtr>(in);
   return true;
 }
 
 // return code: -1 failed; 0-Unfinished; > 0 package buffer size
 template <class ReqBody, class RspBody, class Head>
 int32_t TubeMQCodec<ReqBody, RspBody, Head>::Check(BufferPtr &in, Any &out, uint32_t &request_id,
-                                                   bool &has_request_id) {
+         // TODO                                          bool &has_request_id) {
   return in.length();
 }
