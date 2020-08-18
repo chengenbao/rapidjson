@@ -90,7 +90,7 @@ bool DecEncoder::Encode(const Any &in, BufferPtr &buff) {
   if (!result) {
     return result;
   }
-  // calc total list size 
+  // calc total list size
   int32_t list_size =
     calcBlockCount(rpc_str.length())
     + calcBlockCount(req_str.length())
@@ -185,7 +185,7 @@ bool DecEncoder::Decode(const BufferPtr &buff, Any &out) {
   return false;
 }
 
-int32_t DecEncoder::Check(BufferPtr &in, Any &out, 
+int32_t DecEncoder::Check(BufferPtr &in, Any &out,
                     uint32_t &request_id, bool &has_request_id) {
   // check package is valid
   if (in->length() < 12) {

@@ -241,7 +241,7 @@ bool TubeMQConsumer::buidCloseRequestC2M(string& err_info,
   return result;
 }
 
-bool TubeMQConsumer::buidRegisterRequestC2B(const PartitionExt& partition, 
+bool TubeMQConsumer::buidRegisterRequestC2B(const PartitionExt& partition,
                                    string& err_info, char** out_msg, int& out_length) {
   bool is_first_reg;
   int64_t part_offset;
@@ -267,8 +267,8 @@ bool TubeMQConsumer::buidRegisterRequestC2B(const PartitionExt& partition,
       }
     }
   }
-  if (is_first_reg 
-    && sub_info_.IsBoundConsume() 
+  if (is_first_reg
+    && sub_info_.IsBoundConsume()
     && sub_info_.IsNotAllocated()) {
     sub_info_.GetAssignedPartOffset(partition.GetPartitionKey(), part_offset);
     if (part_offset != tb_config::kInvalidValue) {
@@ -383,8 +383,6 @@ bool TubeMQConsumer::getSerializedMsg(string& err_info,
   return true;
 }
 
-
-
 string TubeMQConsumer::buildUUID() {
   stringstream ss;
   ss << this->config_.GetGroupName();
@@ -404,11 +402,11 @@ string TubeMQConsumer::buildUUID() {
 int32_t TubeMQConsumer::getConsumeReadStatus(bool is_first_reg) {
   int32_t readStatus = rpc_config::kConsumeStatusNormal;
   if (is_first_reg) {
-    if(this->config_.GetConsumePosition() == 0) {
+    if (this->config_.GetConsumePosition() == 0) {
       readStatus = rpc_config::kConsumeStatusFromMax;
       LOG_INFO("[Consumer From Max Offset], clientId=%s",
         this->client_uuid_.c_str());
-    } else if(this->config_.GetConsumePosition() > 0) {
+    } else if (this->config_.GetConsumePosition() > 0) {
       readStatus = rpc_config::kConsumeStatusFromMaxAlways;
       LOG_INFO("[Consumer From Max Offset Always], clientId=%s",
         this->client_uuid_.c_str());

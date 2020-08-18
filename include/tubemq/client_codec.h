@@ -54,8 +54,7 @@ class RequestWrapper {
   const string& GetMessage() const { return prot_msg_; }
   void SetRpcTimeoutMs(int32_t rpc_read_timeout) { rpc_read_timeout_ = rpc_read_timeout; }
   int32_t GetRpcTimeoutMs() const { return rpc_read_timeout_; }
-  
-  
+
  private:
   int32_t rpc_read_timeout_;
   uint32_t request_id_;
