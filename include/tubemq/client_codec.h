@@ -105,6 +105,8 @@ class DecEncoder : public CodecProtocol {
   int32_t SetRequestId(uint32_t request_id, Any &req);
 
  private:
+  int32_t calcBlockCount(int32_t content_len);
+  void appendContent(BufferPtr &buff, string &content_str);
   bool parseProtobufRsp(uint32_t serial_no, char* message, int32_t msgLen, Any &out);
   bool readDelimitedFrom(
     google::protobuf::io::ZeroCopyInputStream* rawInput,
