@@ -46,15 +46,28 @@ class TubeMQCodec final : public CodecProtocol {
 
   virtual std::string Name() const { return "tubemq_v1"; }
 
-  virtual bool Decode(const BufferPtr &buff, Any &out);
+  virtual bool Decode(const BufferPtr &buff, Any &out) {
+    RspProtocolPtr rsp = GetRspProtocol();
+    out = rsp;
+    // TODO
+    return true;
+  }
 
-  virtual bool Encode(const Any &in, BufferPtr &buff);
+  virtual bool Encode(const Any &in, BufferPtr &buff) {
+    // TODO
+    ReqProtocolPtr req = any_cast<ReqProtocolPtr>(in);
+    return true;
+  }
 
   // return code: -1 failed; 0-Unfinished; > 0 package buffer size
-  virtual int32_t Check(BufferPtr &in, Any &out, uint32_t &request_id, bool &has_request_id);
+  virtual int32_t Check(BufferPtr &in, Any &out, uint32_t &request_id, bool &has_request_id) {
+    // TODO
+    return in->length();
+  }
 
-  ReqProtocolPtr GetReqProtocol() const { return std::make_shared<ReqProtocol>(); }
-  RspProtocolPtr GetRspProtocol() const { return std::make_shared<RspProtocol>(); }
+  static ReqProtocolPtr GetReqProtocol() { return std::make_shared<ReqProtocol>(); }
+  static RspProtocolPtr GetRspProtocol() { return std::make_shared<RspProtocol>(); }
 };
+}  // namespace tubemq
 #endif
 

@@ -23,6 +23,8 @@
 #ifndef _TUBEMQ_ANY_H_
 #define _TUBEMQ_ANY_H_
 
+#include <assert.h>
+
 #include <algorithm>
 #include <typeinfo>
 
@@ -63,7 +65,7 @@ class Any {
   template <typename ValueType>
   explicit Any(const ValueType& value) : content_(new Holder<ValueType>(value)) {}
 
-  explicit Any(const Any& other) : content_(other.content_ ? other.content_->clone() : nullptr) {}
+  Any(const Any& other) : content_(other.content_ ? other.content_->clone() : nullptr) {}
 
  public:
   Any& swap(Any& rhs) {
@@ -113,7 +115,7 @@ class Any {
   template <typename ValueType>
   class Holder : public PlaceHolder {
    public:
-    explicit Holder(const ValueType& value) : held_(value) {}
+    Holder(const ValueType& value) : held_(value) {}
 
     virtual const std::type_info& GetType() const { return typeid(ValueType); }
 

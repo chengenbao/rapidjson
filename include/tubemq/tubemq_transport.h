@@ -20,6 +20,7 @@
 #ifndef _TUBEMQ_TUBEMQ_TRANSPORT_H_
 #define _TUBEMQ_TUBEMQ_TRANSPORT_H_
 
+#include "tubemq/buffer.h"
 #include "tubemq/codec_protocol.h"
 #include "tubemq/connection_pool.h"
 #include "tubemq/executor_pool.h"
@@ -30,9 +31,18 @@
 
 namespace tubemq {
 
-template <class ReqBody, class RspBody, class Head>
-Future<ResponseContext> AsyncRequest(RequestContextPtr& request,
-                                     TubeMQCodec<ReqBody, RspBody, Head>::ReqProtocolPtr protocol);
+template <typename RequestProtocol>
+Future<ResponseContext> AsyncRequest(RequestContextPtr& request, RequestProtocol& protocol) {
+  request->buf_ = std::make_shared<Buffer>();
+  Any in(protocol);
+  request->codec_->Encode(in, request->buf_);
+  // TODO
+  auto pool = std::make_shared<ExecutorPool>(4);
+  auto connection_pool = std::make_shared<ConnectionPool>(pool);
+  auto future = request->promise_.GetFuture();
+  connection_pool->GetConnection(request)->AsyncWrite(request);
+  return future;
+}
 
 }  // namespace tubemq
 
