@@ -67,7 +67,7 @@ class ConnectionPool : noncopyable {
 
     auto codec = request->codec_;
     connect->SetProtocalCheck(
-        [codec](BufferPtr& in, Any& out, int32_t& request_id, bool& has_request_id) -> int {
+        [codec](BufferPtr& in, Any& out, uint32_t& request_id, bool& has_request_id) -> int {
           return codec->Check(in, out, request_id, has_request_id);
         });
     return connect;
