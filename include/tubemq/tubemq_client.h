@@ -33,6 +33,7 @@
 #include "tubemq/client_subinfo.h"
 #include "tubemq/meta_info.h"
 #include "tubemq/rmt_data_cache.h"
+#include "tubemq/tubemq_codec.h"
 #include "tubemq/tubemq_config.h"
 #include "tubemq/tubemq_message.h"
 #include "tubemq/tubemq_return.h"
@@ -70,7 +71,7 @@ class TubeMQConsumer : public BaseClient {
   void genBrokerAuthenticInfo(AuthorizedInfo* p_authInfo, bool force);
 
  private:
-  bool buidRegisterRequestC2M(RequestWrapper& reqWapper);
+  bool buidRegisterRequestC2M(ReqProtocol& req_protocol);
   bool buidHeartRequestC2M(string& err_info,
                            char** out_msg, int& out_length);
   bool buidCloseRequestC2M(string& err_info,

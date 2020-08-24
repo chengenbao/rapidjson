@@ -119,7 +119,7 @@ bool TubeMQConsumer::register2Master(string& err_info, bool need_change) {
   return true;
 }
 
-bool TubeMQConsumer::buidRegisterRequestC2M(RequestWrapper& reqWapper) {
+bool TubeMQConsumer::buidRegisterRequestC2M(ReqProtocol& req_protocol) {
   string reg_msg;
   RegisterRequestC2M c2m_request;
   list<string>::iterator it_topics;
@@ -157,7 +157,8 @@ bool TubeMQConsumer::buidRegisterRequestC2M(RequestWrapper& reqWapper) {
   }
   //
   c2m_request.SerializeToString(&reg_msg);
-  reqWapper.setMessageInfo(rpc_config::kMasterMethoddConsumerHeatbeat, reg_msg);
+  req_protocol.method_id_ = rpc_config::kMasterMethoddConsumerHeatbeat; 
+  req_protocol.prot_msg_ = reg_msg;
   //
   return true;
 }
