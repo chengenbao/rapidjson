@@ -41,7 +41,7 @@
 namespace tubemq {
 
 // Check Package is done
-using ProtocalCheckerFunction = std::function<int(BufferPtr&, Any&, int32_t&, bool&)>;
+using ProtocalCheckerFunction = std::function<int(BufferPtr&, Any&, uint32_t&, bool&)>;
 
 class Connection : noncopyable {
  public:
