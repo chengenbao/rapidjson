@@ -71,8 +71,7 @@ class TubeMQConsumer : public BaseClient {
 
  private:
   void buidRegisterRequestC2M(TubeMQCodec::ReqProtocol& req_protocol);
-  void buidHeartRequestC2M(string& err_info,
-    TubeMQCodec::ReqProtocol& req_protocol);
+  void buidHeartRequestC2M(TubeMQCodec::ReqProtocol& req_protocol);
   void buidCloseRequestC2M(TubeMQCodec::ReqProtocol& req_protocol);
   void buidRegisterRequestC2B(const PartitionExt& partition,
     TubeMQCodec::ReqProtocol& req_protocol);
@@ -86,7 +85,7 @@ class TubeMQConsumer : public BaseClient {
     bool is_last_consumed, TubeMQCodec::ReqProtocol& req_protocol);
   void genMasterAuthenticateToken(AuthenticateInfo* pauthinfo,
     const string& username, const string usrpassword);
-  void processRegisterResponseM2C(
+  bool processRegisterResponseM2C(
                     const RegisterResponseM2C& response);
 
  private:
