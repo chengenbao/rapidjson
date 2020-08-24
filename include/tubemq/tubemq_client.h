@@ -52,7 +52,7 @@ bool StopTubeMQService(string& err_info);
 
 
 
-
+template <typename RequestProtocol>
 class TubeMQConsumer : public BaseClient {
  public:
   TubeMQConsumer();
@@ -71,7 +71,7 @@ class TubeMQConsumer : public BaseClient {
   void genBrokerAuthenticInfo(AuthorizedInfo* p_authInfo, bool force);
 
  private:
-  bool buidRegisterRequestC2M(ReqProtocolPtr& req_protocol);
+  bool buidRegisterRequestC2M(RequestProtocol& req_protocol);
   bool buidHeartRequestC2M(string& err_info,
                            char** out_msg, int& out_length);
   bool buidCloseRequestC2M(string& err_info,
@@ -87,7 +87,7 @@ class TubeMQConsumer : public BaseClient {
   bool buidGetMessageC2B(const PartitionExt& partition,
     bool is_last_consumed, string& err_info, char** out_msg, int& out_length);
   bool buidCommitC2B(const PartitionExt& partition,
-    bool is_last_consumed, ReqProtocolPtr& req_protocol);
+    bool is_last_consumed, RequestProtocol& req_protocol);
   void genMasterAuthenticateToken(AuthenticateInfo* pauthinfo,
     const string& username, const string usrpassword);
   bool getSerializedMsg(string& err_info,

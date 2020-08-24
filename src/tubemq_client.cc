@@ -119,7 +119,7 @@ bool TubeMQConsumer::register2Master(string& err_info, bool need_change) {
   return true;
 }
 
-bool TubeMQConsumer::buidRegisterRequestC2M(ReqProtocolPtr& req_protocol) {
+bool TubeMQConsumer::buidRegisterRequestC2M(RequestProtocol& req_protocol) {
   string reg_msg;
   RegisterRequestC2M c2m_request;
   list<string>::iterator it_topics;
@@ -157,8 +157,8 @@ bool TubeMQConsumer::buidRegisterRequestC2M(ReqProtocolPtr& req_protocol) {
   }
   //
   c2m_request.SerializeToString(&reg_msg);
-  req_protocol->method_id_ = rpc_config::kMasterMethoddConsumerHeatbeat; 
-  req_protocol->prot_msg_ = reg_msg;
+  req_protocol.method_id_ = rpc_config::kMasterMethoddConsumerHeatbeat; 
+  req_protocol.prot_msg_ = reg_msg;
   //
   return true;
 }
@@ -352,7 +352,7 @@ bool TubeMQConsumer::buidGetMessageC2B(const PartitionExt& partition,
 }
 
 bool TubeMQConsumer::buidCommitC2B(const PartitionExt& partition,
-  bool is_last_consumed, ReqProtocolPtr& req_protocol) {
+  bool is_last_consumed, RequestProtocol& req_protocol) {
   string commit_msg;
   CommitOffsetRequestC2B c2b_request;
   c2b_request.set_clientid(this->client_uuid_);
