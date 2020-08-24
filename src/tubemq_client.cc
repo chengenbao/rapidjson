@@ -119,7 +119,7 @@ bool TubeMQConsumer::register2Master(string& err_info, bool need_change) {
   return true;
 }
 
-bool TubeMQConsumer::buidRegisterRequestC2M(TubeMQCodec::ReqProtocol& req_protocol) {
+void TubeMQConsumer::buidRegisterRequestC2M(TubeMQCodec::ReqProtocol& req_protocol) {
   string reg_msg;
   RegisterRequestC2M c2m_request;
   list<string>::iterator it_topics;
@@ -157,20 +157,11 @@ bool TubeMQConsumer::buidRegisterRequestC2M(TubeMQCodec::ReqProtocol& req_protoc
   }
   //
   c2m_request.SerializeToString(&reg_msg);
-  req_protocol.method_id_ = rpc_config::kMasterMethoddConsumerHeatbeat; 
+  req_protocol.method_id_ = rpc_config::kMasterMethoddConsumerRegister; 
   req_protocol.prot_msg_ = reg_msg;
-  //
-  return true;
 }
 
-
-bool TubeMQConsumer::processRegisterResponseM2C(
-                              const RegisterResponseM2C& response) {
-  return true;
-}
-
-bool TubeMQConsumer::buidHeartRequestC2M(string& err_info,
-                                   char** out_msg, int& out_length) {
+void TubeMQConsumer::buidHeartRequestC2M(TubeMQCodec::ReqProtocol& req_protocol) {
   string hb_msg;
   HeartRequestC2M c2m_request;
   list<string>::iterator it_topics;
@@ -212,17 +203,11 @@ bool TubeMQConsumer::buidHeartRequestC2M(string& err_info,
       config_.GetUsrName(), config_.GetUsrPassWord());
   }
   c2m_request.SerializeToString(&hb_msg);
-  //
-  // begin get serial no from network
-  int32_t serial_no = -1;
-  // end get serial no from network
-  bool result = getSerializedMsg(err_info, out_msg, out_length,
-                     hb_msg, rpc_config::kMasterMethoddConsumerHeatbeat, serial_no);
-  return result;
+  req_protocol.method_id_ = rpc_config::kMasterMethoddConsumerHeatbeat; 
+  req_protocol.prot_msg_ = hb_msg;
 }
 
-bool TubeMQConsumer::buidCloseRequestC2M(string& err_info,
-                                   char** out_msg, int& out_length) {
+void TubeMQConsumer::buidCloseRequestC2M(TubeMQCodec::ReqProtocol& req_protocol) {
   string close_msg;
   CloseRequestC2M c2m_request;
   c2m_request.set_clientid(this->client_uuid_);
@@ -234,16 +219,12 @@ bool TubeMQConsumer::buidCloseRequestC2M(string& err_info,
       config_.GetUsrName(), config_.GetUsrPassWord());
   }
   c2m_request.SerializeToString(&close_msg);
-  // begin get serial no from network
-  int32_t serial_no = -1;
-  // end get serial no from network
-  bool result = getSerializedMsg(err_info, out_msg, out_length,
-              close_msg, rpc_config::kMasterMethoddConsumerClose, serial_no);
-  return result;
+  req_protocol.method_id_ = rpc_config::kMasterMethoddConsumerClose; 
+  req_protocol.prot_msg_ = close_msg;
 }
 
-bool TubeMQConsumer::buidRegisterRequestC2B(const PartitionExt& partition,
-                                   string& err_info, char** out_msg, int& out_length) {
+void TubeMQConsumer::buidRegisterRequestC2B(const PartitionExt& partition,
+    TubeMQCodec::ReqProtocol& req_protocol) {
   bool is_first_reg;
   int64_t part_offset;
   set<string> filter_cond_set;
@@ -279,16 +260,12 @@ bool TubeMQConsumer::buidRegisterRequestC2B(const PartitionExt& partition,
   AuthorizedInfo* p_authInfo = c2b_request.mutable_authinfo();
   genBrokerAuthenticInfo(p_authInfo, true);
   c2b_request.SerializeToString(&register_msg);
-  // begin get serial no from network
-  int32_t serial_no = -1;
-  // end get serial no from network
-  bool result = getSerializedMsg(err_info, out_msg, out_length,
-              register_msg, rpc_config::kBrokerMethoddConsumerRegister, serial_no);
-  return result;
+  req_protocol.method_id_ = rpc_config::kBrokerMethoddConsumerRegister; 
+  req_protocol.prot_msg_ = register_msg;
 }
 
-bool TubeMQConsumer::buidUnRegRequestC2B(const PartitionExt& partition,
-    bool is_last_consumed, string& err_info, char** out_msg, int& out_length) {
+void TubeMQConsumer::buidUnRegRequestC2B(const PartitionExt& partition,
+    bool is_last_consumed, TubeMQCodec::ReqProtocol& req_protocol) {
   string unreg_msg;
   RegisterRequestC2B c2b_request;
   c2b_request.set_clientid(this->client_uuid_);
@@ -300,16 +277,12 @@ bool TubeMQConsumer::buidUnRegRequestC2B(const PartitionExt& partition,
   AuthorizedInfo* p_authInfo = c2b_request.mutable_authinfo();
   genBrokerAuthenticInfo(p_authInfo, true);
   c2b_request.SerializeToString(&unreg_msg);
-  // begin get serial no from network
-  int32_t serial_no = -1;
-  // end get serial no from network
-  bool result = getSerializedMsg(err_info, out_msg, out_length,
-              unreg_msg, rpc_config::kBrokerMethoddConsumerRegister, serial_no);
-  return result;
+  req_protocol.method_id_ = rpc_config::kBrokerMethoddConsumerRegister; 
+  req_protocol.prot_msg_ = unreg_msg;  
 }
 
-bool TubeMQConsumer::buidHeartBeatC2B(const list<PartitionExt>& partitions,
-  string& err_info, char** out_msg, int& out_length) {
+void TubeMQConsumer::buidHeartBeatC2B(const list<PartitionExt>& partitions,
+    TubeMQCodec::ReqProtocol& req_protocol) {
   string hb_msg;
   HeartBeatRequestC2B c2b_request;
   list<PartitionExt>::const_iterator it_part;
@@ -323,16 +296,12 @@ bool TubeMQConsumer::buidHeartBeatC2B(const list<PartitionExt>& partitions,
   AuthorizedInfo* p_authInfo = c2b_request.mutable_authinfo();
   genBrokerAuthenticInfo(p_authInfo, true);
   c2b_request.SerializeToString(&hb_msg);
-  // begin get serial no from network
-  int32_t serial_no = -1;
-  // end get serial no from network
-  bool result = getSerializedMsg(err_info, out_msg, out_length,
-              hb_msg, rpc_config::kBrokerMethoddConsumerHeatbeat, serial_no);
-  return result;
+  req_protocol.method_id_ = rpc_config::kBrokerMethoddConsumerHeatbeat; 
+  req_protocol.prot_msg_ = hb_msg;  
 }
 
-bool TubeMQConsumer::buidGetMessageC2B(const PartitionExt& partition,
-  bool is_last_consumed, string& err_info, char** out_msg, int& out_length) {
+void TubeMQConsumer::buidGetMessageC2B(const PartitionExt& partition,
+  bool is_last_consumed, TubeMQCodec::ReqProtocol& req_protocol) {
   string get_msg;
   GetMessageRequestC2B c2b_request;
   c2b_request.set_clientid(this->client_uuid_);
@@ -343,15 +312,11 @@ bool TubeMQConsumer::buidGetMessageC2B(const PartitionExt& partition,
   c2b_request.set_lastpackconsumed(is_last_consumed);
   c2b_request.set_manualcommitoffset(false);
   c2b_request.SerializeToString(&get_msg);
-  // begin get serial no from network
-  int32_t serial_no = -1;
-  // end get serial no from network
-  bool result = getSerializedMsg(err_info, out_msg, out_length,
-              get_msg, rpc_config::kBrokerMethoddConsumerGetMsg, serial_no);
-  return result;
+  req_protocol.method_id_ = rpc_config::kBrokerMethoddConsumerGetMsg; 
+  req_protocol.prot_msg_ = get_msg;  
 }
 
-bool TubeMQConsumer::buidCommitC2B(const PartitionExt& partition,
+void TubeMQConsumer::buidCommitC2B(const PartitionExt& partition,
   bool is_last_consumed, TubeMQCodec::ReqProtocol& req_protocol) {
   string commit_msg;
   CommitOffsetRequestC2B c2b_request;
@@ -363,24 +328,10 @@ bool TubeMQConsumer::buidCommitC2B(const PartitionExt& partition,
   c2b_request.SerializeToString(&commit_msg);
   req_protocol.method_id_ = rpc_config::kBrokerMethoddConsumerCommit; 
   req_protocol.prot_msg_ = commit_msg;  
-  return true;
 }
 
-bool TubeMQConsumer::getSerializedMsg(string& err_info,
-  char** out_msg, int& out_length, const string& req_msg,
-  const int32_t method_id, int32_t serial_no) {
-  //
-  RequestBody req_body;
-  req_body.set_method(method_id);
-  req_body.set_timeout(this->config_.GetRpcReadTimeoutMs());
-  req_body.set_request(req_msg);
-  RequestHeader req_header;
-  req_header.set_servicetype(Utils::GetServiceTypeByMethodId(method_id));
-  req_header.set_protocolver(2);
-  RpcConnHeader rpc_header;
-  rpc_header.set_flag(rpc_config::kRpcFlagMsgRequest);
-  
-  // process serial
+bool TubeMQConsumer::processRegisterResponseM2C(
+                              const RegisterResponseM2C& response) {
   return true;
 }
 

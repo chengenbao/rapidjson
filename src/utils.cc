@@ -20,7 +20,9 @@
 #include "tubemq/utils.h"
 
 #include <arpa/inet.h>
+#include <ctype.h>
 #include <linux/if.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <regex.h>
 #include <stdio.h>
@@ -34,6 +36,8 @@
 #include <vector>
 #include "tubemq/const_config.h"
 #include "tubemq/const_rpc.h"
+
+
 
 namespace tubemq {
 
@@ -369,6 +373,46 @@ int32_t Utils::GetServiceTypeByMethodId(int32_t method_id) {
     case rpc_config::kMasterMethoddConsumerClose:
     default: {
       return rpc_config::kMasterService;
+    }
+  }
+}
+
+void Utils::XfsAddrByDns(const map<string, int32_t>& orig_addr_map,
+  map<string, string>& target_addr_map) {
+  hostent* host = NULL;
+  map<string, int32_t>::const_iterator it;
+  for (it = orig_addr_map.begin(); it != orig_addr_map.end(); it++) {
+    int8_t first_char =  it->first.c_str()[0];
+    if (isalpha(first_char)) {
+      host = gethostbyname(it->first.c_str());
+      if (host != NULL) {
+        switch (host->h_addrtype) {
+          case AF_INET:
+          case AF_INET6: {
+            uint8_t **pptr = NULL;
+            uint32_t addr = 0;
+            int8_t temp_str[32];
+            memset(temp_str,0,32);
+            pptr = host->h_addr_list;
+            addr = ((uint32_t *) host->h_addr_list[0])[0];
+            if ((addr & 0xffff) == 0x0a0a) {
+              pptr++;
+              addr = ((uint32_t *) host->h_addr_list[0])[1];
+            }
+            inet_ntop(host->h_addrtype, *pptr, temp_str, sizeof(temp_str));
+            string tempIpaddr = temp_str;
+            if (tempIpaddr.length() > 0) {
+              target_addr_map[it->first] = tempIpaddr;
+            }
+          }
+          break;
+          
+          default:
+            break;    
+        }
+      }
+    } else {
+      target_addr_map[it->first] = it->first;
     }
   }
 }

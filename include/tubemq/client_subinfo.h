@@ -23,6 +23,7 @@
 #include <stdint.h>
 #include <list>
 #include <map>
+#include <mutex>
 #include <set>
 #include <string>
 #include "tubemq/atomic_def.h"
@@ -32,8 +33,10 @@ namespace tubemq {
 
 using std::list;
 using std::map;
+using std::mutex;
 using std::set;
 using std::string;
+
 
 
 class MasterAddrInfo {
@@ -42,11 +45,15 @@ class MasterAddrInfo {
   bool InitMasterAddress(string& err_info, const string& master_info);
   void GetNextMasterAddr(string& ipaddr, int32_t& port);
   void GetCurrentMasterAddr(string& ipaddr, int32_t& port);
-  int32_t GetTotalMasterAddrCnt() { return master_addr_.size(); }
+  int32_t GetTotalMasterAddrCnt() { return master_source_.size(); }
+  void UpdMasterAddrByDns();
 
  private:
-  string curr_master_addr_;
-  map<string, int32_t> master_addr_;
+  bool needXfs_;
+  string curr_addr_;
+  map<string, int32_t> master_source_;
+  mutable mutex mutex_;
+  map<string, string>  master_target_;
 };
 
 class ClientSubInfo {

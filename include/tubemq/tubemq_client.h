@@ -70,28 +70,24 @@ class TubeMQConsumer : public BaseClient {
   void genBrokerAuthenticInfo(AuthorizedInfo* p_authInfo, bool force);
 
  private:
-  bool buidRegisterRequestC2M(TubeMQCodec::ReqProtocol& req_protocol);
-  bool buidHeartRequestC2M(string& err_info,
-                           char** out_msg, int& out_length);
-  bool buidCloseRequestC2M(string& err_info,
-                           char** out_msg, int& out_length);
-  bool processRegisterResponseM2C(
-                    const RegisterResponseM2C& response);
-  bool buidRegisterRequestC2B(const PartitionExt& partition,
-    string& err_info, char** out_msg, int& out_length);
-  bool buidUnRegRequestC2B(const PartitionExt& partition,
-    bool is_last_consumed, string& err_info, char** out_msg, int& out_length);
-  bool buidHeartBeatC2B(const list<PartitionExt>& partitions,
-    string& err_info, char** out_msg, int& out_length);
-  bool buidGetMessageC2B(const PartitionExt& partition,
-    bool is_last_consumed, string& err_info, char** out_msg, int& out_length);
-  bool buidCommitC2B(const PartitionExt& partition,
+  void buidRegisterRequestC2M(TubeMQCodec::ReqProtocol& req_protocol);
+  void buidHeartRequestC2M(string& err_info,
+    TubeMQCodec::ReqProtocol& req_protocol);
+  void buidCloseRequestC2M(TubeMQCodec::ReqProtocol& req_protocol);
+  void buidRegisterRequestC2B(const PartitionExt& partition,
+    TubeMQCodec::ReqProtocol& req_protocol);
+  void buidUnRegRequestC2B(const PartitionExt& partition,
+    bool is_last_consumed, TubeMQCodec::ReqProtocol& req_protocol);
+  void buidHeartBeatC2B(const list<PartitionExt>& partitions,
+    TubeMQCodec::ReqProtocol& req_protocol);
+  void buidGetMessageC2B(const PartitionExt& partition,
+    bool is_last_consumed, TubeMQCodec::ReqProtocol& req_protocol);
+  void buidCommitC2B(const PartitionExt& partition,
     bool is_last_consumed, TubeMQCodec::ReqProtocol& req_protocol);
   void genMasterAuthenticateToken(AuthenticateInfo* pauthinfo,
     const string& username, const string usrpassword);
-  bool getSerializedMsg(string& err_info,
-    char** out_msg, int& out_length, const string& req_msg,
-    const int32_t method_id, int32_t serial_no);
+  void processRegisterResponseM2C(
+                    const RegisterResponseM2C& response);
 
  private:
   string client_uuid_;
