@@ -120,16 +120,15 @@ class TubeMQCodec final : public CodecProtocol {
       rsp_protocol->code_ = err_code::kErrRcvThrowError;
       rsp_protocol->error_msg_ = errInfo;
     }
-    out = any_cast<Any>(rsp_protocol);
+    out = Any(rsp_protocol);
     return true;
   }
 
   virtual bool Encode(const Any &in, BufferPtr &buff) {
-    // TODO
-    ReqProtocolPtr req_protocol = any_cast<ReqProtocolPtr>(in);
-    //
     string body_str;
     RequestBody req_body;
+    ReqProtocolPtr req_protocol = any_cast<ReqProtocolPtr>(in);
+
     req_body.set_method(req_protocol->method_id_);
     req_body.set_timeout(req_protocol->rpc_read_timeout_);
     req_body.set_request(req_protocol->prot_msg_);
@@ -168,35 +167,6 @@ class TubeMQCodec final : public CodecProtocol {
     appendContent(buff, req_str);
     appendContent(buff, body_str);
     return true;    
-  }
-
-  void appendContent(BufferPtr &buff, string &content_str) {
-    uint32_t remain = 0;
-    uint32_t step_len = 0;
-    uint32_t buff_cnt = 0;
-    buff_cnt = calcBlockCount(content_str.length());
-    for (uint32_t i = 0; i < buff_cnt; i++) {
-      remain = content_str.length() - i * (Buffer::kInitialSize - 4);
-      if (remain > Buffer::kInitialSize - 4) {
-        step_len = Buffer::kInitialSize - 4;
-      } else {
-        step_len = content_str.length();
-      }
-      buff->AppendInt32(step_len);
-      buff->Write(content_str.c_str() + i * (Buffer::kInitialSize - 4), step_len);
-    }
-  }
-  
-  uint32_t calcBlockCount(uint32_t content_len) {
-    uint32_t block_cnt = content_len / Buffer::kInitialSize;
-    uint32_t remain_size = content_len % Buffer::kInitialSize;
-    if (remain_size > 0) {
-      block_cnt++;
-    }
-    if ((block_cnt * Buffer::kInitialSize) < (content_len + block_cnt * 4)) {
-      block_cnt++;
-    }
-    return block_cnt;
   }
 
   // return code: -1 failed; 0-Unfinished; > 0 package buffer size
@@ -268,8 +238,59 @@ class TubeMQCodec final : public CodecProtocol {
     return true;
   }
 
+ static bool writeDelimitedTo(
+   const google::protobuf::MessageLite& message,
+   google::protobuf::io::ZeroCopyOutputStream* rawOutput) {
+   // We create a new coded stream for each message.  Don't worry, this is fast.
+   google::protobuf::io::CodedOutputStream output(rawOutput);
  
-  
+   // Write the size.
+   const int32_t size = message.ByteSize();
+   output.WriteVarint32(size);
+ 
+   uint8_t* buffer = output.GetDirectBufferForNBytesAndAdvance(size);
+   if (buffer != NULL) {
+     // Optimization:  The message fits in one buffer, so use the faster
+     // direct-to-array serialization path.
+     message.SerializeWithCachedSizesToArray(buffer);
+   } else {
+     // Slightly-slower path when the message is multiple buffers.
+     message.SerializeWithCachedSizes(&output);
+     if (output.HadError()) return false;
+   }
+ 
+   return true;
+ }
+
+ private:
+  void appendContent(BufferPtr &buff, string &content_str) {
+    uint32_t remain = 0;
+    uint32_t step_len = 0;
+    uint32_t buff_cnt = 0;
+    buff_cnt = calcBlockCount(content_str.length());
+    for (uint32_t i = 0; i < buff_cnt; i++) {
+      remain = content_str.length() - i * (Buffer::kInitialSize - 4);
+      if (remain > Buffer::kInitialSize - 4) {
+        step_len = Buffer::kInitialSize - 4;
+      } else {
+        step_len = content_str.length();
+      }
+      buff->AppendInt32(step_len);
+      buff->Write(content_str.c_str() + i * (Buffer::kInitialSize - 4), step_len);
+    }
+  }
+
+  uint32_t calcBlockCount(uint32_t content_len) {
+    uint32_t block_cnt = content_len / Buffer::kInitialSize;
+    uint32_t remain_size = content_len % Buffer::kInitialSize;
+    if (remain_size > 0) {
+      block_cnt++;
+    }
+    if ((block_cnt * Buffer::kInitialSize) < (content_len + block_cnt * 4)) {
+      block_cnt++;
+    }
+    return block_cnt;
+  }
 };
 }  // namespace tubemq
 #endif
