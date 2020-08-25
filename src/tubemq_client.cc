@@ -26,6 +26,7 @@
 #include "tubemq/const_config.h"
 #include "tubemq/const_rpc.h"
 #include "tubemq/logger.h"
+#include "tubemq/transport.h"
 #include "tubemq/tubemq_config.h"
 #include "tubemq/utils.h"
 #include "tubemq/version.h"
@@ -117,7 +118,47 @@ void TubeMQConsumer::ShutDown() {
 }
 
 bool TubeMQConsumer::register2Master(string& err_info, bool need_change) {
-  // register function
+  string target_ip;
+  int target_port;
+  // check client status
+  if (this->status_.get() == 0) {
+    err_info = "Consumer not startted!";
+    return false;
+  }
+  
+  LOG_DEBUG("[REGISTER], initial register request, clientId= %s",
+    this->client_uuid_.c_str());
+  // get master address and port
+  if (need_change) {
+    getNextMasterAddr(target_ip, target_port);
+  } else {
+    getCurrentMasterAddr(target_ip, target_port);
+  }
+
+  int retry_count = 0;
+  int maxRetrycount = masters_map_.size();
+  err_info = "Master register failure, no online master service!";
+  while (retry_count < maxRetrycount) {
+    if (!TubeMQService::instance()->IsRunning()) {
+      err_info = "TubeMQ Service not stopped!";
+      LOG_INFO("[REGISTER] register2Master failure, %s", err_info.c_str());
+      return false;
+    }
+    RequestContextPtr request;
+    TubeMQCodec::ReqProtocol req_protocol;
+    // build register request
+    buidRegisterRequestC2M(req_protocol);
+    // set parameters
+    request->ip_ = target_ip;
+    request->port_ = target_port;
+    request->timeout_ = config_.GetRpcReadTimeoutMs();
+    request->request_id_ = ;
+    req_protocol.request_id_ = ;
+    req_protocol.rpc_read_timeout_ = config_.GetRpcReadTimeoutMs() - 500;
+    // send message to target
+    // process response
+  }
+  
   return true;
 }
 
