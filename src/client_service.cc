@@ -86,7 +86,7 @@ bool TubeMQService::Start(string& err_info, string conf_file) {
   }
   timer_executor_->Resize(2);
   network_executor_->Resize(4);
-  connection_pool_ = ConnectionPool(network_executor_);
+  connection_pool_ = std::make_shared<ConnectionPool>(network_executor_);
   iniLogger(fileini, sector);
   service_status_.Set(2);
   err_info = "Ok!";
