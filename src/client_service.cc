@@ -88,6 +88,7 @@ bool TubeMQService::Start(string& err_info, string conf_file) {
   network_executor_->Resize(4);
   connection_pool_ = std::make_shared<ConnectionPool>(network_executor_);
   iniLogger(fileini, sector);
+  iniXfsThread(fileini, sector);
   service_status_.Set(2);
   err_info = "Ok!";
   return true;
@@ -95,6 +96,9 @@ bool TubeMQService::Start(string& err_info, string conf_file) {
 
 bool TubeMQService::Stop(string& err_info) {
   if (service_status_.CompareAndSet(2, -1)) {
+    if (dns_xfs_thread_.joinable()) {
+      dns_xfs_thread_.join();
+    }
     shutDownClinets();
     timer_executor_->Close();
     network_executor_->Close();
@@ -118,6 +122,14 @@ void TubeMQService::iniLogger(const Fileini& fileini, const string& sector) {
   fileini.GetValue(err_info, sector, "log_level", log_level, 4);
   log_level = TUBEMQ_MID(log_level, 0, 4);
   GetLogger().Init(log_path, Logger::Level(log_level), log_size, log_num);
+}
+
+void TubeMQService::iniXfsThread(const Fileini& fileini, const string& sector) {
+  string err_info;
+  int32_t dns_xfs_period_ms = 30 * 1000;
+  fileini.GetValue(err_info, sector, "dns_xfs_period_ms", dns_xfs_period_ms, 30 * 1000);
+  TUBEMQ_MID(dns_xfs_period_ms, tb_config::kMaxIntValue, 10000);
+  dns_xfs_thread_ = std::thread(thread_task_dnsxfs, dns_xfs_period_ms);
 }
 
 int32_t TubeMQService::GetClientObjCnt() {
@@ -201,6 +213,18 @@ void TubeMQService::GetXfsMasterAddress(const string& source, string& target) {
   if (master_source_.find(source) != master_source_.end()) {
     target = master_target_[source];
   }
+}
+
+void TubeMQService::thread_task_dnsxfs(int dns_xfs_period_ms) {
+  LOG_INFO("[Service] DSN transfer thread startted!");
+  while (true) {
+    if (TubeMQService::Instance()->GetServiceStatus() == 2) {
+      break;
+    }
+    TubeMQService::Instance()->updMasterAddrByDns();
+    std::this_thread::sleep_for(std::chrono::milliseconds(dns_xfs_period_ms));
+  }
+  LOG_INFO("[Service] DSN transfer thread stopped!");
 }
 
 bool TubeMQService::hasXfsTask(map<string, int32_t>& src_addr_map) {

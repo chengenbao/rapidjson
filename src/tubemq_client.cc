@@ -117,7 +117,7 @@ bool TubeMQConsumer::register2Master(string& err_info, bool need_change) {
   string target_ip;
   int target_port;
   // check client status
-  if (this->status_.get() == 0) {
+  if (this->status_.Get() == 0) {
     err_info = "Consumer not startted!";
     return false;
   }
@@ -134,7 +134,7 @@ bool TubeMQConsumer::register2Master(string& err_info, bool need_change) {
   int maxRetrycount = masters_map_.size();
   err_info = "Master register failure, no online master service!";
   while (retry_count < maxRetrycount) {
-    if (!TubeMQService::instance()->IsRunning()) {
+    if (!TubeMQService::Instance()->IsRunning()) {
       err_info = "TubeMQ Service not stopped!";
       LOG_INFO("[REGISTER] register2Master failure, %s", err_info.c_str());
       return false;

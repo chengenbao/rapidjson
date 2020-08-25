@@ -76,13 +76,17 @@ class TubeMQService : public noncopyable {
   bool AddMasterAddress(string& err_info, const string& master_info);
   void GetXfsMasterAddress(const string& source, string& target);
 
+ protected:
+  void updMasterAddrByDns();
+
  private:
   TubeMQService();
   ~TubeMQService();
   void iniLogger(const Fileini& fileini, const string& sector);
+  void iniXfsThread(const Fileini& fileini, const string& sector);
+  static void thread_task_dnsxfs(int dns_xfs_period_ms);
   void shutDownClinets() const;
   bool hasXfsTask(map<string, int32_t>& src_addr_map);
-  void updMasterAddrByDns();
   bool addNeedDnsXfsAddr(map<string, int32_t>& src_addr_map);
 
  private:
@@ -95,6 +99,7 @@ class TubeMQService : public noncopyable {
   ExecutorPoolPtr timer_executor_;
   ExecutorPoolPtr network_executor_;
   ConnectionPoolPtr connection_pool_;
+  thread  dns_xfs_thread_;
   mutable mutex dns_mutex_;
   map<string, int32_t> master_source_;
   map<string, string> master_target_;
