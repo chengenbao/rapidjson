@@ -44,6 +44,13 @@ Future<ResponseContext> AsyncRequest(RequestContextPtr& request, RequestProtocol
   return future;
 }
 
+template <typename RequestProtocol>
+ErrorCode SyncRequest(ResponseContext& response_context, RequestContextPtr& request,
+                      RequestProtocol& protocol) {
+  auto future = AsyncRequest(request, protocol);
+  return future.Get(response_context);
+}
+
 }  // namespace tubemq
 
 #endif  // _TUBEMQ_TUBEMQ_TRANSPORT_H_

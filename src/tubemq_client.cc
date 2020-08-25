@@ -21,7 +21,9 @@
 
 #include <signal.h>
 #include <unistd.h>
+
 #include <sstream>
+
 #include "tubemq/client_service.h"
 #include "tubemq/const_config.h"
 #include "tubemq/const_rpc.h"
@@ -31,13 +33,9 @@
 #include "tubemq/utils.h"
 #include "tubemq/version.h"
 
-
-
-
 namespace tubemq {
 
 using std::stringstream;
-
 
 bool StartTubeMQService(string& err_info, string& conf_file) {
   signal(SIGPIPE, SIG_IGN);
@@ -79,8 +77,7 @@ bool TubeMQConsumer::Start(string& err_info, const ConsumerConfig& config) {
     return true;
   }
   // check configure
-  if (config.GetGroupName().length() == 0
-    || config.GetMasterAddrInfo().length() == 0) {
+  if (config.GetGroupName().length() == 0 || config.GetMasterAddrInfo().length() == 0) {
     err_info = "Parameter error: not set master address info or group name!";
     return false;
   }
@@ -109,7 +106,6 @@ bool TubeMQConsumer::Start(string& err_info, const ConsumerConfig& config) {
   return true;
 }
 
-
 void TubeMQConsumer::ShutDown() {
   if (!this->status_.CompareAndSet(2, 0)) {
     return;
@@ -125,9 +121,8 @@ bool TubeMQConsumer::register2Master(string& err_info, bool need_change) {
     err_info = "Consumer not startted!";
     return false;
   }
-  
-  LOG_DEBUG("[REGISTER], initial register request, clientId= %s",
-    this->client_uuid_.c_str());
+
+  LOG_DEBUG("[REGISTER], initial register request, clientId= %s", this->client_uuid_.c_str());
   // get master address and port
   if (need_change) {
     getNextMasterAddr(target_ip, target_port);
@@ -145,24 +140,27 @@ bool TubeMQConsumer::register2Master(string& err_info, bool need_change) {
       return false;
     }
     RequestContextPtr request;
-    TubeMQCodec::ReqProtocol req_protocol;
+    TubeMQCodec::ReqProtocolPtr req_protocol = TubeMQCodec::GetReqProtocol();
     // build register request
     buidRegisterRequestC2M(req_protocol);
     // set parameters
     request->ip_ = target_ip;
     request->port_ = target_port;
     request->timeout_ = config_.GetRpcReadTimeoutMs();
-    request->request_id_ = ;
-    req_protocol.request_id_ = ;
-    req_protocol.rpc_read_timeout_ = config_.GetRpcReadTimeoutMs() - 500;
+    request->request_id_ = Singleton<UniqueSeqId>::Next();
+    req_protocol->request_id_ = request->request_id_;
+    req_protocol->rpc_read_timeout_ = config_.GetRpcReadTimeoutMs() - 500;
     // send message to target
+    ResponseContext response_context;
+    ErrorCode error = SyncRequest(response_context, request, req_protocol);
     // process response
+    auto rsp = any_cast<TubeMQCodec::RspProtocolPtr>(response_context.rsp_);
   }
-  
+
   return true;
 }
 
-void TubeMQConsumer::buidRegisterRequestC2M(TubeMQCodec::ReqProtocol& req_protocol) {
+void TubeMQConsumer::buidRegisterRequestC2M(TubeMQCodec::ReqProtocolPtr& req_protocol) {
   string reg_msg;
   RegisterRequestC2M c2m_request;
   list<string>::iterator it_topics;
@@ -187,7 +185,7 @@ void TubeMQConsumer::buidRegisterRequestC2M(TubeMQCodec::ReqProtocol& req_protoc
     c2m_request.add_subscribeinfo(it_sub->ToString());
   }
   // get topic conditions
-  list<string> topic_conds =  this->sub_info_.GetTopicConds();
+  list<string> topic_conds = this->sub_info_.GetTopicConds();
   for (it_topics = topic_conds.begin(); it_topics != topic_conds.end(); ++it_topics) {
     c2m_request.add_topiccondition(*it_topics);
   }
@@ -195,13 +193,12 @@ void TubeMQConsumer::buidRegisterRequestC2M(TubeMQCodec::ReqProtocol& req_protoc
   if (needGenMasterCertificateInfo(true)) {
     MasterCertificateInfo* pmst_certinfo = c2m_request.mutable_authinfo();
     AuthenticateInfo* pauthinfo = pmst_certinfo->mutable_authinfo();
-    genMasterAuthenticateToken(pauthinfo,
-      config_.GetUsrName(), config_.GetUsrPassWord());
+    genMasterAuthenticateToken(pauthinfo, config_.GetUsrName(), config_.GetUsrPassWord());
   }
   //
   c2m_request.SerializeToString(&reg_msg);
-  req_protocol.method_id_ = rpc_config::kMasterMethoddConsumerRegister; 
-  req_protocol.prot_msg_ = reg_msg;
+  req_protocol->method_id_ = rpc_config::kMasterMethoddConsumerRegister;
+  req_protocol->prot_msg_ = reg_msg;
 }
 
 void TubeMQConsumer::buidHeartRequestC2M(TubeMQCodec::ReqProtocol& req_protocol) {
@@ -224,7 +221,7 @@ void TubeMQConsumer::buidHeartRequestC2M(TubeMQCodec::ReqProtocol& req_protocol)
     c2m_request.set_reportsubscribeinfo(true);
     this->rmtdata_cache_.GetSubscribedInfo(subscribe_info_lst);
     if (has_event) {
-      EventProto *event_proto = c2m_request.mutable_event();
+      EventProto* event_proto = c2m_request.mutable_event();
       event_proto->set_rebalanceid(event.GetRebalanceId());
       event_proto->set_optype(event.GetEventType());
       event_proto->set_status(event.GetEventStatus());
@@ -242,11 +239,10 @@ void TubeMQConsumer::buidHeartRequestC2M(TubeMQCodec::ReqProtocol& req_protocol)
   if (needGenMasterCertificateInfo(true)) {
     MasterCertificateInfo* pmst_certinfo = c2m_request.mutable_authinfo();
     AuthenticateInfo* pauthinfo = pmst_certinfo->mutable_authinfo();
-    genMasterAuthenticateToken(pauthinfo,
-      config_.GetUsrName(), config_.GetUsrPassWord());
+    genMasterAuthenticateToken(pauthinfo, config_.GetUsrName(), config_.GetUsrPassWord());
   }
   c2m_request.SerializeToString(&hb_msg);
-  req_protocol.method_id_ = rpc_config::kMasterMethoddConsumerHeatbeat; 
+  req_protocol.method_id_ = rpc_config::kMasterMethoddConsumerHeatbeat;
   req_protocol.prot_msg_ = hb_msg;
 }
 
@@ -258,16 +254,15 @@ void TubeMQConsumer::buidCloseRequestC2M(TubeMQCodec::ReqProtocol& req_protocol)
   if (needGenMasterCertificateInfo(true)) {
     MasterCertificateInfo* pmst_certinfo = c2m_request.mutable_authinfo();
     AuthenticateInfo* pauthinfo = pmst_certinfo->mutable_authinfo();
-    genMasterAuthenticateToken(pauthinfo,
-      config_.GetUsrName(), config_.GetUsrPassWord());
+    genMasterAuthenticateToken(pauthinfo, config_.GetUsrName(), config_.GetUsrPassWord());
   }
   c2m_request.SerializeToString(&close_msg);
-  req_protocol.method_id_ = rpc_config::kMasterMethoddConsumerClose; 
+  req_protocol.method_id_ = rpc_config::kMasterMethoddConsumerClose;
   req_protocol.prot_msg_ = close_msg;
 }
 
 void TubeMQConsumer::buidRegisterRequestC2B(const PartitionExt& partition,
-    TubeMQCodec::ReqProtocol& req_protocol) {
+                                            TubeMQCodec::ReqProtocol& req_protocol) {
   bool is_first_reg;
   int64_t part_offset;
   set<string> filter_cond_set;
@@ -287,14 +282,12 @@ void TubeMQConsumer::buidRegisterRequestC2B(const PartitionExt& partition,
     if (filter_map.find(partition.GetTopic()) != filter_map.end()) {
       filter_cond_set = filter_map[partition.GetTopic()];
       for (set<string>::iterator it_cond = filter_cond_set.begin();
-        it_cond != filter_cond_set.end(); it_cond++) {
-          c2b_request.add_filtercondstr(*it_cond);
+           it_cond != filter_cond_set.end(); it_cond++) {
+        c2b_request.add_filtercondstr(*it_cond);
       }
     }
   }
-  if (is_first_reg
-    && sub_info_.IsBoundConsume()
-    && sub_info_.IsNotAllocated()) {
+  if (is_first_reg && sub_info_.IsBoundConsume() && sub_info_.IsNotAllocated()) {
     sub_info_.GetAssignedPartOffset(partition.GetPartitionKey(), part_offset);
     if (part_offset != tb_config::kInvalidValue) {
       c2b_request.set_curroffset(part_offset);
@@ -303,12 +296,12 @@ void TubeMQConsumer::buidRegisterRequestC2B(const PartitionExt& partition,
   AuthorizedInfo* p_authInfo = c2b_request.mutable_authinfo();
   genBrokerAuthenticInfo(p_authInfo, true);
   c2b_request.SerializeToString(&register_msg);
-  req_protocol.method_id_ = rpc_config::kBrokerMethoddConsumerRegister; 
+  req_protocol.method_id_ = rpc_config::kBrokerMethoddConsumerRegister;
   req_protocol.prot_msg_ = register_msg;
 }
 
-void TubeMQConsumer::buidUnRegRequestC2B(const PartitionExt& partition,
-    bool is_last_consumed, TubeMQCodec::ReqProtocol& req_protocol) {
+void TubeMQConsumer::buidUnRegRequestC2B(const PartitionExt& partition, bool is_last_consumed,
+                                         TubeMQCodec::ReqProtocol& req_protocol) {
   string unreg_msg;
   RegisterRequestC2B c2b_request;
   c2b_request.set_clientid(this->client_uuid_);
@@ -320,12 +313,12 @@ void TubeMQConsumer::buidUnRegRequestC2B(const PartitionExt& partition,
   AuthorizedInfo* p_authInfo = c2b_request.mutable_authinfo();
   genBrokerAuthenticInfo(p_authInfo, true);
   c2b_request.SerializeToString(&unreg_msg);
-  req_protocol.method_id_ = rpc_config::kBrokerMethoddConsumerRegister; 
-  req_protocol.prot_msg_ = unreg_msg;  
+  req_protocol.method_id_ = rpc_config::kBrokerMethoddConsumerRegister;
+  req_protocol.prot_msg_ = unreg_msg;
 }
 
 void TubeMQConsumer::buidHeartBeatC2B(const list<PartitionExt>& partitions,
-    TubeMQCodec::ReqProtocol& req_protocol) {
+                                      TubeMQCodec::ReqProtocol& req_protocol) {
   string hb_msg;
   HeartBeatRequestC2B c2b_request;
   list<PartitionExt>::const_iterator it_part;
@@ -339,12 +332,12 @@ void TubeMQConsumer::buidHeartBeatC2B(const list<PartitionExt>& partitions,
   AuthorizedInfo* p_authInfo = c2b_request.mutable_authinfo();
   genBrokerAuthenticInfo(p_authInfo, true);
   c2b_request.SerializeToString(&hb_msg);
-  req_protocol.method_id_ = rpc_config::kBrokerMethoddConsumerHeatbeat; 
-  req_protocol.prot_msg_ = hb_msg;  
+  req_protocol.method_id_ = rpc_config::kBrokerMethoddConsumerHeatbeat;
+  req_protocol.prot_msg_ = hb_msg;
 }
 
-void TubeMQConsumer::buidGetMessageC2B(const PartitionExt& partition,
-  bool is_last_consumed, TubeMQCodec::ReqProtocol& req_protocol) {
+void TubeMQConsumer::buidGetMessageC2B(const PartitionExt& partition, bool is_last_consumed,
+                                       TubeMQCodec::ReqProtocol& req_protocol) {
   string get_msg;
   GetMessageRequestC2B c2b_request;
   c2b_request.set_clientid(this->client_uuid_);
@@ -355,12 +348,12 @@ void TubeMQConsumer::buidGetMessageC2B(const PartitionExt& partition,
   c2b_request.set_lastpackconsumed(is_last_consumed);
   c2b_request.set_manualcommitoffset(false);
   c2b_request.SerializeToString(&get_msg);
-  req_protocol.method_id_ = rpc_config::kBrokerMethoddConsumerGetMsg; 
-  req_protocol.prot_msg_ = get_msg;  
+  req_protocol.method_id_ = rpc_config::kBrokerMethoddConsumerGetMsg;
+  req_protocol.prot_msg_ = get_msg;
 }
 
-void TubeMQConsumer::buidCommitC2B(const PartitionExt& partition,
-  bool is_last_consumed, TubeMQCodec::ReqProtocol& req_protocol) {
+void TubeMQConsumer::buidCommitC2B(const PartitionExt& partition, bool is_last_consumed,
+                                   TubeMQCodec::ReqProtocol& req_protocol) {
   string commit_msg;
   CommitOffsetRequestC2B c2b_request;
   c2b_request.set_clientid(this->client_uuid_);
@@ -369,12 +362,11 @@ void TubeMQConsumer::buidCommitC2B(const PartitionExt& partition,
   c2b_request.set_partitionid(partition.GetPartitionId());
   c2b_request.set_lastpackconsumed(is_last_consumed);
   c2b_request.SerializeToString(&commit_msg);
-  req_protocol.method_id_ = rpc_config::kBrokerMethoddConsumerCommit; 
-  req_protocol.prot_msg_ = commit_msg;  
+  req_protocol.method_id_ = rpc_config::kBrokerMethoddConsumerCommit;
+  req_protocol.prot_msg_ = commit_msg;
 }
 
-bool TubeMQConsumer::processRegisterResponseM2C(
-                              const RegisterResponseM2C& response) {
+bool TubeMQConsumer::processRegisterResponseM2C(const RegisterResponseM2C& response) {
   return true;
 }
 
@@ -399,29 +391,25 @@ int32_t TubeMQConsumer::getConsumeReadStatus(bool is_first_reg) {
   if (is_first_reg) {
     if (this->config_.GetConsumePosition() == 0) {
       readStatus = rpc_config::kConsumeStatusFromMax;
-      LOG_INFO("[Consumer From Max Offset], clientId=%s",
-        this->client_uuid_.c_str());
+      LOG_INFO("[Consumer From Max Offset], clientId=%s", this->client_uuid_.c_str());
     } else if (this->config_.GetConsumePosition() > 0) {
       readStatus = rpc_config::kConsumeStatusFromMaxAlways;
-      LOG_INFO("[Consumer From Max Offset Always], clientId=%s",
-        this->client_uuid_.c_str());
+      LOG_INFO("[Consumer From Max Offset Always], clientId=%s", this->client_uuid_.c_str());
     }
   }
   return readStatus;
 }
 
-bool TubeMQConsumer::initMasterAddress(string& err_info,
-                                       const string& master_info) {
+bool TubeMQConsumer::initMasterAddress(string& err_info, const string& master_info) {
   masters_map_.clear();
-  Utils::Split(master_info, masters_map_,
-    delimiter::kDelimiterComma, delimiter::kDelimiterColon);
+  Utils::Split(master_info, masters_map_, delimiter::kDelimiterComma, delimiter::kDelimiterColon);
   if (masters_map_.empty()) {
     err_info = "Illegal parameter: master_info is blank!";
     return false;
   }
   bool needXfs = false;
   map<string, int32_t>::iterator it;
-  for (it = masters_map_.begin(); it != masters_map_.end(); it++ ) {
+  for (it = masters_map_.begin(); it != masters_map_.end(); it++) {
     if (Utils::NeedDnsXfs(it->first)) {
       needXfs = true;
       break;
@@ -448,7 +436,7 @@ void TubeMQConsumer::getNextMasterAddr(string& ipaddr, int32_t& port) {
     it = masters_map_.begin();
   }
   ipaddr = it->first;
-  port   = it->second;
+  port = it->second;
   curr_master_addr_ = it->first;
   if (Utils::NeedDnsXfs(ipaddr)) {
     TubeMQService::Instance()->GetXfsMasterAddress(curr_master_addr_, ipaddr);
@@ -472,7 +460,7 @@ bool TubeMQConsumer::needGenMasterCertificateInfo(bool force) {
     } else if (nextauth_2_master.Get()) {
       if (nextauth_2_master.CompareAndSet(true, false)) {
         needAdd = true;
-      }      
+      }
     }
   }
   return needAdd;
@@ -491,18 +479,17 @@ void TubeMQConsumer::genBrokerAuthenticInfo(AuthorizedInfo* p_authInfo, bool for
       }
     }
     if (needAdd) {
-      string auth_token = Utils::GenBrokerAuthenticateToken(
-        config_.GetUsrName(), config_.GetUsrPassWord());
+      string auth_token =
+          Utils::GenBrokerAuthenticateToken(config_.GetUsrName(), config_.GetUsrPassWord());
       p_authInfo->set_authauthorizedtoken(auth_token);
     }
   }
 }
 
-void TubeMQConsumer::genMasterAuthenticateToken(AuthenticateInfo* pauthinfo,
-  const string& username, const string usrpassword) {
+void TubeMQConsumer::genMasterAuthenticateToken(AuthenticateInfo* pauthinfo, const string& username,
+                                                const string usrpassword) {
   //
 }
-
 
 }  // namespace tubemq
 
