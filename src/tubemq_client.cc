@@ -23,6 +23,7 @@
 #include <unistd.h>
 
 #include <sstream>
+
 #include "tubemq/client_service.h"
 #include "tubemq/const_config.h"
 #include "tubemq/const_rpc.h"
@@ -147,7 +148,7 @@ bool TubeMQConsumer::register2Master(string& err_info, bool need_change) {
     request->ip_ = target_ip;
     request->port_ = target_port;
     request->timeout_ = config_.GetRpcReadTimeoutMs();
-    request->request_id_ = Singleton<UniqueSeqId>::Next();
+    request->request_id_ = Singleton<UniqueSeqId>::Instance().Next();
     req_protocol->request_id_ = request->request_id_;
     req_protocol->rpc_read_timeout_ = config_.GetRpcReadTimeoutMs() - 500;
     // send message to target
