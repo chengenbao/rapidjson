@@ -30,6 +30,7 @@
 #include "tubemq/logger.h"
 #include "tubemq/singleton.h"
 #include "tubemq/transport.h"
+#include "tubemq/tubemq_transport.h"
 #include "tubemq/tubemq_config.h"
 #include "tubemq/utils.h"
 #include "tubemq/version.h"
@@ -202,7 +203,7 @@ void TubeMQConsumer::buidRegisterRequestC2M(TubeMQCodec::ReqProtocolPtr& req_pro
   req_protocol->prot_msg_ = reg_msg;
 }
 
-void TubeMQConsumer::buidHeartRequestC2M(TubeMQCodec::ReqProtocol& req_protocol) {
+void TubeMQConsumer::buidHeartRequestC2M(TubeMQCodec::ReqProtocolPtr& req_protocol) {
   string hb_msg;
   HeartRequestC2M c2m_request;
   list<string>::iterator it_topics;
@@ -243,11 +244,11 @@ void TubeMQConsumer::buidHeartRequestC2M(TubeMQCodec::ReqProtocol& req_protocol)
     genMasterAuthenticateToken(pauthinfo, config_.GetUsrName(), config_.GetUsrPassWord());
   }
   c2m_request.SerializeToString(&hb_msg);
-  req_protocol.method_id_ = rpc_config::kMasterMethoddConsumerHeatbeat;
-  req_protocol.prot_msg_ = hb_msg;
+  req_protocol->method_id_ = rpc_config::kMasterMethoddConsumerHeatbeat;
+  req_protocol->prot_msg_ = hb_msg;
 }
 
-void TubeMQConsumer::buidCloseRequestC2M(TubeMQCodec::ReqProtocol& req_protocol) {
+void TubeMQConsumer::buidCloseRequestC2M(TubeMQCodec::ReqProtocolPtr& req_protocol) {
   string close_msg;
   CloseRequestC2M c2m_request;
   c2m_request.set_clientid(this->client_uuid_);
@@ -258,12 +259,12 @@ void TubeMQConsumer::buidCloseRequestC2M(TubeMQCodec::ReqProtocol& req_protocol)
     genMasterAuthenticateToken(pauthinfo, config_.GetUsrName(), config_.GetUsrPassWord());
   }
   c2m_request.SerializeToString(&close_msg);
-  req_protocol.method_id_ = rpc_config::kMasterMethoddConsumerClose;
-  req_protocol.prot_msg_ = close_msg;
+  req_protocol->method_id_ = rpc_config::kMasterMethoddConsumerClose;
+  req_protocol->prot_msg_ = close_msg;
 }
 
 void TubeMQConsumer::buidRegisterRequestC2B(const PartitionExt& partition,
-                                            TubeMQCodec::ReqProtocol& req_protocol) {
+                                            TubeMQCodec::ReqProtocolPtr& req_protocol) {
   bool is_first_reg;
   int64_t part_offset;
   set<string> filter_cond_set;
@@ -297,12 +298,12 @@ void TubeMQConsumer::buidRegisterRequestC2B(const PartitionExt& partition,
   AuthorizedInfo* p_authInfo = c2b_request.mutable_authinfo();
   genBrokerAuthenticInfo(p_authInfo, true);
   c2b_request.SerializeToString(&register_msg);
-  req_protocol.method_id_ = rpc_config::kBrokerMethoddConsumerRegister;
-  req_protocol.prot_msg_ = register_msg;
+  req_protocol->method_id_ = rpc_config::kBrokerMethoddConsumerRegister;
+  req_protocol->prot_msg_ = register_msg;
 }
 
 void TubeMQConsumer::buidUnRegRequestC2B(const PartitionExt& partition, bool is_last_consumed,
-                                         TubeMQCodec::ReqProtocol& req_protocol) {
+                                         TubeMQCodec::ReqProtocolPtr& req_protocol) {
   string unreg_msg;
   RegisterRequestC2B c2b_request;
   c2b_request.set_clientid(this->client_uuid_);
@@ -314,8 +315,8 @@ void TubeMQConsumer::buidUnRegRequestC2B(const PartitionExt& partition, bool is_
   AuthorizedInfo* p_authInfo = c2b_request.mutable_authinfo();
   genBrokerAuthenticInfo(p_authInfo, true);
   c2b_request.SerializeToString(&unreg_msg);
-  req_protocol.method_id_ = rpc_config::kBrokerMethoddConsumerRegister;
-  req_protocol.prot_msg_ = unreg_msg;
+  req_protocol->method_id_ = rpc_config::kBrokerMethoddConsumerRegister;
+  req_protocol->prot_msg_ = unreg_msg;
 }
 
 void TubeMQConsumer::buidHeartBeatC2B(const list<PartitionExt>& partitions,
@@ -333,12 +334,12 @@ void TubeMQConsumer::buidHeartBeatC2B(const list<PartitionExt>& partitions,
   AuthorizedInfo* p_authInfo = c2b_request.mutable_authinfo();
   genBrokerAuthenticInfo(p_authInfo, true);
   c2b_request.SerializeToString(&hb_msg);
-  req_protocol.method_id_ = rpc_config::kBrokerMethoddConsumerHeatbeat;
-  req_protocol.prot_msg_ = hb_msg;
+  req_protocol->method_id_ = rpc_config::kBrokerMethoddConsumerHeatbeat;
+  req_protocol->prot_msg_ = hb_msg;
 }
 
 void TubeMQConsumer::buidGetMessageC2B(const PartitionExt& partition, bool is_last_consumed,
-                                       TubeMQCodec::ReqProtocol& req_protocol) {
+                                       TubeMQCodec::ReqProtocolPtr& req_protocol) {
   string get_msg;
   GetMessageRequestC2B c2b_request;
   c2b_request.set_clientid(this->client_uuid_);
@@ -349,12 +350,12 @@ void TubeMQConsumer::buidGetMessageC2B(const PartitionExt& partition, bool is_la
   c2b_request.set_lastpackconsumed(is_last_consumed);
   c2b_request.set_manualcommitoffset(false);
   c2b_request.SerializeToString(&get_msg);
-  req_protocol.method_id_ = rpc_config::kBrokerMethoddConsumerGetMsg;
-  req_protocol.prot_msg_ = get_msg;
+  req_protocol->method_id_ = rpc_config::kBrokerMethoddConsumerGetMsg;
+  req_protocol->prot_msg_ = get_msg;
 }
 
 void TubeMQConsumer::buidCommitC2B(const PartitionExt& partition, bool is_last_consumed,
-                                   TubeMQCodec::ReqProtocol& req_protocol) {
+                                   TubeMQCodec::ReqProtocolPtr& req_protocol) {
   string commit_msg;
   CommitOffsetRequestC2B c2b_request;
   c2b_request.set_clientid(this->client_uuid_);
@@ -363,8 +364,8 @@ void TubeMQConsumer::buidCommitC2B(const PartitionExt& partition, bool is_last_c
   c2b_request.set_partitionid(partition.GetPartitionId());
   c2b_request.set_lastpackconsumed(is_last_consumed);
   c2b_request.SerializeToString(&commit_msg);
-  req_protocol.method_id_ = rpc_config::kBrokerMethoddConsumerCommit;
-  req_protocol.prot_msg_ = commit_msg;
+  req_protocol->method_id_ = rpc_config::kBrokerMethoddConsumerCommit;
+  req_protocol->prot_msg_ = commit_msg;
 }
 
 bool TubeMQConsumer::processRegisterResponseM2C(const RegisterResponseM2C& response) {
