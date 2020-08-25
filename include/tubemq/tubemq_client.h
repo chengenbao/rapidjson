@@ -73,19 +73,19 @@ class TubeMQConsumer : public BaseClient {
   void genBrokerAuthenticInfo(AuthorizedInfo* p_authInfo, bool force);
 
  private:
-  void buidRegisterRequestC2M(TubeMQCodec::ReqProtocol& req_protocol);
-  void buidHeartRequestC2M(TubeMQCodec::ReqProtocol& req_protocol);
-  void buidCloseRequestC2M(TubeMQCodec::ReqProtocol& req_protocol);
+  void buidRegisterRequestC2M(TubeMQCodec::ReqProtocolPtr& req_protocol);
+  void buidHeartRequestC2M(TubeMQCodec::ReqProtocolPtr& req_protocol);
+  void buidCloseRequestC2M(TubeMQCodec::ReqProtocolPtr& req_protocol);
   void buidRegisterRequestC2B(const PartitionExt& partition,
-    TubeMQCodec::ReqProtocol& req_protocol);
+    TubeMQCodec::ReqProtocolPtr& req_protocol);
   void buidUnRegRequestC2B(const PartitionExt& partition,
-    bool is_last_consumed, TubeMQCodec::ReqProtocol& req_protocol);
+    bool is_last_consumed, TubeMQCodec::ReqProtocolPtr& req_protocol);
   void buidHeartBeatC2B(const list<PartitionExt>& partitions,
-    TubeMQCodec::ReqProtocol& req_protocol);
+    TubeMQCodec::ReqProtocolPtr& req_protocol);
   void buidGetMessageC2B(const PartitionExt& partition,
-    bool is_last_consumed, TubeMQCodec::ReqProtocol& req_protocol);
+    bool is_last_consumed, TubeMQCodec::ReqProtocolPtr& req_protocol);
   void buidCommitC2B(const PartitionExt& partition,
-    bool is_last_consumed, TubeMQCodec::ReqProtocol& req_protocol);
+    bool is_last_consumed, TubeMQCodec::ReqProtocolPtr& req_protocol);
   void genMasterAuthenticateToken(AuthenticateInfo* pauthinfo,
     const string& username, const string usrpassword);
   bool processRegisterResponseM2C(

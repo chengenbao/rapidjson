@@ -23,11 +23,11 @@
 #include <unistd.h>
 
 #include <sstream>
-
 #include "tubemq/client_service.h"
 #include "tubemq/const_config.h"
 #include "tubemq/const_rpc.h"
 #include "tubemq/logger.h"
+#include "tubemq/singleton.h"
 #include "tubemq/transport.h"
 #include "tubemq/tubemq_config.h"
 #include "tubemq/utils.h"
