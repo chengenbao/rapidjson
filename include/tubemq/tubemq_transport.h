@@ -41,7 +41,7 @@ Future<ResponseContext> AsyncRequest(RequestContextPtr& request, RequestProtocol
   if (pool != nullptr) {
     pool->GetConnection(request)->AsyncWrite(request);
   } else {
-    request->promise_.SetFailed(err_code::kErrServerStop);
+    request->promise_.SetFailed(ErrorCode(err_code::kErrServerStop, "server is stop"));
   }
   return future;
 }

@@ -65,7 +65,7 @@ class Future {
     if (!state_->ready_) {
       // Wait for error_code_
       while (!state_->ready_) {
-        state_->condition.wait(lock);
+        state_->condition_.wait(lock);
       }
     }
 
