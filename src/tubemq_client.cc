@@ -202,7 +202,7 @@ void TubeMQConsumer::buidRegisterRequestC2M(TubeMQCodec::ReqProtocolPtr& req_pro
   req_protocol->prot_msg_ = reg_msg;
 }
 
-void TubeMQConsumer::buidHeartRequestC2M(TubeMQCodec::ReqProtocol& req_protocol) {
+void TubeMQConsumer::buidHeartRequestC2M(TubeMQCodec::ReqProtocolPtr& req_protocol) {
   string hb_msg;
   HeartRequestC2M c2m_request;
   list<string>::iterator it_topics;
@@ -247,7 +247,7 @@ void TubeMQConsumer::buidHeartRequestC2M(TubeMQCodec::ReqProtocol& req_protocol)
   req_protocol->prot_msg_ = hb_msg;
 }
 
-void TubeMQConsumer::buidCloseRequestC2M(TubeMQCodec::ReqProtocol& req_protocol) {
+void TubeMQConsumer::buidCloseRequestC2M(TubeMQCodec::ReqProtocolPtr& req_protocol) {
   string close_msg;
   CloseRequestC2M c2m_request;
   c2m_request.set_clientid(this->client_uuid_);
@@ -263,7 +263,7 @@ void TubeMQConsumer::buidCloseRequestC2M(TubeMQCodec::ReqProtocol& req_protocol)
 }
 
 void TubeMQConsumer::buidRegisterRequestC2B(const PartitionExt& partition,
-                                            TubeMQCodec::ReqProtocol& req_protocol) {
+                                            TubeMQCodec::ReqProtocolPtr& req_protocol) {
   bool is_first_reg;
   int64_t part_offset;
   set<string> filter_cond_set;
@@ -302,7 +302,7 @@ void TubeMQConsumer::buidRegisterRequestC2B(const PartitionExt& partition,
 }
 
 void TubeMQConsumer::buidUnRegRequestC2B(const PartitionExt& partition, bool is_last_consumed,
-                                         TubeMQCodec::ReqProtocol& req_protocol) {
+                                         TubeMQCodec::ReqProtocolPtr& req_protocol) {
   string unreg_msg;
   RegisterRequestC2B c2b_request;
   c2b_request.set_clientid(this->client_uuid_);
@@ -338,7 +338,7 @@ void TubeMQConsumer::buidHeartBeatC2B(const list<PartitionExt>& partitions,
 }
 
 void TubeMQConsumer::buidGetMessageC2B(const PartitionExt& partition, bool is_last_consumed,
-                                       TubeMQCodec::ReqProtocol& req_protocol) {
+                                       TubeMQCodec::ReqProtocolPtr& req_protocol) {
   string get_msg;
   GetMessageRequestC2B c2b_request;
   c2b_request.set_clientid(this->client_uuid_);
@@ -354,7 +354,7 @@ void TubeMQConsumer::buidGetMessageC2B(const PartitionExt& partition, bool is_la
 }
 
 void TubeMQConsumer::buidCommitC2B(const PartitionExt& partition, bool is_last_consumed,
-                                   TubeMQCodec::ReqProtocol& req_protocol) {
+                                   TubeMQCodec::ReqProtocolPtr& req_protocol) {
   string commit_msg;
   CommitOffsetRequestC2B c2b_request;
   c2b_request.set_clientid(this->client_uuid_);
