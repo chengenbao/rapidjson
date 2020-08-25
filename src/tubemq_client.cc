@@ -320,7 +320,7 @@ void TubeMQConsumer::buidUnRegRequestC2B(const PartitionExt& partition, bool is_
 }
 
 void TubeMQConsumer::buidHeartBeatC2B(const list<PartitionExt>& partitions,
-                                      TubeMQCodec::ReqProtocol& req_protocol) {
+                                      TubeMQCodec::ReqProtocolPtr& req_protocol) {
   string hb_msg;
   HeartBeatRequestC2B c2b_request;
   list<PartitionExt>::const_iterator it_part;
