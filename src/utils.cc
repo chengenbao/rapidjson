@@ -417,6 +417,16 @@ void Utils::XfsAddrByDns(const map<string, int32_t>& orig_addr_map,
   }
 }
 
+bool Utils::NeedDnsXfs(const string& masteraddr) {
+  if (masteraddr.length() > 0) {
+    char first_char =  masteraddr.c_str()[0];
+    if (isalpha(first_char)) {
+      return true;
+    }
+  }
+  return false;  
+}
+
 string Utils::GenBrokerAuthenticateToken(const string& username,
   const string& usrpassword) {
   return "";

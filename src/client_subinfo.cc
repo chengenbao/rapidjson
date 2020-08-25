@@ -19,96 +19,12 @@
 
 #include "tubemq/client_subinfo.h"
 
-#include <ctype.h>
-
 #include "tubemq/const_config.h"
 #include "tubemq/utils.h"
 
 
 
 namespace tubemq {
-
-using std::lock_guard;
-
-MasterAddrInfo::MasterAddrInfo() {
-  curr_addr_ = "";
-  needXfs_ = false;
-  master_source_.clear();
-  master_target_.clear();
-}
-
-bool MasterAddrInfo::InitMasterAddress(string& err_info,
-                                       const string& master_info) {
-  master_source_.clear();
-  Utils::Split(master_info, master_source_,
-    delimiter::kDelimiterComma, delimiter::kDelimiterColon);
-  if (master_source_.empty()) {
-    err_info = "Illegal parameter: master_info is blank!";
-    return false;
-  }
-  map<string, int32_t>::iterator it;
-  for (it =master_source_.begin(); it != master_source_.end(); it++ ) {
-    int8_t first_char =  it->first.c_str()[0];
-    if (isalpha(first_char)) {
-      needXfs_ = true;
-      break;
-    }
-  }
-  if (needXfs_) {
-    UpdMasterAddrByDns();
-  }
-  it = master_source_.begin();
-  curr_addr_ = it->first;
-  err_info = "Ok";
-  return true;
-}
-
-void MasterAddrInfo::GetNextMasterAddr(string& ipaddr, int32_t& port) {
-  map<string, int32_t>::iterator it;
-  it = master_source_.find(curr_addr_);
-  if (it != master_source_.end()) {
-    it++;
-    if (it == master_source_.end()) {
-      it = master_source_.begin();
-    }
-  } else {
-    it = master_source_.begin();
-  }
-  ipaddr = it->first;
-  port   = it->second;
-  curr_addr_ = it->first;
-  if (needXfs_) {
-    lock_guard<mutex> lck(mutex_);
-    ipaddr = master_target_[it->first];
-  }
-}
-
-void MasterAddrInfo::GetCurrentMasterAddr(string& ipaddr, int32_t& port) {
-  ipaddr = curr_addr_;
-  port = master_source_[curr_addr_];
-  if (needXfs_) {
-    lock_guard<mutex> lck(mutex_);
-    ipaddr = master_target_[curr_addr_];
-  }
-}
-
-void MasterAddrInfo::UpdMasterAddrByDns() {
-  map<string, string> tmp_addr_map;
-  map<string, int32_t>::iterator it;
-  if (!needXfs_ || master_source_.empty()) {
-    return;
-  }
-  Utils::XfsAddrByDns(master_source_, tmp_addr_map);
-  lock_guard<mutex> lck(mutex_);
-  if (tmp_addr_map.empty()) {
-    for (it =master_source_.begin(); it != master_source_.end(); it++ ) {
-      this->master_target_[it->first] = it->first;
-    }
-  } else {
-    this->master_target_ = tmp_addr_map;
-  }
-}
-
 
 
 

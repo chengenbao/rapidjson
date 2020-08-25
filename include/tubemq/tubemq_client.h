@@ -65,6 +65,9 @@ class TubeMQConsumer : public BaseClient {
  private:
   string buildUUID();
   int32_t getConsumeReadStatus(bool is_first_reg);
+  bool initMasterAddress(string& err_info, const string& master_info);
+  void getNextMasterAddr(string& ipaddr, int32_t& port);
+  void getCurrentMasterAddr(string& ipaddr, int32_t& port);
   bool register2Master(string& err_info, bool need_change);
   bool needGenMasterCertificateInfo(bool force);
   void genBrokerAuthenticInfo(AuthorizedInfo* p_authInfo, bool force);
@@ -98,6 +101,8 @@ class TubeMQConsumer : public BaseClient {
   AtomicBoolean nextauth_2_master;
   AtomicBoolean nextauth_2_broker;
   int32_t cur_report_times_;
+  string curr_master_addr_;
+  map<string, int32_t> masters_map_;
 };
 
 

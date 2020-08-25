@@ -74,12 +74,17 @@ class TubeMQService : public noncopyable {
   const string& GetLocalHost() const { return local_host_; }
   ExecutorPool& GetTimerExecutorPool() { return timer_executor_; }
   ExecutorPool& GetNetWorkExecutorPool() { return network_executor_; }
+  bool AddMasterAddress(string& err_info, const string& master_info);
+  void GetXfsMasterAddress(const string& source, string& target);
 
  private:
   TubeMQService();
   ~TubeMQService();
   void iniLogger(const Fileini& fileini, const string& sector);
   void shutDownClinets() const;
+  bool hasXfsTask(map<string, int32_t>& src_addr_map);
+  void updMasterAddrByDns();
+  bool addNeedDnsXfsAddr(map<string, int32_t>& src_addr_map);
 
  private:
   static TubeMQService* _instance;
@@ -90,6 +95,10 @@ class TubeMQService : public noncopyable {
   map<int32_t, BaseClient*> clients_map_;
   ExecutorPool timer_executor_;
   ExecutorPool network_executor_;
+  mutable mutex dns_mutex_;
+  map<string, int32_t> master_source_;
+  map<string, string>  master_target_;
+  
 };
 
 }  // namespace tubemq

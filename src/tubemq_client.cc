@@ -63,6 +63,8 @@ TubeMQConsumer::TubeMQConsumer() : BaseClient(false) {
   visit_token_.Set(tb_config::kInvalidValue);
   nextauth_2_master.Set(false);
   nextauth_2_broker.Set(false);
+  curr_master_addr_ = "";
+  masters_map_.clear();
 }
 
 TubeMQConsumer::~TubeMQConsumer() {
@@ -365,6 +367,59 @@ int32_t TubeMQConsumer::getConsumeReadStatus(bool is_first_reg) {
     }
   }
   return readStatus;
+}
+
+bool TubeMQConsumer::initMasterAddress(string& err_info,
+                                       const string& master_info) {
+  masters_map_.clear();
+  Utils::Split(master_info, masters_map_,
+    delimiter::kDelimiterComma, delimiter::kDelimiterColon);
+  if (masters_map_.empty()) {
+    err_info = "Illegal parameter: master_info is blank!";
+    return false;
+  }
+  bool needXfs = false;
+  map<string, int32_t>::iterator it;
+  for (it = masters_map_.begin(); it != masters_map_.end(); it++ ) {
+    if (Utils::NeedDnsXfs(it->first)) {
+      needXfs = true;
+      break;
+    }
+  }
+  it = masters_map_.begin();
+  curr_master_addr_ = it->first;
+  if (needXfs) {
+    TubeMQService::Instance()->AddMasterAddress(err_info, master_info);
+  }
+  err_info = "Ok";
+  return true;
+}
+
+void TubeMQConsumer::getNextMasterAddr(string& ipaddr, int32_t& port) {
+  map<string, int32_t>::iterator it;
+  it = masters_map_.find(curr_master_addr_);
+  if (it != masters_map_.end()) {
+    it++;
+    if (it == masters_map_.end()) {
+      it = masters_map_.begin();
+    }
+  } else {
+    it = masters_map_.begin();
+  }
+  ipaddr = it->first;
+  port   = it->second;
+  curr_master_addr_ = it->first;
+  if (Utils::NeedDnsXfs(ipaddr)) {
+    TubeMQService::Instance()->GetXfsMasterAddress(curr_master_addr_, ipaddr);
+  }
+}
+
+void TubeMQConsumer::getCurrentMasterAddr(string& ipaddr, int32_t& port) {
+  ipaddr = curr_master_addr_;
+  port = masters_map_[curr_master_addr_];
+  if (Utils::NeedDnsXfs(ipaddr)) {
+    TubeMQService::Instance()->GetXfsMasterAddress(curr_master_addr_, ipaddr);
+  }
 }
 
 bool TubeMQConsumer::needGenMasterCertificateInfo(bool force) {

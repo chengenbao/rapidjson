@@ -174,5 +174,83 @@ void TubeMQService::shutDownClinets() const {
   }
 }
 
+bool TubeMQService::AddMasterAddress(string& err_info,
+                                       const string& master_info) {
+  map<string, int32_t>::iterator it;
+  map<string, int32_t> tmp_addr_map;
+  Utils::Split(master_info, tmp_addr_map,
+    delimiter::kDelimiterComma, delimiter::kDelimiterColon);
+  if (tmp_addr_map.empty()) {
+    err_info = "Illegal parameter: master_info is blank!";
+    return false;
+  }
+  for (it = tmp_addr_map.begin(); it != tmp_addr_map.end(); ) {
+    if (!Utils::NeedDnsXfs(it->first)) {
+      tmp_addr_map.erase(it++);
+    }
+  }
+  if (tmp_addr_map.empty()) {
+    err_info = "Ok";
+    return true;
+  }
+  if (addNeedDnsXfsAddr(tmp_addr_map)) {
+    updMasterAddrByDns();
+  }
+  err_info = "Ok";
+  return true;
+}
+
+void TubeMQService::GetXfsMasterAddress(
+  const string& source, string& target) {
+  target = source;    
+  lock_guard<mutex> lck(mutex_);
+  if (master_source_.find(source) != master_source_.end()) {
+    target = master_target_[source];
+  }
+}
+
+bool TubeMQService::hasXfsTask(map<string, int32_t>& src_addr_map) {
+  lock_guard<mutex> lck(mutex_);
+  if (!master_source_.empty()) {
+    src_addr_map = master_source_;
+    return true;
+  }
+  return false;
+}
+
+bool TubeMQService::addNeedDnsXfsAddr(map<string, int32_t>& src_addr_map) {
+  bool added = false;
+  map<string, int32_t>::iterator it;
+  if (!src_addr_map.empty()) {
+    lock_guard<mutex> lck(mutex_);
+    for (it = src_addr_map.begin(); it != src_addr_map.end(); it++ ) {
+      if (master_source_.find(it->first) == master_source_.end()) {
+        added = true;
+        master_source_[it->first] = it->second;
+      }
+    }
+  }
+  return added;
+}
+
+void TubeMQService::updMasterAddrByDns() {
+  map<string, int32_t> tmp_src_addr_map;
+  map<string, string> tmp_tgt_addr_map;
+  map<string, int32_t>::iterator it;
+  if (!hasXfsTask(tmp_src_addr_map)) {
+    return;
+  }
+  Utils::XfsAddrByDns(tmp_src_addr_map, tmp_tgt_addr_map);
+  lock_guard<mutex> lck(mutex_);
+  if (tmp_tgt_addr_map.empty()) {
+    for (it = tmp_src_addr_map.begin(); it != tmp_src_addr_map.end(); it++ ) {
+      this->master_target_[it->first] = it->first;
+    }
+  } else {
+    this->master_target_ = tmp_tgt_addr_map;
+  }
+}
+
+
 
 }  // namespace tubemq

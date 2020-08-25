@@ -33,28 +33,9 @@ namespace tubemq {
 
 using std::list;
 using std::map;
-using std::mutex;
 using std::set;
 using std::string;
 
-
-
-class MasterAddrInfo {
- public:
-  MasterAddrInfo();
-  bool InitMasterAddress(string& err_info, const string& master_info);
-  void GetNextMasterAddr(string& ipaddr, int32_t& port);
-  void GetCurrentMasterAddr(string& ipaddr, int32_t& port);
-  int32_t GetTotalMasterAddrCnt() { return master_source_.size(); }
-  void UpdMasterAddrByDns();
-
- private:
-  bool needXfs_;
-  string curr_addr_;
-  map<string, int32_t> master_source_;
-  mutable mutex mutex_;
-  map<string, string>  master_target_;
-};
 
 class ClientSubInfo {
  public:
