@@ -36,11 +36,13 @@ Future<ResponseContext> AsyncRequest(RequestContextPtr& request, RequestProtocol
   request->buf_ = std::make_shared<Buffer>();
   Any in(protocol);
   request->codec_->Encode(in, request->buf_);
-  // TODO
-  auto pool = std::make_shared<ExecutorPool>(4);
-  auto connection_pool = std::make_shared<ConnectionPool>(pool);
   auto future = request->promise_.GetFuture();
-  connection_pool->GetConnection(request)->AsyncWrite(request);
+  auto pool = TubeMQService::Instance()->GetConnectionPool();
+  if (pool != nullptr) {
+    pool->GetConnection(request)->AsyncWrite(request);
+  } else {
+    request->promise_.SetFailed(err_code::kErrServerStop);
+  }
   return future;
 }
 

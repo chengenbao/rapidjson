@@ -53,6 +53,7 @@ enum Result {
   kErrWaitServerRspTimeout = 550,
   kErrNetWorkTimeout = 1000,
   kErrNetworkError = 1001,
+  kErrServerStop = 2001,
 };
 }  // namespace err_code
 

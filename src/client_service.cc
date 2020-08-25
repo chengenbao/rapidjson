@@ -25,17 +25,12 @@
 #include "tubemq/logger.h"
 #include "tubemq/utils.h"
 
-
-
 namespace tubemq {
 
 using std::lock_guard;
 using std::stringstream;
 
-
-BaseClient::BaseClient(bool is_producer) {
-  this->is_producer_ = is_producer;
-}
+BaseClient::BaseClient(bool is_producer) { this->is_producer_ = is_producer; }
 
 BaseClient::~BaseClient() {
   // no code
@@ -55,7 +50,9 @@ TubeMQService* TubeMQService::Instance() {
   return _instance;
 }
 
-TubeMQService::TubeMQService() {
+TubeMQService::TubeMQService()
+    : timer_executor_(std::make_shared<ExecutorPool>(2)),
+      network_executor_(std::make_shared<ExecutorPool>(4)) {
   service_status_.Set(0);
   client_index_base_.Set(0);
 }
@@ -87,6 +84,9 @@ bool TubeMQService::Start(string& err_info, string conf_file) {
     err_info = "TubeMQ Service has startted or Stopped!";
     return false;
   }
+  timer_executor_->Resize(2);
+  network_executor_->Resize(4);
+  connection_pool_ = ConnectionPool(network_executor_);
   iniLogger(fileini, sector);
   service_status_.Set(2);
   err_info = "Ok!";
@@ -96,16 +96,15 @@ bool TubeMQService::Start(string& err_info, string conf_file) {
 bool TubeMQService::Stop(string& err_info) {
   if (service_status_.CompareAndSet(2, -1)) {
     shutDownClinets();
-    timer_executor_.Close();
-    network_executor_.Close();
+    timer_executor_->Close();
+    network_executor_->Close();
+    connection_pool_ = nullptr;
   }
   err_info = "OK!";
   return true;
 }
 
-bool TubeMQService::IsRunning() {
-  return (service_status_.Get() == 2);
-}
+bool TubeMQService::IsRunning() { return (service_status_.Get() == 2); }
 
 void TubeMQService::iniLogger(const Fileini& fileini, const string& sector) {
   string err_info;
@@ -121,12 +120,10 @@ void TubeMQService::iniLogger(const Fileini& fileini, const string& sector) {
   GetLogger().Init(log_path, Logger::Level(log_level), log_size, log_num);
 }
 
-
 int32_t TubeMQService::GetClientObjCnt() {
   lock_guard<mutex> lck(mutex_);
   return clients_map_.size();
 }
-
 
 bool TubeMQService::AddClientObj(string& err_info, BaseClient* client_obj) {
   if (service_status_.Get() != 0) {
@@ -174,17 +171,15 @@ void TubeMQService::shutDownClinets() const {
   }
 }
 
-bool TubeMQService::AddMasterAddress(string& err_info,
-                                       const string& master_info) {
+bool TubeMQService::AddMasterAddress(string& err_info, const string& master_info) {
   map<string, int32_t>::iterator it;
   map<string, int32_t> tmp_addr_map;
-  Utils::Split(master_info, tmp_addr_map,
-    delimiter::kDelimiterComma, delimiter::kDelimiterColon);
+  Utils::Split(master_info, tmp_addr_map, delimiter::kDelimiterComma, delimiter::kDelimiterColon);
   if (tmp_addr_map.empty()) {
     err_info = "Illegal parameter: master_info is blank!";
     return false;
   }
-  for (it = tmp_addr_map.begin(); it != tmp_addr_map.end(); ) {
+  for (it = tmp_addr_map.begin(); it != tmp_addr_map.end();) {
     if (!Utils::NeedDnsXfs(it->first)) {
       tmp_addr_map.erase(it++);
     }
@@ -200,9 +195,8 @@ bool TubeMQService::AddMasterAddress(string& err_info,
   return true;
 }
 
-void TubeMQService::GetXfsMasterAddress(
-  const string& source, string& target) {
-  target = source;    
+void TubeMQService::GetXfsMasterAddress(const string& source, string& target) {
+  target = source;
   lock_guard<mutex> lck(mutex_);
   if (master_source_.find(source) != master_source_.end()) {
     target = master_target_[source];
@@ -223,7 +217,7 @@ bool TubeMQService::addNeedDnsXfsAddr(map<string, int32_t>& src_addr_map) {
   map<string, int32_t>::iterator it;
   if (!src_addr_map.empty()) {
     lock_guard<mutex> lck(mutex_);
-    for (it = src_addr_map.begin(); it != src_addr_map.end(); it++ ) {
+    for (it = src_addr_map.begin(); it != src_addr_map.end(); it++) {
       if (master_source_.find(it->first) == master_source_.end()) {
         added = true;
         master_source_[it->first] = it->second;
@@ -243,14 +237,12 @@ void TubeMQService::updMasterAddrByDns() {
   Utils::XfsAddrByDns(tmp_src_addr_map, tmp_tgt_addr_map);
   lock_guard<mutex> lck(mutex_);
   if (tmp_tgt_addr_map.empty()) {
-    for (it = tmp_src_addr_map.begin(); it != tmp_src_addr_map.end(); it++ ) {
+    for (it = tmp_src_addr_map.begin(); it != tmp_src_addr_map.end(); it++) {
       this->master_target_[it->first] = it->first;
     }
   } else {
     this->master_target_ = tmp_tgt_addr_map;
   }
 }
-
-
 
 }  // namespace tubemq

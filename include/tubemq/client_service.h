@@ -21,6 +21,7 @@
 #define TUBEMQ_CLIENT_BASE_CLIENT_H_
 
 #include <stdint.h>
+
 #include <map>
 #include <mutex>
 #include <string>
@@ -34,16 +35,12 @@
 #include "tubemq/tubemq_message.h"
 #include "tubemq/tubemq_return.h"
 
-
-
-
 namespace tubemq {
 
 using std::map;
 using std::mutex;
 using std::string;
 using std::thread;
-
 
 class BaseClient {
  public:
@@ -55,10 +52,9 @@ class BaseClient {
   const int32_t GetClientIndex() { return client_index_; }
 
  private:
-  bool  is_producer_;
+  bool is_producer_;
   int32_t client_index_;
 };
-
 
 class TubeMQService : public noncopyable {
  public:
@@ -66,14 +62,15 @@ class TubeMQService : public noncopyable {
   bool Start(string& err_info, string conf_file = "../conf/tubemqclient.conf");
   bool Stop(string& err_info);
   bool IsRunning();
-  const int32_t  GetServiceStatus() const { return service_status_.Get(); }
+  const int32_t GetServiceStatus() const { return service_status_.Get(); }
   int32_t GetClientObjCnt();
   bool AddClientObj(string& err_info, BaseClient* client_obj);
   BaseClient* GetClientObj(int32_t client_index) const;
   BaseClient* RmvClientObj(int32_t client_index);
   const string& GetLocalHost() const { return local_host_; }
-  ExecutorPool& GetTimerExecutorPool() { return timer_executor_; }
-  ExecutorPool& GetNetWorkExecutorPool() { return network_executor_; }
+  ExecutorPoolPtr GetTimerExecutorPool() { return timer_executor_; }
+  ExecutorPoolPtr GetNetWorkExecutorPool() { return network_executor_; }
+  ConnectionPoolPtr GetConnectionPool() { return connection_pool_; }
   bool AddMasterAddress(string& err_info, const string& master_info);
   void GetXfsMasterAddress(const string& source, string& target);
 
@@ -93,12 +90,12 @@ class TubeMQService : public noncopyable {
   AtomicInteger client_index_base_;
   mutable mutex mutex_;
   map<int32_t, BaseClient*> clients_map_;
-  ExecutorPool timer_executor_;
-  ExecutorPool network_executor_;
+  ExecutorPoolPtr timer_executor_;
+  ExecutorPoolPtr network_executor_;
+  ConnectionPoolPtr connection_pool_;
   mutable mutex dns_mutex_;
   map<string, int32_t> master_source_;
-  map<string, string>  master_target_;
-  
+  map<string, string> master_target_;
 };
 
 }  // namespace tubemq
