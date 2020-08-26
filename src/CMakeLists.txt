@@ -21,9 +21,11 @@
 cmake_minimum_required (VERSION 3.1)
 
 
+message("PROTO_SRCS = ${PROTO_SRCS}")
+message("PROTO_HDRS = ${PROTO_HDRS}")
 AUX_SOURCE_DIRECTORY(. CURRENT_DIR_SRCS)                                        
-ADD_LIBRARY(tubemq STATIC ${CURRENT_DIR_SRCS})   
-TARGET_LINK_LIBRARIES (tubemq)
+ADD_LIBRARY(tubemq STATIC ${CURRENT_DIR_SRCS} ${PROTO_SRCS} ${PROTO_HDRS})   
+TARGET_LINK_LIBRARIES (tubemq ${PROTOBUF_LIBRARY})
 
 
 
