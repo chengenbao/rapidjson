@@ -26,7 +26,7 @@ function(tubemq_add_example _name)
   set(_srcs ${ARGN})
   message (STATUS "${_name} sources: ${_srcs}")
   add_executable (${_name} ${_srcs})
-  TARGET_LINK_LIBRARIES (${_name} tubemq ssl crypto log4cplus ${PROTOBUF_LIBRARY} pthread)
+  TARGET_LINK_LIBRARIES (${_name} tubemq ssl crypto log4cplus ${PROTOBUF_LIBRARY} tubemq_proto pthread)
 endfunction()
 
 add_subdirectory (log)
