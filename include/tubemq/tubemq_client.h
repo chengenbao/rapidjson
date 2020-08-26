@@ -88,8 +88,8 @@ class TubeMQConsumer : public BaseClient {
     bool is_last_consumed, TubeMQCodec::ReqProtocolPtr& req_protocol);
   void genMasterAuthenticateToken(AuthenticateInfo* pauthinfo,
     const string& username, const string usrpassword);
-  bool processRegisterResponseM2C(
-                    const RegisterResponseM2C& response);
+  bool processRegisterResponseM2C(string& err_info,
+    const TubeMQCodec::RspProtocolPtr& rsp_protocol);
 
  private:
   int32_t client_indexid_;

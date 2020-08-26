@@ -134,7 +134,7 @@ bool TubeMQConsumer::register2Master(string& err_info, bool need_change) {
   } else {
     getCurrentMasterAddr(target_ip, target_port);
   }
-
+  bool result = false;
   int retry_count = 0;
   int maxRetrycount = masters_map_.size();
   err_info = "Master register failure, no online master service!";
@@ -160,9 +160,17 @@ bool TubeMQConsumer::register2Master(string& err_info, bool need_change) {
     ErrorCode error = SyncRequest(response_context, request, req_protocol);
     // process response
     auto rsp = any_cast<TubeMQCodec::RspProtocolPtr>(response_context.rsp_);
+    result = processRegisterResponseM2C(err_info, rsp);
+    if (result) {
+      err_info = "Ok";
+      break;
+    }
+    LOG_WARN("[REGISTER] register to (%s:%d) failure, retrycount=(%d-%d), reason is %s",
+      target_ip.c_str(), target_port, maxRetrycount, retry_count+1, err_info.c_str());
+    retry_count++;
+    getNextMasterAddr(target_ip, target_port);
   }
-
-  return true;
+  return result;
 }
 
 void TubeMQConsumer::buidRegisterRequestC2M(TubeMQCodec::ReqProtocolPtr& req_protocol) {
@@ -371,7 +379,10 @@ void TubeMQConsumer::buidCommitC2B(const PartitionExt& partition, bool is_last_c
   req_protocol->prot_msg_ = commit_msg;
 }
 
-bool TubeMQConsumer::processRegisterResponseM2C(const RegisterResponseM2C& response) {
+bool TubeMQConsumer::processRegisterResponseM2C(string& err_info,
+  const TubeMQCodec::RspProtocolPtr& rsp_protocol) {
+  
+  
   return true;
 }
 
