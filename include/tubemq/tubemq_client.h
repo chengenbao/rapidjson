@@ -57,7 +57,7 @@ class TubeMQConsumer : public BaseClient {
   TubeMQConsumer();
   ~TubeMQConsumer();
   bool Start(string& err_info, const ConsumerConfig& config);
-  void ShutDown();
+  virtual void ShutDown();
   bool GetMessage(ConsumerResult& result);
   bool Confirm(const string& confirm_context,
          bool is_consumed, ConsumerResult& result);
@@ -69,6 +69,7 @@ class TubeMQConsumer : public BaseClient {
   void getNextMasterAddr(string& ipaddr, int32_t& port);
   void getCurrentMasterAddr(string& ipaddr, int32_t& port);
   bool register2Master(string& err_info, bool need_change);
+  bool heartBeat2Master(string& err_info);
   bool needGenMasterCertificateInfo(bool force);
   void genBrokerAuthenticInfo(AuthorizedInfo* p_authInfo, bool force);
 

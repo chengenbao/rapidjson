@@ -48,7 +48,7 @@ class BaseClient {
  public:
   explicit BaseClient(bool is_producer);
   virtual ~BaseClient();
-  virtual void ShutDown();
+  virtual void ShutDown() { };
   void SetClientIndex(int32_t client_index) { client_index_ = client_index; }
   bool IsProducer() { return is_producer_; }
   const int32_t GetClientIndex() { return client_index_; }
