@@ -37,9 +37,9 @@
 #include "tubemq/tubemq_errcode.h"
 #include "tubemq/tubemq_return.h"
 #include "tubemq/utils.h"
-#include "tubemq/MasterService.pb.h"
-#include "tubemq/RPC.pb.h"
-#include "tubemq/BrokerService.pb.h"
+#include "MasterService.pb.h"
+#include "RPC.pb.h"
+#include "BrokerService.pb.h"
 
 
 

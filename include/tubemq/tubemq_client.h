@@ -25,9 +25,9 @@
 #include <list>
 #include <string>
 
-#include "tubemq/BrokerService.pb.h"
-#include "tubemq/RPC.pb.h"
-#include "tubemq/MasterService.pb.h"
+#include "BrokerService.pb.h"
+#include "RPC.pb.h"
+#include "MasterService.pb.h"
 #include "tubemq/atomic_def.h"
 #include "tubemq/client_service.h"
 #include "tubemq/client_subinfo.h"
