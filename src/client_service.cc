@@ -30,7 +30,10 @@ namespace tubemq {
 using std::lock_guard;
 using std::stringstream;
 
-BaseClient::BaseClient(bool is_producer) { this->is_producer_ = is_producer; }
+BaseClient::BaseClient(bool is_producer) { 
+  this->is_producer_ = is_producer;
+  this->client_index_ = tb_config::kInvalidValue;
+}
 
 BaseClient::~BaseClient() {
   // no code
@@ -137,12 +140,12 @@ int32_t TubeMQService::GetClientObjCnt() {
   return clients_map_.size();
 }
 
-bool TubeMQService::AddClientObj(string& err_info, BaseClient* client_obj) {
+bool TubeMQService::AddClientObj(string& err_info, BaseClient* client_obj, int32_t& client_index) {
   if (service_status_.Get() != 0) {
     err_info = "Service not startted!";
     return false;
   }
-  int32_t client_index = client_index_base_.IncrementAndGet();
+  client_index = client_index_base_.IncrementAndGet();
   lock_guard<mutex> lck(mutex_);
   client_obj->SetClientIndex(client_index);
   this->clients_map_[client_index] = client_obj;

@@ -88,7 +88,8 @@ bool TubeMQConsumer::Start(string& err_info, const ConsumerConfig& config) {
     err_info = "TubeMQ Service not startted!";
     return false;
   }
-  if (!TubeMQService::Instance()->AddClientObj(err_info, this)) {
+  if (!TubeMQService::Instance()->AddClientObj(err_info, this, client_index_)) {
+    client_index_ = tb_config::kInvalidValue;
     this->status_.CompareAndSet(1, 0);
     return false;
   }
@@ -112,6 +113,8 @@ void TubeMQConsumer::ShutDown() {
   if (!this->status_.CompareAndSet(2, 0)) {
     return;
   }
+  TubeMQService::Instance()->RmvClientObj(client_index_);
+  client_index_ = tb_config::kInvalidValue;
   // process resuorce release
 }
 

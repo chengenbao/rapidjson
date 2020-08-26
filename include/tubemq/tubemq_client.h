@@ -92,6 +92,7 @@ class TubeMQConsumer : public BaseClient {
                     const RegisterResponseM2C& response);
 
  private:
+  int32_t client_indexid_;
   string client_uuid_;
   AtomicInteger status_;
   ConsumerConfig config_;
