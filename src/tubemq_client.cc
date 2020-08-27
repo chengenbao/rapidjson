@@ -144,7 +144,7 @@ bool TubeMQConsumer::register2Master(string& err_info, bool need_change) {
       LOG_INFO("[REGISTER] register2Master failure, %s", err_info.c_str());
       return false;
     }
-    RequestContextPtr request;
+    auto request = std::make_shared<RequestContext>();
     TubeMQCodec::ReqProtocolPtr req_protocol = TubeMQCodec::GetReqProtocol();
     // build register request
     buidRegisterRequestC2M(req_protocol);
