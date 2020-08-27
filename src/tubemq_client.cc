@@ -30,8 +30,8 @@
 #include "tubemq/logger.h"
 #include "tubemq/singleton.h"
 #include "tubemq/transport.h"
-#include "tubemq/tubemq_transport.h"
 #include "tubemq/tubemq_config.h"
+#include "tubemq/tubemq_transport.h"
 #include "tubemq/utils.h"
 #include "tubemq/version.h"
 
@@ -149,6 +149,7 @@ bool TubeMQConsumer::register2Master(string& err_info, bool need_change) {
     // build register request
     buidRegisterRequestC2M(req_protocol);
     // set parameters
+    request->codec = std::make_shared<TubeMQCodec>();
     request->ip_ = target_ip;
     request->port_ = target_port;
     request->timeout_ = config_.GetRpcReadTimeoutMs();
@@ -166,23 +167,21 @@ bool TubeMQConsumer::register2Master(string& err_info, bool need_change) {
       break;
     }
     LOG_WARN("[REGISTER] register to (%s:%d) failure, retrycount=(%d-%d), reason is %s",
-      target_ip.c_str(), target_port, maxRetrycount, retry_count+1, err_info.c_str());
+             target_ip.c_str(), target_port, maxRetrycount, retry_count + 1, err_info.c_str());
     retry_count++;
     getNextMasterAddr(target_ip, target_port);
   }
   // if success check master's heartbeat timer and started
   // if only re-register, cancel timer and re-start heart beat process
-  // 
+  //
   return result;
 }
 
 bool TubeMQConsumer::heartBeat2Master(string& err_info) {
   // timer task
-  
 
   return true;
 }
-
 
 void TubeMQConsumer::buidRegisterRequestC2M(TubeMQCodec::ReqProtocolPtr& req_protocol) {
   string reg_msg;
@@ -391,15 +390,14 @@ void TubeMQConsumer::buidCommitC2B(const PartitionExt& partition, bool is_last_c
 }
 
 bool TubeMQConsumer::processRegisterResponseM2C(string& err_info,
-  const TubeMQCodec::RspProtocolPtr& rsp_protocol) {
+                                                const TubeMQCodec::RspProtocolPtr& rsp_protocol) {
   if (!rsp_protocol->success_) {
     err_info = rsp_protocol->error_msg_;
     return false;
   }
   RegisterResponseM2C rsp_reg_m2c;
-  bool result = rsp_reg_m2c.ParseFromArray(
-    rsp_protocol->rsp_body_.data().c_str(),
-    (int)(rsp_protocol->rsp_body_.data().length()));
+  bool result = rsp_reg_m2c.ParseFromArray(rsp_protocol->rsp_body_.data().c_str(),
+                                           (int)(rsp_protocol->rsp_body_.data().length()));
   if (!result) {
     err_info = "Parse RegisterResponseM2C response failure!";
     return false;
@@ -412,12 +410,12 @@ bool TubeMQConsumer::processRegisterResponseM2C(string& err_info,
   if (rsp_reg_m2c.has_defflowcheckid() || rsp_reg_m2c.has_groupflowcheckid()) {
     if (rsp_reg_m2c.has_defflowcheckid()) {
       rmtdata_cache_.UpdateDefFlowCtrlInfo(rsp_reg_m2c.defflowcheckid(),
-        rsp_reg_m2c.defflowcontrolinfo());
+                                           rsp_reg_m2c.defflowcontrolinfo());
     }
-    int qryPriorityId = rsp_reg_m2c.has_qrypriorityid()
-      ? rsp_reg_m2c.qrypriorityid() : rmtdata_cache_.GetGroupQryPriorityId();
-    rmtdata_cache_.UpdateGroupFlowCtrlInfo(qryPriorityId,
-      rsp_reg_m2c.groupflowcheckid(), rsp_reg_m2c.groupflowcontrolinfo());
+    int qryPriorityId = rsp_reg_m2c.has_qrypriorityid() ? rsp_reg_m2c.qrypriorityid()
+                                                        : rmtdata_cache_.GetGroupQryPriorityId();
+    rmtdata_cache_.UpdateGroupFlowCtrlInfo(qryPriorityId, rsp_reg_m2c.groupflowcheckid(),
+                                           rsp_reg_m2c.groupflowcontrolinfo());
   }
   err_info = "Ok";
   return true;
