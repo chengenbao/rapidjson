@@ -149,7 +149,7 @@ bool TubeMQConsumer::register2Master(string& err_info, bool need_change) {
     // build register request
     buidRegisterRequestC2M(req_protocol);
     // set parameters
-    request->codec = std::make_shared<TubeMQCodec>();
+    request->codec_ = std::make_shared<TubeMQCodec>();
     request->ip_ = target_ip;
     request->port_ = target_port;
     request->timeout_ = config_.GetRpcReadTimeoutMs();
