@@ -141,7 +141,7 @@ int32_t TubeMQService::GetClientObjCnt() {
 }
 
 bool TubeMQService::AddClientObj(string& err_info, BaseClient* client_obj, int32_t& client_index) {
-  if (service_status_.Get() != 0) {
+  if (!IsRunning()) {
     err_info = "Service not startted!";
     return false;
   }
@@ -221,7 +221,7 @@ void TubeMQService::GetXfsMasterAddress(const string& source, string& target) {
 void TubeMQService::thread_task_dnsxfs(int dns_xfs_period_ms) {
   LOG_INFO("[Service] DSN transfer thread startted!");
   while (true) {
-    if (TubeMQService::Instance()->GetServiceStatus() == 2) {
+    if (TubeMQService::Instance()->GetServiceStatus() >= 0) {
       break;
     }
     TubeMQService::Instance()->updMasterAddrByDns();

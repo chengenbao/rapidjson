@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
   }
   result = StartTubeMQService(err_info, conf_file);
   if (!result) {
-    printf("\n Initial Tube service failure \n");
+    printf("\n StartTubeMQService failure: %s \n", err_info.c_str());
     return -1;
   }
 
@@ -89,7 +89,7 @@ int main(int argc, char* argv[]) {
   getchar();
   result = StopTubeMQService(err_info);
   if(!result) {
-    printf(" *** stopTubeService failure, reason is %s \n", err_info.c_str());
+    printf(" *** StopTubeMQService failure, reason is %s \n", err_info.c_str());
   }
 
   getchar();
