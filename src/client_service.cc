@@ -221,7 +221,7 @@ void TubeMQService::GetXfsMasterAddress(const string& source, string& target) {
 void TubeMQService::thread_task_dnsxfs(int dns_xfs_period_ms) {
   LOG_INFO("[Service] DSN transfer thread startted!");
   while (true) {
-    if (TubeMQService::Instance()->GetServiceStatus() >= 0) {
+    if (TubeMQService::Instance()->GetServiceStatus() <= 0) {
       break;
     }
     TubeMQService::Instance()->updMasterAddrByDns();

@@ -27,6 +27,7 @@
 #include "tubemq/client_service.h"
 #include "tubemq/const_config.h"
 #include "tubemq/const_rpc.h"
+#include "tubemq/tubemq_errcode.h"
 #include "tubemq/logger.h"
 #include "tubemq/singleton.h"
 #include "tubemq/transport.h"
@@ -159,28 +160,48 @@ bool TubeMQConsumer::register2Master(string& err_info, bool need_change) {
     // send message to target
     ResponseContext response_context;
     ErrorCode error = SyncRequest(response_context, request, req_protocol);
-    // process response
-    auto rsp = any_cast<TubeMQCodec::RspProtocolPtr>(response_context.rsp_);
-    result = processRegisterResponseM2C(err_info, rsp);
-    if (result) {
-      err_info = "Ok";
-      break;
+    if (error.Value() == err_code::kErrSuccess) {
+      // process response
+      auto rsp = any_cast<TubeMQCodec::RspProtocolPtr>(response_context.rsp_);
+      result = processRegisterResponseM2C(err_info, rsp);
+      if (result) {
+        err_info = "Ok";
+        break;
+      }
+    } else {
+      err_info = error.Message();
     }
     LOG_WARN("[REGISTER] register to (%s:%d) failure, retrycount=(%d-%d), reason is %s",
              target_ip.c_str(), target_port, maxRetrycount, retry_count + 1, err_info.c_str());
     retry_count++;
     getNextMasterAddr(target_ip, target_port);
   }
+  // TODO :
   // if success check master's heartbeat timer and started
   // if only re-register, cancel timer and re-start heart beat process
   //
   return result;
 }
 
-bool TubeMQConsumer::heartBeat2Master(string& err_info) {
+void TubeMQConsumer::heartBeat2Master(TubeMQConsumer *tube_consumer_ptr) {
   // timer task
-
-  return true;
+  // 1. check if need re-register, if true, first call register
+  // 2. call heartbeat to master
+  // 3. process response
+  bool ret_result;
+  while (true) {
+    if (!tube_consumer_ptr->isClientRunning()) {
+      return;
+    }
+    // Fetch the rebalance result, construct message and return it.
+    ConsumerEvent event;
+    ret_result = tube_consumer_ptr->pollEventResult(event);
+    if (ret_result) {
+      // add event
+    }
+    break;
+  }
+  return;
 }
 
 void TubeMQConsumer::buidRegisterRequestC2M(TubeMQCodec::ReqProtocolPtr& req_protocol) {
@@ -419,6 +440,16 @@ bool TubeMQConsumer::processRegisterResponseM2C(string& err_info,
   }
   err_info = "Ok";
   return true;
+}
+
+bool TubeMQConsumer::pollEventResult(ConsumerEvent& event) {
+  return rmtdata_cache_.PollEventResult(event);
+}
+
+
+
+bool TubeMQConsumer::isClientRunning() {
+  return (this->status_.Get() == 2);
 }
 
 string TubeMQConsumer::buildUUID() {

@@ -64,14 +64,17 @@ class TubeMQConsumer : public BaseClient {
 
  private:
   string buildUUID();
+  bool isClientRunning();
   int32_t getConsumeReadStatus(bool is_first_reg);
   bool initMasterAddress(string& err_info, const string& master_info);
   void getNextMasterAddr(string& ipaddr, int32_t& port);
   void getCurrentMasterAddr(string& ipaddr, int32_t& port);
   bool register2Master(string& err_info, bool need_change);
   bool heartBeat2Master(string& err_info);
+  void heartBeat2Master(TubeMQConsumer* tube_consumer_ptr);
   bool needGenMasterCertificateInfo(bool force);
   void genBrokerAuthenticInfo(AuthorizedInfo* p_authInfo, bool force);
+  
 
  private:
   void buidRegisterRequestC2M(TubeMQCodec::ReqProtocolPtr& req_protocol);
@@ -91,6 +94,8 @@ class TubeMQConsumer : public BaseClient {
     const string& username, const string usrpassword);
   bool processRegisterResponseM2C(string& err_info,
     const TubeMQCodec::RspProtocolPtr& rsp_protocol);
+  bool pollEventResult(ConsumerEvent& event);
+
 
  private:
   int32_t client_indexid_;
@@ -105,6 +110,7 @@ class TubeMQConsumer : public BaseClient {
   int32_t cur_report_times_;
   string curr_master_addr_;
   map<string, int32_t> masters_map_;
+  int64_t last_master_updtime_;
 };
 
 
