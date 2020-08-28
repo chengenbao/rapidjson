@@ -38,6 +38,7 @@
 
 namespace tubemq {
 
+using std::lock_guard;
 using std::stringstream;
 
 bool StartTubeMQService(string& err_info, const string& conf_file) {
@@ -60,13 +61,17 @@ bool StopTubeMQService(string& err_info) {
 
 TubeMQConsumer::TubeMQConsumer() : BaseClient(false) {
   status_.Set(0);
-  cur_report_times_ = 0;
+  unreport_times_ = 0;
   client_uuid_ = "";
   visit_token_.Set(tb_config::kInvalidValue);
   nextauth_2_master.Set(false);
   nextauth_2_broker.Set(false);
   curr_master_addr_ = "";
   masters_map_.clear();
+  authorized_info_ = "";
+  is_master_actived_ = false;
+  last_master_hbtime_ = 0;
+  master_sh_retry_cnt_ = 0;
 }
 
 TubeMQConsumer::~TubeMQConsumer() {
@@ -101,7 +106,8 @@ bool TubeMQConsumer::Start(string& err_info, const ConsumerConfig& config) {
   // initial resource
 
   // register to master
-  if (!register2Master(err_info, false)) {
+  int32_t error_code;
+  if (!register2Master(error_code,err_info, false)) {
     this->status_.CompareAndSet(1, 0);
     return false;
   }
@@ -119,7 +125,8 @@ void TubeMQConsumer::ShutDown() {
   // process resuorce release
 }
 
-bool TubeMQConsumer::register2Master(string& err_info, bool need_change) {
+bool TubeMQConsumer::register2Master(int32_t& error_code,
+  string& err_info, bool need_change) {
   string target_ip;
   int target_port;
   // check client status
@@ -141,7 +148,7 @@ bool TubeMQConsumer::register2Master(string& err_info, bool need_change) {
   err_info = "Master register failure, no online master service!";
   while (retry_count < maxRetrycount) {
     if (!TubeMQService::Instance()->IsRunning()) {
-      err_info = "TubeMQ Service not stopped!";
+      err_info = "TubeMQ Service is stopped!";
       LOG_INFO("[REGISTER] register2Master failure, %s", err_info.c_str());
       return false;
     }
@@ -163,46 +170,144 @@ bool TubeMQConsumer::register2Master(string& err_info, bool need_change) {
     if (error.Value() == err_code::kErrSuccess) {
       // process response
       auto rsp = any_cast<TubeMQCodec::RspProtocolPtr>(response_context.rsp_);
-      result = processRegisterResponseM2C(err_info, rsp);
+      result = processRegisterResponseM2C(error_code, err_info, rsp);
       if (result) {
         err_info = "Ok";
+        is_master_actived_ = true;
+        last_master_hbtime_ = Utils::GetCurrentTimeMillis();
         break;
+      } else {
+        is_master_actived_ = false;
       }
     } else {
+      error_code = error.Value();
       err_info = error.Message();
     }
-    LOG_WARN("[REGISTER] register to (%s:%d) failure, retrycount=(%d-%d), reason is %s",
-             target_ip.c_str(), target_port, maxRetrycount, retry_count + 1, err_info.c_str());
+    if (error_code == err_code::kErrConsumeGroupForbidden 
+      || error_code == err_code::kErrConsumeContentForbidden) {
+      LOG_WARN("[REGISTER] register to (%s:%d) failure, reason is %s, exist register process",
+               target_ip.c_str(), target_port, err_info.c_str());
+      return false;
+    } else {
+      LOG_WARN("[REGISTER] register to (%s:%d) failure, retrycount=(%d-%d), reason is %s",
+               target_ip.c_str(), target_port, maxRetrycount, retry_count + 1, err_info.c_str());
+    }
     retry_count++;
     getNextMasterAddr(target_ip, target_port);
   }
-  // TODO :
-  // if success check master's heartbeat timer and started
-  // if only re-register, cancel timer and re-start heart beat process
-  //
   return result;
 }
 
-void TubeMQConsumer::heartBeat2Master(TubeMQConsumer *tube_consumer_ptr) {
+void TubeMQConsumer::heartBeat2Master() {
   // timer task
   // 1. check if need re-register, if true, first call register
   // 2. call heartbeat to master
   // 3. process response
+  // 4. call timer again
   bool ret_result;
-  while (true) {
-    if (!tube_consumer_ptr->isClientRunning()) {
-      return;
-    }
-    // Fetch the rebalance result, construct message and return it.
-    ConsumerEvent event;
-    ret_result = tube_consumer_ptr->pollEventResult(event);
-    if (ret_result) {
-      // add event
-    }
-    break;
+  int32_t error_code;
+  string error_info;
+  string target_ip;
+  int target_port;
+
+  if (!TubeMQService::Instance()->IsRunning()) {
+    LOG_INFO("[HeartBeat2Master] heartBeat2Master failure, TubeMQ Service is stopped!");
+    return;
   }
+  if (!isClientRunning()) {
+    LOG_INFO("[HeartBeat2Master] heartBeat2Master failure, TubeMQ Client stopped!");
+    return;
+  }
+  // check status in master
+  // if not actived first register, or send heartbeat
+  if (is_master_actived_ == false) {
+    ret_result = register2Master(error_code, error_info, false);
+    if (ret_result) {
+      is_master_actived_ = true;
+      master_sh_retry_cnt_ = 0;
+    } else {
+      master_sh_retry_cnt_++;
+    }
+  } else {
+    // select current master
+    getCurrentMasterAddr(target_ip, target_port);
+    auto request = std::make_shared<RequestContext>();
+    TubeMQCodec::ReqProtocolPtr req_protocol = TubeMQCodec::GetReqProtocol();
+    // build heartbeat 2 master request
+    buidHeartRequestC2M(req_protocol);
+    request->codec_ = std::make_shared<TubeMQCodec>();
+    request->ip_ = target_ip;
+    request->port_ = target_port;
+    request->timeout_ = config_.GetRpcReadTimeoutMs();
+    request->request_id_ = Singleton<UniqueSeqId>::Instance().Next();
+    req_protocol->request_id_ = request->request_id_;
+    req_protocol->rpc_read_timeout_ = config_.GetRpcReadTimeoutMs() - 500;
+    // send message to target
+    ResponseContext response_context;
+    ErrorCode error = SyncRequest(response_context, request, req_protocol);
+    if (error.Value() == err_code::kErrNetWorkTimeout) {
+      master_sh_retry_cnt_++;
+      LOG_WARN("[HeartBeat2Master] request network timeout to (%s:%d) failure",
+        target_ip.c_str(), target_port);
+    } else {
+      // process response
+      auto rsp = any_cast<TubeMQCodec::RspProtocolPtr>(response_context.rsp_);
+      ret_result = processHBResponseM2C(error_code, error_info, rsp);
+      if (ret_result) {
+        is_master_actived_ = true;
+        master_sh_retry_cnt_ = 0;
+      } else {
+        master_sh_retry_cnt_++;
+        if (error_code == err_code::kErrHbNoNode 
+          || error_info.find("StandbyException") != string::npos) {
+          is_master_actived_ = false;
+          ret_result = register2Master(error_code, error_info,
+            !(error_code == err_code::kErrHbNoNode));
+          if (ret_result) {
+            is_master_actived_ = true;
+            master_sh_retry_cnt_ = 0;
+          } 
+        }
+      }
+    }
+  }
+  // start next heartbeat timer
+  int32_t next_hb_periodms = config_.GetHeartbeatPeriodMs();
+  if (master_sh_retry_cnt_ >= config_.GetMaxHeartBeatRetryTimes()) {
+    next_hb_periodms = config_.GetHeartbeatPeriodAftFailMs();
+  }
+  // TODO: start heartbeat timer
+  next_hb_periodms = next_hb_periodms;
+
   return;
 }
+
+void TubeMQConsumer::close2Master() {
+  string target_ip;
+  int target_port;
+  if(!isClientRunning()) {
+    LOG_INFO("Client not running ,out close2Master\n");
+    return;
+  }
+  getCurrentMasterAddr(target_ip, target_port);
+  auto request = std::make_shared<RequestContext>();
+  TubeMQCodec::ReqProtocolPtr req_protocol = TubeMQCodec::GetReqProtocol();
+  // build close2master request
+  buidCloseRequestC2M(req_protocol);
+  request->codec_ = std::make_shared<TubeMQCodec>();
+  request->ip_ = target_ip;
+  request->port_ = target_port;
+  request->timeout_ = config_.GetRpcReadTimeoutMs();
+  request->request_id_ = Singleton<UniqueSeqId>::Instance().Next();
+  req_protocol->request_id_ = request->request_id_;
+  req_protocol->rpc_read_timeout_ = config_.GetRpcReadTimeoutMs() - 500;
+  // send message to target
+  ResponseContext response_context;
+  SyncRequest(response_context, request, req_protocol);
+  // not need wait response
+  return;
+}
+
 
 void TubeMQConsumer::buidRegisterRequestC2M(TubeMQCodec::ReqProtocolPtr& req_protocol) {
   string reg_msg;
@@ -260,8 +365,8 @@ void TubeMQConsumer::buidHeartRequestC2M(TubeMQCodec::ReqProtocolPtr& req_protoc
   list<SubscribeInfo> subscribe_info_lst;
   bool has_event = rmtdata_cache_.PollEventResult(event);
   // judge if report subscribe info
-  if ((has_event) || (++cur_report_times_ > config_.GetMaxSubinfoReportIntvl())) {
-    cur_report_times_ = 0;
+  if ((has_event) || (++unreport_times_ > config_.GetMaxSubinfoReportIntvl())) {
+    unreport_times_ = 0;
     c2m_request.set_reportsubscribeinfo(true);
     this->rmtdata_cache_.GetSubscribedInfo(subscribe_info_lst);
     if (has_event) {
@@ -410,42 +515,107 @@ void TubeMQConsumer::buidCommitC2B(const PartitionExt& partition, bool is_last_c
   req_protocol->prot_msg_ = commit_msg;
 }
 
-bool TubeMQConsumer::processRegisterResponseM2C(string& err_info,
+bool TubeMQConsumer::processRegisterResponseM2C(int32_t& err_code, string& err_info,
                                                 const TubeMQCodec::RspProtocolPtr& rsp_protocol) {
   if (!rsp_protocol->success_) {
+    err_code = rsp_protocol->code_;
     err_info = rsp_protocol->error_msg_;
     return false;
   }
-  RegisterResponseM2C rsp_reg_m2c;
-  bool result = rsp_reg_m2c.ParseFromArray(rsp_protocol->rsp_body_.data().c_str(),
+  RegisterResponseM2C rsp_m2c;
+  bool result = rsp_m2c.ParseFromArray(rsp_protocol->rsp_body_.data().c_str(),
                                            (int)(rsp_protocol->rsp_body_.data().length()));
   if (!result) {
+    err_code = err_code::kErrParseFailure;
     err_info = "Parse RegisterResponseM2C response failure!";
     return false;
   }
-  if (!rsp_reg_m2c.success()) {
-    err_info = rsp_reg_m2c.errmsg();
+  if (!rsp_m2c.success()) {
+    err_code = rsp_m2c.errcode();
+    err_info = rsp_m2c.errmsg();
     return false;
   }
   // update policy
-  if (rsp_reg_m2c.has_defflowcheckid() || rsp_reg_m2c.has_groupflowcheckid()) {
-    if (rsp_reg_m2c.has_defflowcheckid()) {
-      rmtdata_cache_.UpdateDefFlowCtrlInfo(rsp_reg_m2c.defflowcheckid(),
-                                           rsp_reg_m2c.defflowcontrolinfo());
-    }
-    int qryPriorityId = rsp_reg_m2c.has_qrypriorityid() ? rsp_reg_m2c.qrypriorityid()
-                                                        : rmtdata_cache_.GetGroupQryPriorityId();
-    rmtdata_cache_.UpdateGroupFlowCtrlInfo(qryPriorityId, rsp_reg_m2c.groupflowcheckid(),
-                                           rsp_reg_m2c.groupflowcontrolinfo());
+  if (rsp_m2c.has_notallocated() || !rsp_m2c.notallocated()) {
+    sub_info_.CompAndSetNotAllocated(true, false);
   }
+  if (rsp_m2c.has_defflowcheckid() || rsp_m2c.has_groupflowcheckid()) {
+    if (rsp_m2c.has_defflowcheckid()) {
+      rmtdata_cache_.UpdateDefFlowCtrlInfo(rsp_m2c.defflowcheckid(),
+                                           rsp_m2c.defflowcontrolinfo());
+    }
+    int qryPriorityId = rsp_m2c.has_qrypriorityid()
+      ? rsp_m2c.qrypriorityid() : rmtdata_cache_.GetGroupQryPriorityId();
+    rmtdata_cache_.UpdateGroupFlowCtrlInfo(qryPriorityId, rsp_m2c.groupflowcheckid(),
+                                           rsp_m2c.groupflowcontrolinfo());
+  }
+  if (rsp_m2c.has_authorizedinfo()) {
+    processAuthorizedToken(rsp_m2c.authorizedinfo());
+  }
+  err_code = err_code::kErrSuccess;
   err_info = "Ok";
   return true;
 }
 
-bool TubeMQConsumer::pollEventResult(ConsumerEvent& event) {
-  return rmtdata_cache_.PollEventResult(event);
+bool TubeMQConsumer::processHBResponseM2C(int32_t& error_code, string& err_info,
+                                                const TubeMQCodec::RspProtocolPtr& rsp_protocol) {
+  if (!rsp_protocol->success_) {
+    error_code = rsp_protocol->code_;
+    err_info = rsp_protocol->error_msg_;
+    return false;
+  }
+  HeartResponseM2C rsp_m2c;
+  bool result = rsp_m2c.ParseFromArray(rsp_protocol->rsp_body_.data().c_str(),
+    (int32_t) (rsp_protocol->rsp_body_.data().length()));
+  if (!result) {
+    error_code = err_code::kErrParseFailure;
+    err_info = "Parse HeartResponseM2C response failure!";
+    return false;
+  }
+  if (!rsp_m2c.success()) {
+    error_code = rsp_m2c.errcode();
+    err_info = rsp_m2c.errmsg();
+    return false;
+  }
+  // update policy
+  if (rsp_m2c.has_notallocated() || !rsp_m2c.notallocated()) {
+    sub_info_.CompAndSetNotAllocated(true, false);
+  }
+  if (rsp_m2c.has_defflowcheckid() || rsp_m2c.has_groupflowcheckid()) {
+    if (rsp_m2c.has_defflowcheckid()) {
+      rmtdata_cache_.UpdateDefFlowCtrlInfo(rsp_m2c.defflowcheckid(),
+                                           rsp_m2c.defflowcontrolinfo());
+    }
+    int qryPriorityId = rsp_m2c.has_qrypriorityid()
+      ? rsp_m2c.qrypriorityid() : rmtdata_cache_.GetGroupQryPriorityId();
+    rmtdata_cache_.UpdateGroupFlowCtrlInfo(qryPriorityId, rsp_m2c.groupflowcheckid(),
+                                           rsp_m2c.groupflowcontrolinfo());
+  }
+  if (rsp_m2c.has_authorizedinfo()) {
+    processAuthorizedToken(rsp_m2c.authorizedinfo());
+  }
+  if (rsp_m2c.has_requireauth()) {
+    nextauth_2_master.Set(rsp_m2c.requireauth());
+  }
+  //Get the latest rebalance task
+  if (rsp_m2c.has_event()) {
+    EventProto eventProto = rsp_m2c.event();
+    if (eventProto.rebalanceid() > 0) {
+      list<SubscribeInfo> subcribe_infos;
+      for (int i = 0; i < eventProto.subscribeinfo_size(); i++) {
+        SubscribeInfo sub_info(eventProto.subscribeinfo(i));
+        subcribe_infos.push_back(sub_info);
+      }
+      ConsumerEvent new_event(eventProto.rebalanceid(),
+        eventProto.optype(), subcribe_infos, 0);
+      rmtdata_cache_.OfferEventResult(new_event);
+    }
+  }
+  last_master_hbtime_ = Utils::GetCurrentTimeMillis();
+  error_code = err_code::kErrSuccess;
+  err_info = "Ok";
+  return true;
 }
-
 
 
 bool TubeMQConsumer::isClientRunning() {
@@ -572,6 +742,18 @@ void TubeMQConsumer::genMasterAuthenticateToken(AuthenticateInfo* pauthinfo, con
                                                 const string usrpassword) {
   //
 }
+
+void TubeMQConsumer::processAuthorizedToken(const MasterAuthorizedInfo& authorized_token_info) {
+  visit_token_.Set(authorized_token_info.visitauthorizedtoken());
+  if (authorized_token_info.has_authauthorizedtoken()) {
+    lock_guard<mutex> lck(auth_lock_);
+    
+    if (authorized_info_ != authorized_token_info.authauthorizedtoken()) {
+      authorized_info_ = authorized_token_info.authauthorizedtoken();
+    }
+  }
+}
+
 
 }  // namespace tubemq
 

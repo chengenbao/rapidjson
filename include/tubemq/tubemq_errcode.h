@@ -54,6 +54,7 @@ enum Result {
   kErrNetWorkTimeout = 1000,
   kErrNetworkError = 1001,
   kErrServerStop = 2001,
+  kErrParseFailure = 5001,
 };
 }  // namespace err_code
 

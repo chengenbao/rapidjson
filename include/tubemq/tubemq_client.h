@@ -23,6 +23,7 @@
 #include <stdlib.h>
 
 #include <list>
+#include <mutex>
 #include <string>
 
 #include "BrokerService.pb.h"
@@ -42,6 +43,7 @@
 
 namespace tubemq {
 
+using std::mutex;
 using std::string;
 
 
@@ -69,11 +71,14 @@ class TubeMQConsumer : public BaseClient {
   bool initMasterAddress(string& err_info, const string& master_info);
   void getNextMasterAddr(string& ipaddr, int32_t& port);
   void getCurrentMasterAddr(string& ipaddr, int32_t& port);
-  bool register2Master(string& err_info, bool need_change);
+  bool register2Master(int32_t& error_code,
+    string& err_info, bool need_change);
   bool heartBeat2Master(string& err_info);
-  void heartBeat2Master(TubeMQConsumer* tube_consumer_ptr);
+  void heartBeat2Master();
+  void close2Master();
   bool needGenMasterCertificateInfo(bool force);
   void genBrokerAuthenticInfo(AuthorizedInfo* p_authInfo, bool force);
+  void processAuthorizedToken(const MasterAuthorizedInfo& authorized_token_info);
   
 
  private:
@@ -92,10 +97,10 @@ class TubeMQConsumer : public BaseClient {
     bool is_last_consumed, TubeMQCodec::ReqProtocolPtr& req_protocol);
   void genMasterAuthenticateToken(AuthenticateInfo* pauthinfo,
     const string& username, const string usrpassword);
-  bool processRegisterResponseM2C(string& err_info,
+  bool processRegisterResponseM2C(int32_t& err_code,
+    string& err_info, const TubeMQCodec::RspProtocolPtr& rsp_protocol);
+  bool processHBResponseM2C(int32_t& error_code, string& err_info,
     const TubeMQCodec::RspProtocolPtr& rsp_protocol);
-  bool pollEventResult(ConsumerEvent& event);
-
 
  private:
   int32_t client_indexid_;
@@ -105,12 +110,16 @@ class TubeMQConsumer : public BaseClient {
   ClientSubInfo sub_info_;
   RmtDataCacheCsm rmtdata_cache_;
   AtomicLong visit_token_;
+  mutable mutex auth_lock_;
+  string authorized_info_;
   AtomicBoolean nextauth_2_master;
   AtomicBoolean nextauth_2_broker;
-  int32_t cur_report_times_;
   string curr_master_addr_;
   map<string, int32_t> masters_map_;
-  int64_t last_master_updtime_;
+  bool is_master_actived_;
+  int32_t master_sh_retry_cnt_;
+  int64_t last_master_hbtime_;
+  int32_t unreport_times_;
 };
 
 

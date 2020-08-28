@@ -57,7 +57,7 @@ void ClientConnection::requestTimeoutHandle(const std::error_code& ec, RequestCo
     return;
   }
   auto request_id = req->request_id_;
-  auto err = ErrorCode(err_code::kErrNetWorkTimeout, "timeout");
+  auto err = ErrorCode(err_code::kErrNetWorkTimeout, "Request is timeout");
   requestCallback(request_id, &err);
 }
 
