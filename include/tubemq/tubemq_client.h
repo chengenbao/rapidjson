@@ -65,17 +65,19 @@ class TubeMQConsumer : public BaseClient {
          bool is_consumed, ConsumerResult& result);
 
  private:
+  bool register2Master(int32_t& error_code,
+    string& err_info, bool need_change);
+  void heartBeat2Master();
+  void processRebalanceEvent();
+  void close2Master();
+
+ private:
   string buildUUID();
   bool isClientRunning();
   int32_t getConsumeReadStatus(bool is_first_reg);
   bool initMasterAddress(string& err_info, const string& master_info);
   void getNextMasterAddr(string& ipaddr, int32_t& port);
   void getCurrentMasterAddr(string& ipaddr, int32_t& port);
-  bool register2Master(int32_t& error_code,
-    string& err_info, bool need_change);
-  bool heartBeat2Master(string& err_info);
-  void heartBeat2Master();
-  void close2Master();
   bool needGenMasterCertificateInfo(bool force);
   void genBrokerAuthenticInfo(AuthorizedInfo* p_authInfo, bool force);
   void processAuthorizedToken(const MasterAuthorizedInfo& authorized_token_info);
@@ -97,10 +99,17 @@ class TubeMQConsumer : public BaseClient {
     bool is_last_consumed, TubeMQCodec::ReqProtocolPtr& req_protocol);
   void genMasterAuthenticateToken(AuthenticateInfo* pauthinfo,
     const string& username, const string usrpassword);
-  bool processRegisterResponseM2C(int32_t& err_code,
+  bool processRegisterResponseM2C(int32_t& error_code,
     string& err_info, const TubeMQCodec::RspProtocolPtr& rsp_protocol);
   bool processHBResponseM2C(int32_t& error_code, string& err_info,
     const TubeMQCodec::RspProtocolPtr& rsp_protocol);
+  void processDisConnect2Broker(ConsumerEvent& event);
+  void processConnect2Broker(ConsumerEvent& event);
+  void unregister2Brokers(
+    map<NodeInfo, list<PartitionExt> >& unreg_partitions, bool wait_rsp);
+  bool processRegResponseB2C(int32_t& error_code, string& err_info,
+    const TubeMQCodec::RspProtocolPtr& rsp_protocol);
+  void processHeartBeat2Broker(NodeInfo broker_info);
 
  private:
   int32_t client_indexid_;
@@ -120,6 +129,7 @@ class TubeMQConsumer : public BaseClient {
   int32_t master_sh_retry_cnt_;
   int64_t last_master_hbtime_;
   int32_t unreport_times_;
+  map<NodeInfo, int32_t> broker_timer_map_;
 };
 
 

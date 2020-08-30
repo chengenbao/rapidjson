@@ -120,6 +120,10 @@ void TubeMQConsumer::ShutDown() {
   if (!this->status_.CompareAndSet(2, 0)) {
     return;
   }
+  // exist rebalance thread
+  ConsumerEvent empty_event;
+  rmtdata_cache_.OfferEvent(empty_event);
+  // remove client stub
   TubeMQService::Instance()->RmvClientObj(client_index_);
   client_index_ = tb_config::kInvalidValue;
   // process resuorce release
@@ -282,6 +286,53 @@ void TubeMQConsumer::heartBeat2Master() {
   return;
 }
 
+void TubeMQConsumer::processRebalanceEvent() {
+  // thread wait until event come
+  LOG_INFO("begin, rebalance event Handler start");
+  while(true) {
+    if (!TubeMQService::Instance()->IsRunning()) {
+      LOG_INFO("[Rebalance Event] TubeMQ Service is stopped, RebalanceEvent existed!");
+      break;
+    }
+    if (!isClientRunning()) {
+      LOG_INFO("[Rebalance Event] TubeMQ Client is stopped, RebalanceEvent existed!");
+      break;
+    }
+    ConsumerEvent event;
+    rmtdata_cache_.TakeEvent(event);
+    if (event.GetEventStatus() == tb_config::kInvalidValue
+      && event.GetRebalanceId() == tb_config::kInvalidValue) {
+      LOG_INFO("[Rebalance Event]  found existed ,out RebalanceEvent Task handler!");
+      break;
+    }
+    rmtdata_cache_.ClearEvent();
+    switch(event.GetEventType()) {
+      case 2:
+      case 20: {
+        processDisConnect2Broker(event);
+        rmtdata_cache_.OfferEventResult(event);
+      }
+      break;
+
+      case 1:
+      case 10: {
+        processConnect2Broker(event);
+        rmtdata_cache_.OfferEventResult(event);
+      }
+      break;
+
+      default: {
+        //
+      }
+      break;
+    }
+  }
+
+  LOG_INFO("end, rebalance event Handler stop");
+  return;
+}
+
+
 void TubeMQConsumer::close2Master() {
   string target_ip;
   int target_port;
@@ -308,6 +359,131 @@ void TubeMQConsumer::close2Master() {
   return;
 }
 
+void TubeMQConsumer::processConnect2Broker(ConsumerEvent& event) {
+  if(!isClientRunning()) {
+    return;
+  }
+  bool ret_result;
+  int32_t error_code;
+  string error_info;
+  list<PartitionExt> subscribed_partitions;
+  list<PartitionExt> unsub_partitions;
+  list<PartitionExt>::iterator it;
+  list<SubscribeInfo> subscribe_info =
+    event.GetSubscribeInfoList();
+  if(!subscribe_info.empty()) {
+    rmtdata_cache_.FilterPartitions(subscribe_info,
+      subscribed_partitions, unsub_partitions);
+    if (!unsub_partitions.empty()) {
+      for (it = unsub_partitions.begin(); it != unsub_partitions.end(); it++) {
+        auto request = std::make_shared<RequestContext>();
+        TubeMQCodec::ReqProtocolPtr req_protocol = TubeMQCodec::GetReqProtocol();
+        // build close2master request
+        buidRegisterRequestC2B(*it, req_protocol);
+        request->codec_ = std::make_shared<TubeMQCodec>();
+        request->ip_ = it->GetBrokerHost();
+        request->port_ = it->GetBrokerPort();
+        request->timeout_ = config_.GetRpcReadTimeoutMs();
+        request->request_id_ = Singleton<UniqueSeqId>::Instance().Next();
+        req_protocol->request_id_ = request->request_id_;
+        req_protocol->rpc_read_timeout_ = config_.GetRpcReadTimeoutMs() - 500;
+        // send message to target
+        ResponseContext response_context;
+        ErrorCode error = SyncRequest(response_context, request, req_protocol);
+        if (error.Value() == err_code::kErrNetWorkTimeout) {
+          LOG_WARN("[Connect2Broker] request network timeout to (%s:%d) failure",
+            it->GetBrokerHost().c_str(), it->GetBrokerPort());
+        } else {
+          // process response
+          auto rsp = any_cast<TubeMQCodec::RspProtocolPtr>(response_context.rsp_);
+          ret_result = processRegResponseB2C(error_code, error_info, rsp);
+          if (ret_result) {
+            rmtdata_cache_.AddNewPartition(*it);
+            // TODO: add hearbeat timer by broker IP?
+          }
+        }
+      }
+    }
+  }
+  event.SetEventStatus(2);
+}
+
+void TubeMQConsumer::processDisConnect2Broker(ConsumerEvent& event) {
+  if(!isClientRunning()) {
+    return;
+  }
+  list<SubscribeInfo> subscribe_info =
+    event.GetSubscribeInfoList();
+  if(!subscribe_info.empty()) {
+    map<NodeInfo, list<PartitionExt> > rmv_partitions;
+    rmtdata_cache_.RemoveAndGetPartition(subscribe_info,
+      config_.IsRollbackIfConfirmTimeout(), rmv_partitions);
+    if (!rmv_partitions.empty()) {
+      unregister2Brokers(rmv_partitions, true);
+    }
+  }
+  event.SetEventStatus(2);
+  return;
+}
+
+void TubeMQConsumer::processHeartBeat2Broker(NodeInfo broker_info) {
+  if(!isClientRunning()) {
+    return;
+  }
+  list<PartitionExt> partition_list;
+  list<PartitionExt>::iterator it;
+  rmtdata_cache_.GetPartitionByBroker(broker_info, partition_list);
+  if (partition_list.empty()) {
+    // TODO: delete hearbeat timer by broker IP?
+    return;
+  }
+  auto request = std::make_shared<RequestContext>();
+  TubeMQCodec::ReqProtocolPtr req_protocol = TubeMQCodec::GetReqProtocol();
+  // build heartbeat2broker request
+  buidHeartBeatC2B(partition_list, req_protocol);
+  request->codec_ = std::make_shared<TubeMQCodec>();
+  request->ip_ = broker_info.GetHost();
+  request->port_ = broker_info.GetPort();
+  request->timeout_ = config_.GetRpcReadTimeoutMs();
+  request->request_id_ = Singleton<UniqueSeqId>::Instance().Next();
+  req_protocol->request_id_ = request->request_id_;
+  req_protocol->rpc_read_timeout_ = config_.GetRpcReadTimeoutMs() - 500;
+  // send message to target
+  ResponseContext response_context;
+  ErrorCode error = SyncRequest(response_context, request, req_protocol);
+  if (error.Value() == err_code::kErrNetWorkTimeout) {
+    LOG_WARN("[Heartbeat2Broker] request network timeout to (%s:%d) failure",
+      broker_info.GetHost().c_str(), broker_info.GetPort());
+  } else {
+    // process response
+    auto rsp = any_cast<TubeMQCodec::RspProtocolPtr>(response_context.rsp_);
+    if (rsp->success_) {
+      HeartBeatResponseB2C rsp_b2c;
+      bool result = rsp_b2c.ParseFromArray(rsp->rsp_body_.data().c_str(),
+        (int)(rsp->rsp_body_.data().length()));
+      if (result) {
+        set<string> partition_keys;
+        if (rsp_b2c.has_haspartfailure() && rsp_b2c.haspartfailure()) {
+          for (int tmp_i = 0; tmp_i < rsp_b2c.failureinfo_size(); tmp_i++) {
+            string token_key = delimiter::kDelimiterColon;
+            string fullpart_str = rsp_b2c.failureinfo(tmp_i);
+            string::size_type pos1 = fullpart_str.find(token_key);
+            if (pos1 == string::npos) {
+              continue;
+            }
+            //int error_code = atoi(fullpart_str.substr(0, pos1).c_str());
+            string part_str = fullpart_str.substr(
+              pos1 + token_key.size(), fullpart_str.size());
+            Partition part(part_str);
+            partition_keys.insert(part.GetPartitionKey());
+          }
+        }
+        rmtdata_cache_.RemovePartition(partition_keys);
+      }
+    }
+  }
+  // TODO: add hearbeat timer by broker IP?
+}
 
 void TubeMQConsumer::buidRegisterRequestC2M(TubeMQCodec::ReqProtocolPtr& req_protocol) {
   string reg_msg;
@@ -515,10 +691,10 @@ void TubeMQConsumer::buidCommitC2B(const PartitionExt& partition, bool is_last_c
   req_protocol->prot_msg_ = commit_msg;
 }
 
-bool TubeMQConsumer::processRegisterResponseM2C(int32_t& err_code, string& err_info,
+bool TubeMQConsumer::processRegisterResponseM2C(int32_t& error_code, string& err_info,
                                                 const TubeMQCodec::RspProtocolPtr& rsp_protocol) {
   if (!rsp_protocol->success_) {
-    err_code = rsp_protocol->code_;
+    error_code = rsp_protocol->code_;
     err_info = rsp_protocol->error_msg_;
     return false;
   }
@@ -526,12 +702,12 @@ bool TubeMQConsumer::processRegisterResponseM2C(int32_t& err_code, string& err_i
   bool result = rsp_m2c.ParseFromArray(rsp_protocol->rsp_body_.data().c_str(),
                                            (int)(rsp_protocol->rsp_body_.data().length()));
   if (!result) {
-    err_code = err_code::kErrParseFailure;
+    error_code = err_code::kErrParseFailure;
     err_info = "Parse RegisterResponseM2C response failure!";
     return false;
   }
   if (!rsp_m2c.success()) {
-    err_code = rsp_m2c.errcode();
+    error_code = rsp_m2c.errcode();
     err_info = rsp_m2c.errmsg();
     return false;
   }
@@ -552,7 +728,7 @@ bool TubeMQConsumer::processRegisterResponseM2C(int32_t& err_code, string& err_i
   if (rsp_m2c.has_authorizedinfo()) {
     processAuthorizedToken(rsp_m2c.authorizedinfo());
   }
-  err_code = err_code::kErrSuccess;
+  error_code = err_code::kErrSuccess;
   err_info = "Ok";
   return true;
 }
@@ -608,12 +784,72 @@ bool TubeMQConsumer::processHBResponseM2C(int32_t& error_code, string& err_info,
       }
       ConsumerEvent new_event(eventProto.rebalanceid(),
         eventProto.optype(), subcribe_infos, 0);
-      rmtdata_cache_.OfferEventResult(new_event);
+      rmtdata_cache_.OfferEvent(new_event);
     }
   }
   last_master_hbtime_ = Utils::GetCurrentTimeMillis();
   error_code = err_code::kErrSuccess;
   err_info = "Ok";
+  return true;
+}
+
+void TubeMQConsumer::unregister2Brokers(
+  map<NodeInfo, list<PartitionExt> >& unreg_partitions, bool wait_rsp) {
+  string err_info;
+  map<NodeInfo, list<PartitionExt> >::iterator it;
+  list<PartitionExt>::iterator it_part;
+
+  if (unreg_partitions.empty()) {
+    return;
+  }
+  for (it = unreg_partitions.begin(); it != unreg_partitions.end(); ++it) {
+    list<PartitionExt> part_list = it->second;
+    for (it_part = part_list.begin(); it_part != part_list.end(); ++it_part) {
+      auto request = std::make_shared<RequestContext>();
+      TubeMQCodec::ReqProtocolPtr req_protocol = TubeMQCodec::GetReqProtocol();
+      // build unregister 2 broker request
+      buidUnRegRequestC2B(*it_part, it_part->IsLastConsumed(), req_protocol);
+      request->codec_ = std::make_shared<TubeMQCodec>();
+      request->ip_ = it_part->GetBrokerHost();
+      request->port_ = it_part->GetBrokerPort();
+      request->timeout_ = config_.GetRpcReadTimeoutMs();
+      request->request_id_ = Singleton<UniqueSeqId>::Instance().Next();
+      req_protocol->request_id_ = request->request_id_;
+      req_protocol->rpc_read_timeout_ = config_.GetRpcReadTimeoutMs() - 500;
+      // send message to target
+      ResponseContext response_context;
+      ErrorCode error = SyncRequest(response_context, request, req_protocol);
+      if (wait_rsp) {
+
+      }
+      // not care result
+      // TODO:  process result
+    }
+  }
+}
+
+bool TubeMQConsumer::processRegResponseB2C(int32_t& error_code, string& err_info,
+  const TubeMQCodec::RspProtocolPtr& rsp_protocol) {
+  if (!rsp_protocol->success_) {
+    error_code = rsp_protocol->code_;
+    err_info = rsp_protocol->error_msg_;
+    return false;
+  }
+  RegisterResponseB2C rsp_b2c;
+  bool result = rsp_b2c.ParseFromArray(rsp_protocol->rsp_body_.data().c_str(),
+    (int)(rsp_protocol->rsp_body_.data().length()));
+  if (!result) {
+    error_code = err_code::kErrParseFailure;
+    err_info = "Parse RegisterResponseB2C response failure!";
+    return false;
+  }
+  if (!rsp_b2c.success()) {
+    error_code = rsp_b2c.errcode();
+    err_info = rsp_b2c.errmsg();
+    return false;
+  }
+  error_code = err_code::kErrSuccess;
+  err_info = "Ok";  
   return true;
 }
 
