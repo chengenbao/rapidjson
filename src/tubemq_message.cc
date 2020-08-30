@@ -31,12 +31,8 @@ namespace tubemq {
 using std::stringstream;
 
 
-// message flag's properties settings
-static const int32_t kMsgFlagIncProperties = 0x01;
-// reserved property key Filter Item
-static const char kRsvPropKeyFilterItem[] = "$msgType$";
-// reserved property key message send time
-static const char kRsvPropKeyMsgTime[] = "$msgTime$";
+
+
 
 Message::Message() {
   this->topic_ = "";
@@ -62,6 +58,20 @@ Message::Message(const string& topic, const char* data, uint32_t datalen) {
   copyData(data, datalen);
   this->properties_.clear();
 }
+
+Message::Message(const string& topic, int32_t flag,
+  int64_t message_id, const char* data, uint32_t datalen,
+  const map<string, string>& properties) {
+  this->topic_ = topic;
+  this->flag_ = flag;
+  this->message_id_ = message_id;
+  copyData(data, datalen);
+  copyProperties(properties);
+}
+
+
+
+
 
 Message::~Message() { clearData(); }
 
@@ -138,7 +148,9 @@ bool Message::GetProperty(const string& key, string& value) {
   return false;
 }
 
-bool Message::GetFilterItem(string& value) { return GetProperty(kRsvPropKeyFilterItem, value); }
+bool Message::GetFilterItem(string& value) { 
+  return GetProperty(tb_config::kRsvPropKeyFilterItem, value);
+}
 
 bool Message::AddProperty(string& err_info, const string& key, const string& value) {
   string trimed_key = Utils::Trim(key);
@@ -169,12 +181,13 @@ bool Message::AddProperty(string& err_info, const string& key, const string& val
     err_info = ss.str();
     return false;
   }
-  if (trimed_key == kRsvPropKeyFilterItem || trimed_key == kRsvPropKeyMsgTime) {
+  if (trimed_key == tb_config::kRsvPropKeyFilterItem
+    || trimed_key == tb_config::kRsvPropKeyMsgTime) {
     stringstream ss;
     ss << "Reserved token '";
-    ss << kRsvPropKeyFilterItem;
+    ss << tb_config::kRsvPropKeyFilterItem;
     ss << "' or '";
-    ss << kRsvPropKeyMsgTime;
+    ss << tb_config::kRsvPropKeyMsgTime;
     ss << "' must not be used in parmeter key!";
     err_info = ss.str();
     return false;
@@ -182,7 +195,7 @@ bool Message::AddProperty(string& err_info, const string& key, const string& val
   // add key and value
   this->properties_[trimed_key] = trimed_value;
   if (!this->properties_.empty()) {
-    this->flag_ |= kMsgFlagIncProperties;
+    this->flag_ |= tb_config::kMsgFlagIncProperties;
   }
   err_info = "Ok";
   return true;
@@ -215,7 +228,7 @@ void Message::copyProperties(const map<string, string>& properties) {
     this->properties_[it_map->first] = it_map->second;
   }
   if (!this->properties_.empty()) {
-    this->flag_ |= kMsgFlagIncProperties;
+    this->flag_ |= tb_config::kMsgFlagIncProperties;
   }
 }
 

@@ -83,6 +83,15 @@ static const uint32_t kBrokerTlsPortDef = 8124;
 // invalid value
 static const int32_t kInvalidValue = -2;
 
+// message flag's properties settings
+static const int32_t kMsgFlagIncProperties = 0x01;
+
+// reserved property key Filter Item
+static const char kRsvPropKeyFilterItem[] = "$msgType$";
+// reserved property key message send time
+static const char kRsvPropKeyMsgTime[] = "$msgTime$";
+
+
 }  // namespace tb_config
 
 namespace delimiter {
@@ -102,6 +111,8 @@ static const char kDelimiterLftSB[] = "[";
 static const char kDelimiterRgtSB[] = "]";
 
 }  // namespace delimiter
+
+
 
 }  // namespace tubemq
 

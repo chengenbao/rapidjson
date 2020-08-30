@@ -175,7 +175,7 @@ void RmtDataCacheCsm::BookedPartionInfo(
 }
 
 void RmtDataCacheCsm::BookedPartionInfo(const string& partition_key,
-                     int64_t curr_offset, int32_t err_code, bool esc_limit,
+                     int64_t curr_offset, int32_t error_code, bool esc_limit,
                   int32_t msg_size, int64_t limit_dlt, int64_t cur_data_dlt,
                      bool require_slow) {
   map<string, PartitionExt>::iterator it_part;
@@ -188,7 +188,7 @@ void RmtDataCacheCsm::BookedPartionInfo(const string& partition_key,
   lock_guard<mutex> lck2(meta_lock_);
   it_part = partitions_.find(partition_key);
   if (it_part != partitions_.end()) {
-    it_part->second.BookConsumeData(err_code, msg_size,
+    it_part->second.BookConsumeData(error_code, msg_size,
               esc_limit, limit_dlt, cur_data_dlt, require_slow);
   }
 }
@@ -221,7 +221,7 @@ bool RmtDataCacheCsm::RelPartition(string &err_info,
 // release partiton with error response return
 bool RmtDataCacheCsm::RelPartition(string &err_info, bool filter_consume,
                               const string& confirm_context, bool is_consumed,
-                              int64_t curr_offset, int32_t err_code, bool esc_limit,
+                              int64_t curr_offset, int32_t error_code, bool esc_limit,
                               int32_t msg_size, int64_t limit_dlt, int64_t cur_data_dlt) {
   int64_t booked_time;
   string  partition_key;
@@ -231,7 +231,7 @@ bool RmtDataCacheCsm::RelPartition(string &err_info, bool filter_consume,
   if (!result) {
     return false;
   }
-  BookedPartionInfo(partition_key, curr_offset, err_code,
+  BookedPartionInfo(partition_key, curr_offset, error_code,
             esc_limit, msg_size, limit_dlt, cur_data_dlt, false);
   return inRelPartition(err_info, true,
     filter_consume, confirm_context, is_consumed);

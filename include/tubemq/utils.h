@@ -41,6 +41,8 @@ class Utils {
   // split string to map<string, int>
   static void Split(const string& source, map<string, int32_t>& result,
                     const string& delimiter_step1, const string& delimiter_step2);
+  static void Split(const string& source, map<string, string>& result,
+                    const string& delimiter_step1, const string& delimiter_step2);
   static void Join(const vector<string>& vec, const string& delimiter, string& target);
   static bool ValidString(string& err_info, const string& source, bool allow_empty, bool pat_match,
                           bool check_max_length, unsigned int maxlen);

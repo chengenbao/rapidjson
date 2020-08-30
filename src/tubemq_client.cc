@@ -140,7 +140,46 @@ bool TubeMQConsumer::GetMessage(ConsumerResult& result) {
       "TubeMQ Client stopped!");
     return false;
   }
-  return true;
+  int32_t error_code;
+  string err_info;
+  PartitionExt partition_ext;
+  string confirm_context;
+  if (!rmtdata_cache_.SelectPartition(error_code,
+    err_info, partition_ext, confirm_context)) {
+    result.SetFailureResult(error_code, err_info);
+    return false;
+  }
+  long curr_offset = tb_config::kInvalidValue;
+  bool filter_consume = 
+    sub_info_.IsFilterConsume(partition_ext.GetTopic());
+  PeerInfo peer_info(partition_ext, curr_offset);
+  auto request = std::make_shared<RequestContext>();
+  TubeMQCodec::ReqProtocolPtr req_protocol = TubeMQCodec::GetReqProtocol();
+  // build getmessage request
+  buidGetMessageC2B(partition_ext,
+    partition_ext.IsLastConsumed(), req_protocol);
+  request->codec_ = std::make_shared<TubeMQCodec>();
+  request->ip_ = partition_ext.GetBrokerHost();
+  request->port_ = partition_ext.GetBrokerPort();
+  request->timeout_ = config_.GetRpcReadTimeoutMs();
+  request->request_id_ = Singleton<UniqueSeqId>::Instance().Next();
+  req_protocol->request_id_ = request->request_id_;
+  req_protocol->rpc_read_timeout_ = config_.GetRpcReadTimeoutMs() - 500;
+  // send message to target
+  ResponseContext response_context;
+  ErrorCode error = SyncRequest(response_context, request, req_protocol);
+  if (error.Value()  == err_code::kErrSuccess) {
+    // process response
+    auto rsp = any_cast<TubeMQCodec::RspProtocolPtr>(response_context.rsp_);
+    processGetMessageRspB2C(result, peer_info,
+      filter_consume, partition_ext, confirm_context, rsp);
+    return result.IsSuccess();
+  } else {
+    rmtdata_cache_.RelPartition(err_info, filter_consume, confirm_context, false);
+    result.SetFailureResult(error.Value(),
+      error.Message(), partition_ext.GetTopic(), peer_info);
+    return false;
+  }
 }
 
 bool TubeMQConsumer::Confirm(const string& confirm_context,
@@ -215,7 +254,7 @@ bool TubeMQConsumer::Confirm(const string& confirm_context,
   if (error.Value()  == err_code::kErrSuccess) {
     // process response
     auto rsp = any_cast<TubeMQCodec::RspProtocolPtr>(response_context.rsp_);
-    if (!rsp->success_) {
+    if (rsp->success_) {
       CommitOffsetResponseB2C rsp_b2c;
       ret_result = rsp_b2c.ParseFromArray(rsp->rsp_body_.data().c_str(),
         (int)(rsp->rsp_body_.data().length()));
@@ -966,6 +1005,178 @@ bool TubeMQConsumer::processRegResponseB2C(int32_t& error_code, string& err_info
   }
   error_code = err_code::kErrSuccess;
   err_info = "Ok";  
+  return true;
+}
+
+
+void TubeMQConsumer::convertMessages(int32_t& msg_size, list<Message>& message_list,
+  bool filter_consume, const string& topic_name, GetMessageResponseB2C& rsp_b2c) {
+  msg_size = 0;
+  message_list.clear();
+  if (rsp_b2c.messages_size() == 0) {
+    return;
+  }
+  for (int i = 0; i < rsp_b2c.messages_size(); i++) { 
+    TransferedMessage tsfMsg = rsp_b2c.messages(i);
+    int32_t flag = tsfMsg.flag();
+    int64_t message_id = tsfMsg.messageid();
+    int64_t in_check_sum = tsfMsg.checksum();
+    int32_t payload_length = tsfMsg.payloaddata().length();
+    char* payload_data = new char[payload_length];
+    memcpy(payload_data, tsfMsg.payloaddata().c_str(), payload_length);
+    int64_t calc_checksum = 0;
+    // TODO: calc crc 32
+    if (in_check_sum != calc_checksum) {
+      delete[] payload_data;
+      continue;
+    }
+    int read_pos = 0;
+    int data_len = payload_length;
+    map<string, string> properties;
+    if ((flag & tb_config::kMsgFlagIncProperties) == 1) {
+      if (payload_length < 4) {
+        delete[] payload_data;
+        continue;
+      }
+      int32_t attr_len = ntohl(*(int *)(&payload_data[0]));
+      read_pos += 4;
+      data_len -= 4;
+      if (attr_len > data_len) {
+        delete[] payload_data;
+        continue;
+      }
+      string attribute(payload_data + read_pos, attr_len);
+      read_pos += attr_len;
+      data_len -= attr_len;
+      Utils::Split(attribute, properties,
+        delimiter::kDelimiterComma, delimiter::kDelimiterEqual);
+      if (filter_consume) {
+        map<string, set<string> > topic_filter_map 
+          = sub_info_.GetTopicFilterMap();
+        map<string, set<string> >::const_iterator it 
+          = topic_filter_map.find(topic_name);
+        if (properties.find(
+          tb_config::kRsvPropKeyFilterItem) != properties.end()) {
+          string msg_key = properties[tb_config::kRsvPropKeyFilterItem];
+          if (it != topic_filter_map.end()) {
+            set<string> filters = it->second;
+            if(filters.find(msg_key) == filters.end()) {
+              delete[] payload_data;
+              continue;
+            }
+          }
+        }
+      }
+    }
+    Message message(topic_name, flag, message_id, 
+      payload_data + read_pos, data_len, properties);
+    message_list.push_back(message);
+    msg_size += data_len;
+    delete[] payload_data;
+  }
+  return;
+}
+
+bool TubeMQConsumer::processGetMessageRspB2C(ConsumerResult& result,
+  PeerInfo& peer_info, bool filter_consume, const PartitionExt& partition_ext,
+  const string& confirm_context, const TubeMQCodec::RspProtocolPtr& rsp) {
+  string err_info;
+  if (!rsp->success_) {
+    rmtdata_cache_.RelPartition(err_info, filter_consume, confirm_context, false);
+    result.SetFailureResult(rsp->code_, rsp->error_msg_,
+      partition_ext.GetTopic(), peer_info);
+    return false;
+  }
+  GetMessageResponseB2C rsp_b2c;
+  bool ret_result = rsp_b2c.ParseFromArray(
+    rsp->rsp_body_.data().c_str(), (int)(rsp->rsp_body_.data().length()));
+  if (!ret_result) {
+    rmtdata_cache_.RelPartition(err_info, filter_consume, confirm_context, false);
+    result.SetFailureResult(err_code::kErrServerError,
+      "Parse GetMessageResponseB2C response failure!",
+      partition_ext.GetTopic(), peer_info);
+    return false;
+
+  }
+  switch (rsp_b2c.errcode()) {
+    case err_code::kErrSuccess: {
+      bool esc_limit = (rsp_b2c.has_escflowctrl() && rsp_b2c.escflowctrl());
+      long data_dltval = rsp_b2c.has_currdatadlt()
+        ? rsp_b2c.currdatadlt() : tb_config::kInvalidValue;
+      long curr_offset = rsp_b2c.has_curroffset()
+        ? rsp_b2c.curroffset() : tb_config::kInvalidValue;
+      bool req_slow = rsp_b2c.has_requireslow()
+        ? rsp_b2c.requireslow() : false;
+      int msg_size = 0;
+      list<Message> message_list;
+      convertMessages(msg_size, message_list,
+        filter_consume, partition_ext.GetTopic(), rsp_b2c);
+      rmtdata_cache_.BookedPartionInfo(partition_ext.GetPartitionKey(),
+        curr_offset, err_code::kErrSuccess, esc_limit, msg_size,
+        0, data_dltval, req_slow);
+      peer_info.SetCurrOffset(curr_offset);
+      result.SetSuccessResult(err_code::kErrSuccess, partition_ext.GetTopic(),
+        peer_info, confirm_context, message_list);
+      return true;
+    }
+
+    case err_code::kErrHbNoNode:
+    case err_code::kErrCertificateFailure:
+    case err_code::kErrDuplicatePartition: {
+      rmtdata_cache_.RemovePartition(err_info, confirm_context);
+      result.SetFailureResult(rsp_b2c.errcode(), rsp_b2c.errmsg(),
+        partition_ext.GetTopic(), peer_info);
+      return false;
+    }
+    
+    case err_code::kErrConsumeSpeedLimit: {
+      // Process with server side speed limit
+      long def_dlttime = rsp_b2c.has_minlimittime()
+        ? rsp_b2c.minlimittime() : config_.GetMsgNotFoundWaitPeriodMs();
+      rmtdata_cache_.RelPartition(err_info, filter_consume, confirm_context,
+         false, tb_config::kInvalidValue, rsp_b2c.errcode(), false, 0,
+         def_dlttime, tb_config::kInvalidValue);
+      result.SetFailureResult(rsp_b2c.errcode(), rsp_b2c.errmsg(),
+        partition_ext.GetTopic(), peer_info);
+      return false;
+    }
+
+    case err_code::kErrNotFound:
+    case err_code::kErrForbidden:
+    case err_code::kErrMoved:
+    case err_code::kErrServiceUnavilable:
+    default: {
+      // Slow down the request based on the limitation configuration when meet these errors
+      long limit_dlt = 300;
+      switch (rsp_b2c.errcode()) {
+          case err_code::kErrForbidden: {
+              limit_dlt = 2000;
+              break;
+          }
+          case err_code::kErrServiceUnavilable: {
+              limit_dlt = 300;
+              break;
+          }
+          case err_code::kErrMoved: {
+              limit_dlt = 200;
+              break;
+          }
+          case err_code::kErrNotFound: {
+              limit_dlt = config_.GetMsgNotFoundWaitPeriodMs();
+              break;
+          }
+          default: {
+              //
+          }
+      }
+      rmtdata_cache_.RelPartition(err_info, filter_consume, confirm_context,
+         false, tb_config::kInvalidValue, rsp_b2c.errcode(), false, 0,
+         limit_dlt, tb_config::kInvalidValue);
+      result.SetFailureResult(rsp_b2c.errcode(), rsp_b2c.errmsg(),
+        partition_ext.GetTopic(), peer_info);
+      return false;
+    }
+  }
   return true;
 }
 

@@ -110,6 +110,15 @@ class TubeMQConsumer : public BaseClient {
   bool processRegResponseB2C(int32_t& error_code, string& err_info,
     const TubeMQCodec::RspProtocolPtr& rsp_protocol);
   void processHeartBeat2Broker(NodeInfo broker_info);
+  bool processGetMessageRspB2C(ConsumerResult& result,
+    PeerInfo& peer_info, bool filter_consume, 
+    const PartitionExt& partition_ext,
+    const string& confirm_context,
+    const TubeMQCodec::RspProtocolPtr& rsp_protocol);
+  void convertMessages(int32_t& msg_size, list<Message>& message_list,
+    bool filter_consume, const string& topic_name,
+    GetMessageResponseB2C& rsp_b2c);
+
 
  private:
   int32_t client_indexid_;

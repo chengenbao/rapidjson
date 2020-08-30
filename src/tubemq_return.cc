@@ -71,9 +71,9 @@ ConsumerResult::ConsumerResult(const ConsumerResult& target) {
   this->message_list_ = target.message_list_;
 }
 
-ConsumerResult::ConsumerResult(int32_t err_code, string err_msg) {
+ConsumerResult::ConsumerResult(int32_t error_code, string err_msg) {
   success_ = false;
-  err_code_ = err_code;
+  err_code_ = error_code;
   err_msg_ = err_msg;
   topic_name_ = "";
   confirm_context_ = "";
@@ -101,26 +101,26 @@ ConsumerResult& ConsumerResult::operator=(const ConsumerResult& target) {
   return *this;
 }
 
-void ConsumerResult::SetFailureResult(int32_t err_code, string err_msg) {
+void ConsumerResult::SetFailureResult(int32_t error_code, string err_msg) {
   success_ = false;
-  err_code_ = err_code;
+  err_code_ = error_code;
   err_msg_ = err_msg;
 }
 
-void ConsumerResult::SetFailureResult(int32_t err_code, string err_msg,
+void ConsumerResult::SetFailureResult(int32_t error_code, string err_msg,
                             const string& topic_name, const PeerInfo& peer_info) {
   success_ = false;
-  err_code_ = err_code;
+  err_code_ = error_code;
   err_msg_ = err_msg;
   topic_name_ = topic_name;
   peer_info_ = peer_info;
 }
 
-void ConsumerResult::SetSuccessResult(int32_t err_code,
+void ConsumerResult::SetSuccessResult(int32_t error_code,
                                              const string& topic_name,
                                              const PeerInfo& peer_info) {
   this->success_ = true;
-  this->err_code_ = err_code;
+  this->err_code_ = error_code;
   this->err_msg_ = "Ok";
   this->topic_name_ = topic_name;
   this->peer_info_ = peer_info;
@@ -128,13 +128,13 @@ void ConsumerResult::SetSuccessResult(int32_t err_code,
   this->message_list_.clear();
 }
 
-void ConsumerResult::SetSuccessResult(int32_t err_code,
+void ConsumerResult::SetSuccessResult(int32_t error_code,
                                              const string& topic_name,
                                              const PeerInfo& peer_info,
                                              const string& confirm_context,
                                              const list<Message>& message_list) {
   this->success_ = true;
-  this->err_code_ = err_code;
+  this->err_code_ = error_code;
   this->err_msg_ = "Ok";
   this->topic_name_ = topic_name;
   this->peer_info_ = peer_info;

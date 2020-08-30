@@ -61,15 +61,15 @@ class ConsumerResult {
  public:
   ConsumerResult();
   ConsumerResult(const ConsumerResult& target);
-  ConsumerResult(int32_t err_code, string err_msg);
+  ConsumerResult(int32_t error_code, string err_msg);
   ~ConsumerResult();
   ConsumerResult& operator=(const ConsumerResult& target);
-  void SetFailureResult(int32_t err_code, string err_msg);
-  void SetFailureResult(int32_t err_code, string err_msg,
-              const string& topic_name, const PeerInfo& peer_info);
-  void SetSuccessResult(int32_t err_code,
+  void SetFailureResult(int32_t error_code, string err_msg);
+  void SetFailureResult(int32_t error_code, string err_msg,
     const string& topic_name, const PeerInfo& peer_info);
-  void SetSuccessResult(int32_t err_code, const string& topic_name,
+  void SetSuccessResult(int32_t error_code,
+    const string& topic_name, const PeerInfo& peer_info);
+  void SetSuccessResult(int32_t error_code, const string& topic_name,
                   const PeerInfo& peer_info, const string& confirm_context,
                   const list<Message>& message_list);
   bool IsSuccess() { return success_; }

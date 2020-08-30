@@ -73,14 +73,14 @@ class RmtDataCacheCsm {
            PartitionExt& partition_ext, string& confirm_context);
   void BookedPartionInfo(const string& partition_key, int64_t curr_offset);  
   void BookedPartionInfo(const string& partition_key, int64_t curr_offset,
-                            int32_t err_code, bool esc_limit, int32_t msg_size,
+                            int32_t error_code, bool esc_limit, int32_t msg_size,
                             int64_t limit_dlt, int64_t cur_data_dlt, bool require_slow);
   bool RelPartition(string &err_info, bool filter_consume,
                          const string& confirm_context, bool is_consumed);
   bool RelPartition(string &err_info, const string& confirm_context, bool is_consumed);
   bool RelPartition(string &err_info, bool filter_consume,
                          const string& confirm_context, bool is_consumed,
-                         int64_t curr_offset, int32_t err_code, bool esc_limit,
+                         int64_t curr_offset, int32_t error_code, bool esc_limit,
                          int32_t msg_size, int64_t limit_dlt, int64_t cur_data_dlt);
   void FilterPartitions(const list<SubscribeInfo>& subscribe_info_lst,
           list<PartitionExt>& subscribed_partitions, list<PartitionExt>& unsub_partitions);

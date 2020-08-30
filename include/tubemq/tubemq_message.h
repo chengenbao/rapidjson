@@ -37,6 +37,8 @@ class Message {
   Message();
   Message(const Message& target);
   Message(const string& topic, const char* data, uint32_t datalen);
+  Message(const string& topic, int32_t flag, int64_t message_id,
+    const char* data, uint32_t datalen, const map<string, string>& properties);
   virtual ~Message();
   Message& operator=(const Message& target);
   const int64_t GetMessageId() const;
