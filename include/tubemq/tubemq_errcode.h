@@ -37,6 +37,9 @@ enum Result {
   kErrUnAuthorized = 401,
   kErrForbidden = 403,
   kErrNotFound = 404,
+  kErrNoPartAssigned = 406,
+  kErrAllPartWaiting = 407,
+  kErrAllPartInUse = 408,
   kErrPartitionOccupied = 410,
   kErrHbNoNode = 411,
   kErrDuplicatePartition = 412,
@@ -54,6 +57,8 @@ enum Result {
   kErrNetWorkTimeout = 1000,
   kErrNetworkError = 1001,
   kErrServerStop = 2001,
+  kErrClientStop = 2002,
+  kErrConfirmTimeout = 2003,
   kErrParseFailure = 5001,
 };
 }  // namespace err_code

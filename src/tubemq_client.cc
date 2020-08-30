@@ -129,6 +129,122 @@ void TubeMQConsumer::ShutDown() {
   // process resuorce release
 }
 
+bool TubeMQConsumer::GetMessage(ConsumerResult& result) {
+  if (!TubeMQService::Instance()->IsRunning()) {
+    result.SetFailureResult(err_code::kErrServerStop,
+      "TubeMQ Service stopped!");
+    return false;
+  }
+  if (!isClientRunning()) {
+    result.SetFailureResult(err_code::kErrClientStop,
+      "TubeMQ Client stopped!");
+    return false;
+  }
+  return true;
+}
+
+bool TubeMQConsumer::Confirm(const string& confirm_context,
+  bool is_consumed, ConsumerResult& result) {
+  if (!TubeMQService::Instance()->IsRunning()) {
+    result.SetFailureResult(err_code::kErrServerStop,
+      "TubeMQ Service stopped!");
+    return false;
+  }
+  if (!isClientRunning()) {
+    result.SetFailureResult(err_code::kErrClientStop,
+      "TubeMQ Client stopped!");
+    return false;
+  }
+  string token1 = delimiter::kDelimiterAt;
+  string token2 = delimiter::kDelimiterColon;
+  string::size_type pos1, pos2;
+  pos1 = confirm_context.find(token1);
+  if (string::npos == pos1) {
+    result.SetFailureResult(err_code::kErrBadRequest,
+      "Illegel confirm_context content: unregular confirm_context value format!");
+    return false;
+  }
+  string part_key = Utils::Trim(confirm_context.substr(0, pos1));
+  string booked_time_str = Utils::Trim(confirm_context.substr(
+    pos1 + token1.size(), confirm_context.size()));
+  long booked_time = atol(booked_time_str.c_str());
+  pos1 = part_key.find(token2);
+  if (string::npos == pos1) {
+    result.SetFailureResult(err_code::kErrBadRequest,
+      "Illegel confirm_context content: unregular index key value format!");
+    return false;
+  }
+  pos1 = pos1 + token1.size();
+  string topic_name = part_key.substr(pos1); 
+  pos2 = topic_name.rfind(token2); 
+  if (string::npos == pos2) {
+    result.SetFailureResult(err_code::kErrBadRequest,
+      "Illegel confirm_context content: unregular index's topic key value format!");
+    return false;
+  }
+  topic_name = topic_name.substr(0, pos2);
+  if (!rmtdata_cache_.IsPartitionInUse(part_key, booked_time)) {
+    result.SetFailureResult(err_code::kErrConfirmTimeout,
+      "The confirm_context's value invalid!");
+    return false;
+  }
+  PartitionExt partition_ext;
+  bool ret_result = rmtdata_cache_.GetPartitionExt(part_key, partition_ext);
+  if (!ret_result) {
+    result.SetFailureResult(err_code::kErrConfirmTimeout,
+      "Not found the partition by confirm_context!");
+    return false;
+  }
+  long curr_offset = tb_config::kInvalidValue;
+  PeerInfo peer_info(partition_ext, curr_offset);
+  auto request = std::make_shared<RequestContext>();
+  TubeMQCodec::ReqProtocolPtr req_protocol = TubeMQCodec::GetReqProtocol();
+  // build CommitC2B request
+  buidCommitC2B(partition_ext,
+    sub_info_.IsFilterConsume(topic_name), req_protocol);
+  request->codec_ = std::make_shared<TubeMQCodec>();
+  request->ip_ = partition_ext.GetBrokerHost();
+  request->port_ = partition_ext.GetBrokerPort();
+  request->timeout_ = config_.GetRpcReadTimeoutMs();
+  request->request_id_ = Singleton<UniqueSeqId>::Instance().Next();
+  req_protocol->request_id_ = request->request_id_;
+  req_protocol->rpc_read_timeout_ = config_.GetRpcReadTimeoutMs() - 500;
+  // send message to target
+  ResponseContext response_context;
+  ErrorCode error = SyncRequest(response_context, request, req_protocol);
+  if (error.Value()  == err_code::kErrSuccess) {
+    // process response
+    auto rsp = any_cast<TubeMQCodec::RspProtocolPtr>(response_context.rsp_);
+    if (!rsp->success_) {
+      CommitOffsetResponseB2C rsp_b2c;
+      ret_result = rsp_b2c.ParseFromArray(rsp->rsp_body_.data().c_str(),
+        (int)(rsp->rsp_body_.data().length()));
+      if (ret_result) {
+        if (rsp_b2c.success()) {
+          curr_offset = rsp_b2c.curroffset();
+          peer_info.SetCurrOffset(curr_offset);
+          result.SetSuccessResult(err_code::kErrSuccess, topic_name, peer_info);
+        } else {
+          result.SetFailureResult(rsp_b2c.errcode(),
+            rsp_b2c.errmsg(), topic_name, peer_info);
+        }
+      } else {
+        result.SetFailureResult(err_code::kErrParseFailure,
+          "Parse CommitOffsetResponseB2C response failure!", topic_name, peer_info);
+      }
+    } else {
+      result.SetFailureResult(rsp->code_, rsp->error_msg_, topic_name, peer_info);
+    }
+  } else {
+    result.SetFailureResult(error.Value(), error.Message(), topic_name, peer_info);
+  }
+  string err_info;
+  rmtdata_cache_.BookedPartionInfo(part_key, curr_offset);
+  rmtdata_cache_.RelPartition(err_info,
+    sub_info_.IsFilterConsume(topic_name), confirm_context, is_consumed);
+  return result.IsSuccess();
+}
+
 bool TubeMQConsumer::register2Master(int32_t& error_code,
   string& err_info, bool need_change) {
   string target_ip;
@@ -249,10 +365,10 @@ void TubeMQConsumer::heartBeat2Master() {
     // send message to target
     ResponseContext response_context;
     ErrorCode error = SyncRequest(response_context, request, req_protocol);
-    if (error.Value() == err_code::kErrNetWorkTimeout) {
+    if (error.Value() != err_code::kErrSuccess) {
       master_sh_retry_cnt_++;
-      LOG_WARN("[HeartBeat2Master] request network timeout to (%s:%d) failure",
-        target_ip.c_str(), target_port);
+      LOG_WARN("[HeartBeat2Master] request network failue to (%s:%d) : %s",
+        target_ip.c_str(), target_port, error.Message().c_str());
     } else {
       // process response
       auto rsp = any_cast<TubeMQCodec::RspProtocolPtr>(response_context.rsp_);
@@ -390,9 +506,9 @@ void TubeMQConsumer::processConnect2Broker(ConsumerEvent& event) {
         // send message to target
         ResponseContext response_context;
         ErrorCode error = SyncRequest(response_context, request, req_protocol);
-        if (error.Value() == err_code::kErrNetWorkTimeout) {
-          LOG_WARN("[Connect2Broker] request network timeout to (%s:%d) failure",
-            it->GetBrokerHost().c_str(), it->GetBrokerPort());
+        if (error.Value() != err_code::kErrSuccess) {
+          LOG_WARN("[Connect2Broker] request network failure to (%s:%d) : %s",
+            it->GetBrokerHost().c_str(), it->GetBrokerPort(), error.Message().c_str());
         } else {
           // process response
           auto rsp = any_cast<TubeMQCodec::RspProtocolPtr>(response_context.rsp_);
@@ -451,9 +567,9 @@ void TubeMQConsumer::processHeartBeat2Broker(NodeInfo broker_info) {
   // send message to target
   ResponseContext response_context;
   ErrorCode error = SyncRequest(response_context, request, req_protocol);
-  if (error.Value() == err_code::kErrNetWorkTimeout) {
-    LOG_WARN("[Heartbeat2Broker] request network timeout to (%s:%d) failure",
-      broker_info.GetHost().c_str(), broker_info.GetPort());
+  if (error.Value() != err_code::kErrSuccess) {
+    LOG_WARN("[Heartbeat2Broker] request network  to failure (%s:%d) : %s",
+      broker_info.GetHost().c_str(), broker_info.GetPort(), error.Message().c_str());
   } else {
     // process response
     auto rsp = any_cast<TubeMQCodec::RspProtocolPtr>(response_context.rsp_);

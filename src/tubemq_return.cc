@@ -118,6 +118,18 @@ void ConsumerResult::SetFailureResult(int32_t err_code, string err_msg,
 
 void ConsumerResult::SetSuccessResult(int32_t err_code,
                                              const string& topic_name,
+                                             const PeerInfo& peer_info) {
+  this->success_ = true;
+  this->err_code_ = err_code;
+  this->err_msg_ = "Ok";
+  this->topic_name_ = topic_name;
+  this->peer_info_ = peer_info;
+  this->confirm_context_ = "";
+  this->message_list_.clear();
+}
+
+void ConsumerResult::SetSuccessResult(int32_t err_code,
+                                             const string& topic_name,
                                              const PeerInfo& peer_info,
                                              const string& confirm_context,
                                              const list<Message>& message_list) {

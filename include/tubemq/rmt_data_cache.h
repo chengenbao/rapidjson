@@ -66,9 +66,12 @@ class RmtDataCacheCsm {
   const int64_t GetDefFlowCtrlId() const { return def_flowctrl_handler_.GetFlowCtrlId(); }
   const int64_t GetGroupFlowCtrlId() const { return group_flowctrl_handler_.GetFlowCtrlId(); }
   bool IsUnderGroupCtrl();
+  int32_t GetCurPartCount() const { return cur_part_cnt_.Get(); }
+  bool IsPartitionInUse(string partition_key, long used_time);
   void AddNewPartition(const PartitionExt& partition_ext);
-  bool SelectPartition(string &err_info,
+  bool SelectPartition(int32_t& error_code, string &err_info,
            PartitionExt& partition_ext, string& confirm_context);
+  void BookedPartionInfo(const string& partition_key, int64_t curr_offset);  
   void BookedPartionInfo(const string& partition_key, int64_t curr_offset,
                             int32_t err_code, bool esc_limit, int32_t msg_size,
                             int64_t limit_dlt, int64_t cur_data_dlt, bool require_slow);
@@ -118,6 +121,7 @@ class RmtDataCacheCsm {
   string consumer_id_;
   string group_name_;
   // flow ctrl
+  AtomicInteger cur_part_cnt_;
   FlowCtrlRuleHandler group_flowctrl_handler_;
   FlowCtrlRuleHandler def_flowctrl_handler_;
   AtomicBoolean under_groupctrl_;

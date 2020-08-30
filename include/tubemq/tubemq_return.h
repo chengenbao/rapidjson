@@ -46,6 +46,7 @@ class PeerInfo {
   const string& GetBrokerHost() const { return broker_host_; }
   const string& GetPartitionKey() const { return partition_key_; }
   const int64_t GetCurrOffset() const { return curr_offset_; }
+  void SetCurrOffset(int64_t offset) { curr_offset_ = offset; }
 
  private:
   uint32_t partition_id_;
@@ -66,6 +67,8 @@ class ConsumerResult {
   void SetFailureResult(int32_t err_code, string err_msg);
   void SetFailureResult(int32_t err_code, string err_msg,
               const string& topic_name, const PeerInfo& peer_info);
+  void SetSuccessResult(int32_t err_code,
+    const string& topic_name, const PeerInfo& peer_info);
   void SetSuccessResult(int32_t err_code, const string& topic_name,
                   const PeerInfo& peer_info, const string& confirm_context,
                   const list<Message>& message_list);

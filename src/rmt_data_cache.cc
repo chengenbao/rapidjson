@@ -38,6 +38,7 @@ using std::unique_lock;
 RmtDataCacheCsm::RmtDataCacheCsm() {
   under_groupctrl_.Set(false);
   last_checktime_.Set(0);
+  cur_part_cnt_.Set(0);
 }
 
 RmtDataCacheCsm::~RmtDataCacheCsm() {
@@ -98,6 +99,7 @@ void RmtDataCacheCsm::AddNewPartition(const PartitionExt& partition_ext) {
   lock_guard<mutex> lck(meta_lock_);
   it_map = partitions_.find(partition_key);
   if (it_map == partitions_.end()) {
+    cur_part_cnt_.GetAndIncrement();
     partitions_[partition_key] = partition_ext;
     it_topic = topic_partition_.find(partition_ext.GetTopic());
     if (it_topic == topic_partition_.end()) {
@@ -125,7 +127,7 @@ void RmtDataCacheCsm::AddNewPartition(const PartitionExt& partition_ext) {
   resetIdlePartition(partition_key, true);
 }
 
-bool RmtDataCacheCsm::SelectPartition(string &err_info,
+bool RmtDataCacheCsm::SelectPartition(int32_t& error_code, string &err_info,
                         PartitionExt& partition_ext, string& confirm_context) {
   bool result = false;
   int64_t booked_time = 0;
@@ -134,14 +136,17 @@ bool RmtDataCacheCsm::SelectPartition(string &err_info,
   // lock operate
   lock_guard<mutex> lck(meta_lock_);
   if (partitions_.empty()) {
+    error_code = err_code::kErrNoPartAssigned;
     err_info = "No partition info in local cache, please retry later!";
     result = false;
   } else {
     if (index_partitions_.empty()) {
+      error_code = err_code::kErrAllPartInUse;
       err_info = "No idle partition to consume, please retry later!";
       result = false;
     } else {
       result = false;
+      error_code = err_code::kErrAllPartInUse;
       err_info = "No idle partition to consume data 2, please retry later!";
       booked_time = Utils::GetCurrentTimeMillis();
       partition_key = index_partitions_.front();
@@ -157,6 +162,16 @@ bool RmtDataCacheCsm::SelectPartition(string &err_info,
     }
   }
   return result;
+}
+
+void RmtDataCacheCsm::BookedPartionInfo(
+  const string& partition_key, int64_t curr_offset) {
+  map<string, PartitionExt>::iterator it_part;
+  // book partition offset info
+  if (curr_offset >= 0) {
+    lock_guard<mutex> lck1(data_book_mutex_);
+    partition_offset_[partition_key] = curr_offset;
+  }
 }
 
 void RmtDataCacheCsm::BookedPartionInfo(const string& partition_key,
@@ -177,6 +192,19 @@ void RmtDataCacheCsm::BookedPartionInfo(const string& partition_key,
               esc_limit, limit_dlt, cur_data_dlt, require_slow);
   }
 }
+
+bool RmtDataCacheCsm::IsPartitionInUse(
+  string partition_key, long used_time) {
+  map<string, int64_t>::iterator it_used;
+  lock_guard<mutex> lck(meta_lock_);
+  it_used = partition_useds_.find(partition_key);
+  if (it_used == partition_useds_.end() 
+    || it_used->second != used_time) {
+      return false;
+  }
+  return true;
+}
+
 
 // success process release partition
 bool RmtDataCacheCsm::RelPartition(string &err_info, bool filter_consume,
@@ -528,6 +556,7 @@ void RmtDataCacheCsm::rmvMetaInfo(const string& partition_key) {
     }
     partitions_.erase(partition_key);
     part_subinfo_.erase(partition_key);
+    cur_part_cnt_.GetAndIncrement();
   }
 }
 
