@@ -28,7 +28,9 @@
 
 #include <string>
 
-
+#include "BrokerService.pb.h"
+#include "MasterService.pb.h"
+#include "RPC.pb.h"
 #include "tubemq/any.h"
 #include "tubemq/buffer.h"
 #include "tubemq/codec_protocol.h"
@@ -37,12 +39,6 @@
 #include "tubemq/tubemq_errcode.h"
 #include "tubemq/tubemq_return.h"
 #include "tubemq/utils.h"
-#include "MasterService.pb.h"
-#include "RPC.pb.h"
-#include "BrokerService.pb.h"
-
-
-
 
 namespace tubemq {
 
@@ -56,9 +52,9 @@ class TubeMQCodec final : public CodecProtocol {
   };
 
   struct RspProtocol {
-    int32_t  serial_no_;
+    int32_t serial_no_;
     bool success_;
-    int32_t  code_;
+    int32_t code_;
     string error_msg_;
     int64_t message_id_;
     int32_t method_;
@@ -75,16 +71,16 @@ class TubeMQCodec final : public CodecProtocol {
   virtual std::string Name() const { return "tubemq_v1"; }
 
   virtual bool Decode(const BufferPtr &buff, Any &out) {
-    // check package is valid
-    RpcConnHeader   rpc_header;
-    ResponseHeader  rsp_header;
-    RspProtocolPtr rsp_protocol = GetRspProtocol();
-    // check total length 
+    // check total length
     int total_len = buff->length();
     if (total_len <= 0) {
       // print log
       return false;
     }
+    // check package is valid
+    RpcConnHeader rpc_header;
+    ResponseHeader rsp_header;
+    RspProtocolPtr rsp_protocol = GetRspProtocol();
     // parse pb data
     google::protobuf::io::ArrayInputStream rawOutput(buff->data(), total_len);
     bool result = readDelimitedFrom(&rawOutput, &rpc_header);
@@ -139,8 +135,7 @@ class TubeMQCodec final : public CodecProtocol {
     //
     string req_str;
     RequestHeader req_header;
-    req_header.set_servicetype(
-      Utils::GetServiceTypeByMethodId(req_protocol->method_id_));
+    req_header.set_servicetype(Utils::GetServiceTypeByMethodId(req_protocol->method_id_));
     req_header.set_protocolver(2);
     result = req_header.SerializeToString(&req_str);
     if (!result) {
@@ -155,18 +150,16 @@ class TubeMQCodec final : public CodecProtocol {
       return result;
     }
     // calc total list size
-    int32_t list_size =
-      calcBlockCount(rpc_str.length())
-      + calcBlockCount(req_str.length())
-      + calcBlockCount(body_str.length());
+    int32_t list_size = calcBlockCount(rpc_str.length()) + calcBlockCount(req_str.length()) +
+                        calcBlockCount(body_str.length());
     //
-    buff->AppendInt32((int32_t) rpc_config::kRpcPrtBeginToken);
-    buff->AppendInt32((int32_t) req_protocol->request_id_);
+    buff->AppendInt32((int32_t)rpc_config::kRpcPrtBeginToken);
+    buff->AppendInt32((int32_t)req_protocol->request_id_);
     buff->AppendInt32(list_size);
     appendContent(buff, rpc_str);
     appendContent(buff, req_str);
     appendContent(buff, body_str);
-    return true;    
+    return true;
   }
 
   // return code: -1 failed; 0-Unfinished; > 0 package buffer size
@@ -197,7 +190,7 @@ class TubeMQCodec final : public CodecProtocol {
       }
       item_len = in->ReadUint32();
       if (item_len < 0) {
-          return -1;
+        return -1;
       }
       read_len += 4;
       if (item_len > in->length()) {
@@ -213,9 +206,8 @@ class TubeMQCodec final : public CodecProtocol {
   static ReqProtocolPtr GetReqProtocol() { return std::make_shared<ReqProtocol>(); }
   static RspProtocolPtr GetRspProtocol() { return std::make_shared<RspProtocol>(); }
 
-  static bool readDelimitedFrom(
-    google::protobuf::io::ZeroCopyInputStream* rawInput,
-    google::protobuf::MessageLite* message) {
+  static bool readDelimitedFrom(google::protobuf::io::ZeroCopyInputStream *rawInput,
+                                google::protobuf::MessageLite *message) {
     // We create a new coded stream for each message.  Don't worry, this is fast,
     // and it makes sure the 64MB total size limit is imposed per-message rather
     // than on the whole stream.  (See the CodedInputStream interface for more
@@ -226,8 +218,7 @@ class TubeMQCodec final : public CodecProtocol {
     uint32_t size;
     if (!input.ReadVarint32(&size)) return false;
     // Tell the stream not to read beyond that size.
-    google::protobuf::io::CodedInputStream::Limit limit =
-        input.PushLimit(size);
+    google::protobuf::io::CodedInputStream::Limit limit = input.PushLimit(size);
     // Parse the message.
     if (!message->MergeFromCodedStream(&input)) return false;
     if (!input.ConsumedEntireMessage()) return false;
@@ -238,29 +229,28 @@ class TubeMQCodec final : public CodecProtocol {
     return true;
   }
 
- static bool writeDelimitedTo(
-   const google::protobuf::MessageLite& message,
-   google::protobuf::io::ZeroCopyOutputStream* rawOutput) {
-   // We create a new coded stream for each message.  Don't worry, this is fast.
-   google::protobuf::io::CodedOutputStream output(rawOutput);
- 
-   // Write the size.
-   const int32_t size = message.ByteSize();
-   output.WriteVarint32(size);
- 
-   uint8_t* buffer = output.GetDirectBufferForNBytesAndAdvance(size);
-   if (buffer != NULL) {
-     // Optimization:  The message fits in one buffer, so use the faster
-     // direct-to-array serialization path.
-     message.SerializeWithCachedSizesToArray(buffer);
-   } else {
-     // Slightly-slower path when the message is multiple buffers.
-     message.SerializeWithCachedSizes(&output);
-     if (output.HadError()) return false;
-   }
- 
-   return true;
- }
+  static bool writeDelimitedTo(const google::protobuf::MessageLite &message,
+                               google::protobuf::io::ZeroCopyOutputStream *rawOutput) {
+    // We create a new coded stream for each message.  Don't worry, this is fast.
+    google::protobuf::io::CodedOutputStream output(rawOutput);
+
+    // Write the size.
+    const int32_t size = message.ByteSizeLong();
+    output.WriteVarint32(size);
+
+    uint8_t *buffer = output.GetDirectBufferForNBytesAndAdvance(size);
+    if (buffer != NULL) {
+      // Optimization:  The message fits in one buffer, so use the faster
+      // direct-to-array serialization path.
+      message.SerializeWithCachedSizesToArray(buffer);
+    } else {
+      // Slightly-slower path when the message is multiple buffers.
+      message.SerializeWithCachedSizes(&output);
+      if (output.HadError()) return false;
+    }
+
+    return true;
+  }
 
  private:
   void appendContent(BufferPtr &buff, string &content_str) {

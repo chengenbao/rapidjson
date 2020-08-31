@@ -26,16 +26,13 @@ find_package(Protobuf REQUIRED)
 
 SET(CMAKE_CXX_FLAGS "-std=c++11 -O2 -g -Wall -Werror -Wsign-compare -Wfloat-equal -fno-strict-aliasing -fPIC -DASIO_STANDALONE")
 
-SET(PROTO_FILES proto/*.proto)
-
 INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR}/proto)
 
 INCLUDE_DIRECTORIES(include)
 
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/third_party/rapidjson/include)
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/third_party/log4cplus/include)
-INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR}/third_party/log4cplus/include)
-LINK_DIRECTORIES(${CMAKE_BINARY_DIR}/third_party/log4cplus/lib)
+INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR}/third_party/include)
+LINK_DIRECTORIES(${CMAKE_BINARY_DIR}/third_party/lib)
 
 ADD_SUBDIRECTORY(proto)
 ADD_SUBDIRECTORY(src)

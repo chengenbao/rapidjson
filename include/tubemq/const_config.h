@@ -22,6 +22,7 @@
 
 #include <stdint.h>
 
+#include <algorithm>
 #include <map>
 #include <string>
 
@@ -29,10 +30,11 @@ namespace tubemq {
 
 using std::string;
 
-#define TUBEMQ_MAX(a, b) ( ((a) > (b)) ? (a) : (b) )
-#define TUBEMQ_MIN(a, b) ( ((a) > (b)) ? (b) : (a) )
-#define TUBEMQ_MID(data, max, min)   TUBEMQ_MAX(min, TUBEMQ_MIN((max), (data)))
-
+//#define TUBEMQ_MAX(a, b) ( ((a) > (b)) ? (a) : (b) )
+//#define TUBEMQ_MIN(a, b) ( ((a) > (b)) ? (b) : (a) )
+#define TUBEMQ_MAX(a, b) std::max((a), (b))
+#define TUBEMQ_MIN(a, b) std::min((a), (b))
+#define TUBEMQ_MID(data, max, min) TUBEMQ_MAX(min, TUBEMQ_MIN((max), (data)))
 
 // configuration value setting
 namespace tb_config {
@@ -91,7 +93,6 @@ static const char kRsvPropKeyFilterItem[] = "$msgType$";
 // reserved property key message send time
 static const char kRsvPropKeyMsgTime[] = "$msgTime$";
 
-
 }  // namespace tb_config
 
 namespace delimiter {
@@ -111,8 +112,6 @@ static const char kDelimiterLftSB[] = "[";
 static const char kDelimiterRgtSB[] = "]";
 
 }  // namespace delimiter
-
-
 
 }  // namespace tubemq
 
