@@ -14,5 +14,4 @@ ExternalProject_Add(
     BUILD_IN_SOURCE 1
     INSTALL_DIR ${CMAKE_BINARY_DIR}/third_party/
     )
-#ADD_SUBDIRECTORY(log4cplus) 
 
