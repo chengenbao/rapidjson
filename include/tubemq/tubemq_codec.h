@@ -20,6 +20,8 @@
 #ifndef _TUBEMQ_TUBEMQ_CODEC_H_
 #define _TUBEMQ_TUBEMQ_CODEC_H_
 
+#include <assert.h>
+
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
@@ -150,15 +152,15 @@ class TubeMQCodec final : public CodecProtocol {
       return result;
     }
     // calc total list size
-    int32_t list_size = calcBlockCount(rpc_str.length()) + calcBlockCount(req_str.length()) +
-                        calcBlockCount(body_str.length());
+    int32_t list_size = calcBlockCount(rpc_header.ByteSize()) + calcBlockCount(req_header.ByteSize()) +
+                        calcBlockCount(req_body.ByteSize());
     //
     buff->AppendInt32((int32_t)rpc_config::kRpcPrtBeginToken);
     buff->AppendInt32((int32_t)req_protocol->request_id_);
     buff->AppendInt32(list_size);
-    appendContent(buff, rpc_str);
-    appendContent(buff, req_str);
-    appendContent(buff, body_str);
+    appendContent(buff, rpc_header);
+    appendContent(buff, req_header);
+    appendContent(buff, req_body);
     return true;
   }
 
@@ -253,21 +255,24 @@ class TubeMQCodec final : public CodecProtocol {
   }
 
  private:
-  void appendContent(BufferPtr &buff, string &content_str) {
+  uint32_t appendContent(BufferPtr &buff, const google::protobuf::MessageLite &message) {
     uint32_t remain = 0;
-    uint32_t step_len = 0;
     uint32_t buff_cnt = 0;
-    buff_cnt = calcBlockCount(content_str.length());
+    buff_cnt = calcBlockCount(message.ByteSize());
     for (uint32_t i = 0; i < buff_cnt; i++) {
-      remain = content_str.length() - i * (Buffer::kInitialSize - 4);
+      remain = message.ByteSize() - i * (Buffer::kInitialSize - 4);
       if (remain > Buffer::kInitialSize - 4) {
-        step_len = Buffer::kInitialSize - 4;
-      } else {
-        step_len = content_str.length();
+        remain = Buffer::kInitialSize - 4;
       }
-      buff->AppendInt32(step_len);
-      buff->Write(content_str.c_str() + i * (Buffer::kInitialSize - 4), step_len);
+      uint8_t* step_buff = (uint8_t *)malloc(remain);
+      assert(step_buff);
+      int32_t hstep_length = htonl(remain);
+      memcpy(step_buff, &hstep_length, 4);
+      message.SerializeWithCachedSizesToArray(step_buff + 4);
+      buff->Write(step_buff, remain);
+      delete [] step_buff;
     }
+    return buff_cnt;
   }
 
   uint32_t calcBlockCount(uint32_t content_len) {

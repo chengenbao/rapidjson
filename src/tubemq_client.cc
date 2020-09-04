@@ -1259,7 +1259,7 @@ void TubeMQConsumer::getNextMasterAddr(string& ipaddr, int32_t& port) {
   if (Utils::NeedDnsXfs(ipaddr)) {
     TubeMQService::Instance()->GetXfsMasterAddress(curr_master_addr_, ipaddr);
   }
-    printf("getNextMasterAddr address is %s:%",ipaddr.c_str(),port);
+    printf("getNextMasterAddr address is %s:%d",ipaddr.c_str(),port);
 }
 
 void TubeMQConsumer::getCurrentMasterAddr(string& ipaddr, int32_t& port) {
@@ -1268,7 +1268,7 @@ void TubeMQConsumer::getCurrentMasterAddr(string& ipaddr, int32_t& port) {
   if (Utils::NeedDnsXfs(ipaddr)) {
     TubeMQService::Instance()->GetXfsMasterAddress(curr_master_addr_, ipaddr);
   }
-  printf("getCurrentMasterAddr address is %s:%",ipaddr.c_str(),port);
+  printf("getCurrentMasterAddr address is %s:%d",ipaddr.c_str(),port);
 }
 
 bool TubeMQConsumer::needGenMasterCertificateInfo(bool force) {
