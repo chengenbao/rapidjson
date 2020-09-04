@@ -68,7 +68,9 @@ void ClientConnection::close(const std::error_code* err) {
   status_ = kDisconnected;
   LOG_INFO("%scloseed", context_string_.c_str());
   socket_->close();
-  notifier_(err);
+  if (notifier_ != nullptr) {
+    notifier_(err);
+  }
   releaseAllRequest(err);
 }
 
