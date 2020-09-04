@@ -20,6 +20,7 @@
 #include "tubemq/rmt_data_cache.h"
 
 #include <stdlib.h>
+
 #include <string>
 
 #include "tubemq/client_service.h"
@@ -27,13 +28,10 @@
 #include "tubemq/meta_info.h"
 #include "tubemq/utils.h"
 
-
-
 namespace tubemq {
 
 using std::lock_guard;
 using std::unique_lock;
-
 
 RmtDataCacheCsm::RmtDataCacheCsm() {
   under_groupctrl_.Set(false);
@@ -45,24 +43,22 @@ RmtDataCacheCsm::~RmtDataCacheCsm() {
   //
 }
 
-void RmtDataCacheCsm::SetConsumerInfo(const string& client_id,
-                                            const string& group_name) {
+void RmtDataCacheCsm::SetConsumerInfo(const string& client_id, const string& group_name) {
   consumer_id_ = client_id;
   group_name_ = group_name;
 }
 
-void RmtDataCacheCsm::UpdateDefFlowCtrlInfo(int64_t flowctrl_id,
-                                                 const string& flowctrl_info) {
+void RmtDataCacheCsm::UpdateDefFlowCtrlInfo(int64_t flowctrl_id, const string& flowctrl_info) {
   if (flowctrl_id != def_flowctrl_handler_.GetFlowCtrlId()) {
-    def_flowctrl_handler_.UpdateDefFlowCtrlInfo(true,
-      tb_config::kInvalidValue, flowctrl_id, flowctrl_info);
+    def_flowctrl_handler_.UpdateDefFlowCtrlInfo(true, tb_config::kInvalidValue, flowctrl_id,
+                                                flowctrl_info);
   }
 }
-void RmtDataCacheCsm::UpdateGroupFlowCtrlInfo(int32_t qyrpriority_id,
-                             int64_t flowctrl_id, const string& flowctrl_info) {
+void RmtDataCacheCsm::UpdateGroupFlowCtrlInfo(int32_t qyrpriority_id, int64_t flowctrl_id,
+                                              const string& flowctrl_info) {
   if (flowctrl_id != group_flowctrl_handler_.GetFlowCtrlId()) {
-    group_flowctrl_handler_.UpdateDefFlowCtrlInfo(false,
-                qyrpriority_id, flowctrl_id, flowctrl_info);
+    group_flowctrl_handler_.UpdateDefFlowCtrlInfo(false, qyrpriority_id, flowctrl_id,
+                                                  flowctrl_info);
   }
   if (qyrpriority_id != group_flowctrl_handler_.GetQryPriorityId()) {
     this->group_flowctrl_handler_.SetQryPriorityId(qyrpriority_id);
@@ -72,8 +68,7 @@ void RmtDataCacheCsm::UpdateGroupFlowCtrlInfo(int32_t qyrpriority_id,
   if (cur_time - last_checktime_.Get() > 10000) {
     FlowCtrlResult flowctrl_result;
     this->under_groupctrl_.Set(
-      group_flowctrl_handler_.GetCurDataLimit(
-        tb_config::kMaxLongValue, flowctrl_result));
+        group_flowctrl_handler_.GetCurDataLimit(tb_config::kMaxLongValue, flowctrl_result));
     last_checktime_.Set(cur_time);
   }
 }
@@ -82,10 +77,7 @@ const int64_t RmtDataCacheCsm::GetGroupQryPriorityId() const {
   return this->group_flowctrl_handler_.GetQryPriorityId();
 }
 
-bool RmtDataCacheCsm::IsUnderGroupCtrl() {
-  return this->under_groupctrl_.Get();
-}
-
+bool RmtDataCacheCsm::IsUnderGroupCtrl() { return this->under_groupctrl_.Get(); }
 
 void RmtDataCacheCsm::AddNewPartition(const PartitionExt& partition_ext) {
   //
@@ -127,8 +119,8 @@ void RmtDataCacheCsm::AddNewPartition(const PartitionExt& partition_ext) {
   resetIdlePartition(partition_key, true);
 }
 
-bool RmtDataCacheCsm::SelectPartition(int32_t& error_code, string &err_info,
-                        PartitionExt& partition_ext, string& confirm_context) {
+bool RmtDataCacheCsm::SelectPartition(int32_t& error_code, string& err_info,
+                                      PartitionExt& partition_ext, string& confirm_context) {
   bool result = false;
   int64_t booked_time = 0;
   string partition_key;
@@ -164,8 +156,7 @@ bool RmtDataCacheCsm::SelectPartition(int32_t& error_code, string &err_info,
   return result;
 }
 
-void RmtDataCacheCsm::BookedPartionInfo(
-  const string& partition_key, int64_t curr_offset) {
+void RmtDataCacheCsm::BookedPartionInfo(const string& partition_key, int64_t curr_offset) {
   map<string, PartitionExt>::iterator it_part;
   // book partition offset info
   if (curr_offset >= 0) {
@@ -174,10 +165,10 @@ void RmtDataCacheCsm::BookedPartionInfo(
   }
 }
 
-void RmtDataCacheCsm::BookedPartionInfo(const string& partition_key,
-                     int64_t curr_offset, int32_t error_code, bool esc_limit,
-                  int32_t msg_size, int64_t limit_dlt, int64_t cur_data_dlt,
-                     bool require_slow) {
+void RmtDataCacheCsm::BookedPartionInfo(const string& partition_key, int64_t curr_offset,
+                                        int32_t error_code, bool esc_limit, int32_t msg_size,
+                                        int64_t limit_dlt, int64_t cur_data_dlt,
+                                        bool require_slow) {
   map<string, PartitionExt>::iterator it_part;
   // book partition offset info
   if (curr_offset >= 0) {
@@ -188,57 +179,53 @@ void RmtDataCacheCsm::BookedPartionInfo(const string& partition_key,
   lock_guard<mutex> lck2(meta_lock_);
   it_part = partitions_.find(partition_key);
   if (it_part != partitions_.end()) {
-    it_part->second.BookConsumeData(error_code, msg_size,
-              esc_limit, limit_dlt, cur_data_dlt, require_slow);
+    it_part->second.BookConsumeData(error_code, msg_size, esc_limit, limit_dlt, cur_data_dlt,
+                                    require_slow);
   }
 }
 
-bool RmtDataCacheCsm::IsPartitionInUse(
-  string partition_key, long used_time) {
+bool RmtDataCacheCsm::IsPartitionInUse(string partition_key, long used_time) {
   map<string, int64_t>::iterator it_used;
   lock_guard<mutex> lck(meta_lock_);
   it_used = partition_useds_.find(partition_key);
-  if (it_used == partition_useds_.end() 
-    || it_used->second != used_time) {
-      return false;
+  if (it_used == partition_useds_.end() || it_used->second != used_time) {
+    return false;
   }
   return true;
 }
 
-
 // success process release partition
-bool RmtDataCacheCsm::RelPartition(string &err_info, bool filter_consume,
-                                 const string& confirm_context, bool is_consumed) {
+bool RmtDataCacheCsm::RelPartition(string& err_info, bool filter_consume,
+                                   const string& confirm_context, bool is_consumed) {
   return inRelPartition(err_info, true, filter_consume, confirm_context, is_consumed);
 }
 
 // release partiton without response return
-bool RmtDataCacheCsm::RelPartition(string &err_info,
-                                 const string& confirm_context, bool is_consumed) {
+bool RmtDataCacheCsm::RelPartition(string& err_info, const string& confirm_context,
+                                   bool is_consumed) {
   return inRelPartition(err_info, true, false, confirm_context, is_consumed);
 }
 
 // release partiton with error response return
-bool RmtDataCacheCsm::RelPartition(string &err_info, bool filter_consume,
-                              const string& confirm_context, bool is_consumed,
-                              int64_t curr_offset, int32_t error_code, bool esc_limit,
-                              int32_t msg_size, int64_t limit_dlt, int64_t cur_data_dlt) {
+bool RmtDataCacheCsm::RelPartition(string& err_info, bool filter_consume,
+                                   const string& confirm_context, bool is_consumed,
+                                   int64_t curr_offset, int32_t error_code, bool esc_limit,
+                                   int32_t msg_size, int64_t limit_dlt, int64_t cur_data_dlt) {
   int64_t booked_time;
-  string  partition_key;
+  string partition_key;
   // parse confirm context
-  bool result = parseConfirmContext(err_info,
-                      confirm_context, partition_key, booked_time);
+  bool result = parseConfirmContext(err_info, confirm_context, partition_key, booked_time);
   if (!result) {
     return false;
   }
-  BookedPartionInfo(partition_key, curr_offset, error_code,
-            esc_limit, msg_size, limit_dlt, cur_data_dlt, false);
-  return inRelPartition(err_info, true,
-    filter_consume, confirm_context, is_consumed);
+  BookedPartionInfo(partition_key, curr_offset, error_code, esc_limit, msg_size, limit_dlt,
+                    cur_data_dlt, false);
+  return inRelPartition(err_info, true, filter_consume, confirm_context, is_consumed);
 }
 
 void RmtDataCacheCsm::FilterPartitions(const list<SubscribeInfo>& subscribe_info_lst,
-            list<PartitionExt>& subscribed_partitions, list<PartitionExt>& unsub_partitions) {
+                                       list<PartitionExt>& subscribed_partitions,
+                                       list<PartitionExt>& unsub_partitions) {
   //
   map<string, PartitionExt>::iterator it_part;
   list<SubscribeInfo>::const_iterator it_lst;
@@ -271,8 +258,7 @@ void RmtDataCacheCsm::GetSubscribedInfo(list<SubscribeInfo>& subscribe_info_lst)
   }
 }
 
-void RmtDataCacheCsm::GetAllBrokerPartitions(
-                    map<NodeInfo, list<PartitionExt> >& broker_parts) {
+void RmtDataCacheCsm::GetAllBrokerPartitions(map<NodeInfo, list<PartitionExt> >& broker_parts) {
   map<string, PartitionExt>::iterator it_part;
   map<NodeInfo, list<PartitionExt> >::iterator it_broker;
 
@@ -314,7 +300,7 @@ void RmtDataCacheCsm::GetRegBrokers(list<NodeInfo>& brokers) {
 }
 
 void RmtDataCacheCsm::GetPartitionByBroker(const NodeInfo& broker_info,
-                                            list<PartitionExt>& partition_list) {
+                                           list<PartitionExt>& partition_list) {
   set<string>::iterator it_key;
   map<NodeInfo, set<string> >::iterator it_broker;
   map<string, PartitionExt>::iterator it_part;
@@ -323,8 +309,7 @@ void RmtDataCacheCsm::GetPartitionByBroker(const NodeInfo& broker_info,
   lock_guard<mutex> lck(meta_lock_);
   it_broker = broker_partition_.find(broker_info);
   if (it_broker != broker_partition_.end()) {
-    for (it_key = it_broker->second.begin();
-    it_key != it_broker->second.end(); it_key++) {
+    for (it_key = it_broker->second.begin(); it_key != it_broker->second.end(); it_key++) {
       it_part = partitions_.find(*it_key);
       if (it_part != partitions_.end()) {
         partition_list.push_back(it_part->second);
@@ -332,7 +317,6 @@ void RmtDataCacheCsm::GetPartitionByBroker(const NodeInfo& broker_info,
     }
   }
 }
-
 
 void RmtDataCacheCsm::GetCurPartitionOffsets(map<string, int64_t> part_offset_map) {
   map<string, int64_t>::iterator it;
@@ -344,16 +328,13 @@ void RmtDataCacheCsm::GetCurPartitionOffsets(map<string, int64_t> part_offset_ma
   }
 }
 
-
 //
-bool RmtDataCacheCsm::RemovePartition(string &err_info,
-                                  const string& confirm_context) {
+bool RmtDataCacheCsm::RemovePartition(string& err_info, const string& confirm_context) {
   int64_t booked_time;
-  string  partition_key;
+  string partition_key;
   set<string> partition_keys;
   // parse confirm context
-  bool result = parseConfirmContext(err_info,
-                      confirm_context, partition_key, booked_time);
+  bool result = parseConfirmContext(err_info, confirm_context, partition_key, booked_time);
   if (!result) {
     return false;
   }
@@ -387,7 +368,8 @@ void RmtDataCacheCsm::RemovePartition(const set<string>& partition_keys) {
 }
 
 void RmtDataCacheCsm::RemoveAndGetPartition(const list<SubscribeInfo>& subscribe_infos,
-        bool is_processing_rollback, map<NodeInfo, list<PartitionExt> >& broker_parts) {
+                                            bool is_processing_rollback,
+                                            map<NodeInfo, list<PartitionExt> >& broker_parts) {
   //
   string part_key;
   list<SubscribeInfo>::const_iterator it;
@@ -425,8 +407,6 @@ void RmtDataCacheCsm::RemoveAndGetPartition(const list<SubscribeInfo>& subscribe
   }
 }
 
-
-
 bool RmtDataCacheCsm::IsPartitionFirstReg(const string& partition_key) {
   bool result = false;
   map<string, bool>::iterator it;
@@ -441,13 +421,13 @@ bool RmtDataCacheCsm::IsPartitionFirstReg(const string& partition_key) {
 
 void RmtDataCacheCsm::OfferEvent(const ConsumerEvent& event) {
   unique_lock<mutex> lck(event_read_mutex_);
-  this->rebalance_events_.push_back(event);
+  rebalance_events_.push_back(event);
   event_read_cond_.notify_all();
 }
 
 void RmtDataCacheCsm::TakeEvent(ConsumerEvent& event) {
   unique_lock<mutex> lck(event_read_mutex_);
-  while (this->rebalance_events_.empty()) {
+  while (rebalance_events_.empty()) {
     event_read_cond_.wait(lck);
   }
   event = rebalance_events_.front();
@@ -461,7 +441,7 @@ void RmtDataCacheCsm::ClearEvent() {
 
 void RmtDataCacheCsm::OfferEventResult(const ConsumerEvent& event) {
   lock_guard<mutex> lck(event_write_mutex_);
-  this->rebalance_events_.push_back(event);
+  rebalance_events_.push_back(event);
 }
 
 bool RmtDataCacheCsm::PollEventResult(ConsumerEvent& event) {
@@ -475,8 +455,7 @@ bool RmtDataCacheCsm::PollEventResult(ConsumerEvent& event) {
   return result;
 }
 
-void RmtDataCacheCsm::HandleTimeout(const string partition_key,
-                                          const asio::error_code& error) {
+void RmtDataCacheCsm::HandleTimeout(const string partition_key, const asio::error_code& error) {
   if (!error) {
     lock_guard<mutex> lck(meta_lock_);
     resetIdlePartition(partition_key, true);
@@ -485,12 +464,12 @@ void RmtDataCacheCsm::HandleTimeout(const string partition_key,
 
 void RmtDataCacheCsm::addDelayTimer(const string& partition_key, int64_t delay_time) {
   // add timer
-  tuple<int64_t, SteadyTimerPtr> timer =
-      std::make_tuple(Utils::GetCurrentTimeMillis(),
+  tuple<int64_t, SteadyTimerPtr> timer = std::make_tuple(
+      Utils::GetCurrentTimeMillis(),
       TubeMQService::Instance()->GetTimerExecutorPool()->Get()->CreateSteadyTimer());
   std::get<1>(timer)->expires_after(std::chrono::milliseconds(delay_time));
-  std::get<1>(timer)->async_wait(std::bind(&RmtDataCacheCsm::HandleTimeout,
-                                  this, partition_key, std::placeholders::_1));
+  std::get<1>(timer)->async_wait(
+      std::bind(&RmtDataCacheCsm::HandleTimeout, this, partition_key, std::placeholders::_1));
   partition_timeouts_.insert(std::make_pair(partition_key, timer));
 }
 
@@ -511,16 +490,16 @@ void RmtDataCacheCsm::resetIdlePartition(const string& partition_key, bool need_
   }
 }
 
-void RmtDataCacheCsm::buildConfirmContext(const string& partition_key,
-                                   int64_t booked_time, string& confirm_context) {
+void RmtDataCacheCsm::buildConfirmContext(const string& partition_key, int64_t booked_time,
+                                          string& confirm_context) {
   confirm_context.clear();
   confirm_context += partition_key;
   confirm_context += delimiter::kDelimiterAt;
   confirm_context += Utils::Long2str(booked_time);
 }
 
-bool RmtDataCacheCsm::parseConfirmContext(string &err_info,
-     const string& confirm_context, string& partition_key, int64_t& booked_time) {
+bool RmtDataCacheCsm::parseConfirmContext(string& err_info, const string& confirm_context,
+                                          string& partition_key, int64_t& booked_time) {
   //
   vector<string> result;
   Utils::Split(confirm_context, result, delimiter::kDelimiterAt);
@@ -560,16 +539,15 @@ void RmtDataCacheCsm::rmvMetaInfo(const string& partition_key) {
   }
 }
 
-bool RmtDataCacheCsm::inRelPartition(string &err_info, bool need_delay_check,
-                     bool filter_consume, const string& confirm_context, bool is_consumed) {
+bool RmtDataCacheCsm::inRelPartition(string& err_info, bool need_delay_check, bool filter_consume,
+                                     const string& confirm_context, bool is_consumed) {
   int64_t delay_time;
   int64_t booked_time;
-  string  partition_key;
+  string partition_key;
   map<string, PartitionExt>::iterator it_part;
   map<string, int64_t>::iterator it_used;
   // parse confirm context
-  bool result = parseConfirmContext(err_info,
-                      confirm_context, partition_key, booked_time);
+  bool result = parseConfirmContext(err_info, confirm_context, partition_key, booked_time);
   if (!result) {
     return false;
   }
@@ -594,8 +572,8 @@ bool RmtDataCacheCsm::inRelPartition(string &err_info, bool need_delay_check,
         index_partitions_.remove(partition_key);
         delay_time = 0;
         if (need_delay_check) {
-          delay_time = it_part->second.ProcConsumeResult(def_flowctrl_handler_,
-                        group_flowctrl_handler_, filter_consume, is_consumed);
+          delay_time = it_part->second.ProcConsumeResult(
+              def_flowctrl_handler_, group_flowctrl_handler_, filter_consume, is_consumed);
         }
         if (delay_time > 10) {
           addDelayTimer(partition_key, delay_time);
@@ -613,6 +591,5 @@ bool RmtDataCacheCsm::inRelPartition(string &err_info, bool need_delay_check,
   }
   return result;
 }
-
 
 }  // namespace tubemq

@@ -21,7 +21,6 @@
 #define _TUBEMQ_TUBEMQ_CODEC_H_
 
 #include <assert.h>
-
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
@@ -152,8 +151,9 @@ class TubeMQCodec final : public CodecProtocol {
       return result;
     }
     // calc total list size
-    int32_t list_size = calcBlockCount(rpc_header.ByteSize()) + calcBlockCount(req_header.ByteSize()) +
-                        calcBlockCount(req_body.ByteSize());
+    int32_t list_size = calcBlockCount(rpc_header.ByteSizeLong()) +
+                        calcBlockCount(req_header.ByteSizeLong()) +
+                        calcBlockCount(req_body.ByteSizeLong());
     //
     buff->AppendInt32((int32_t)rpc_config::kRpcPrtBeginToken);
     buff->AppendInt32((int32_t)req_protocol->request_id_);
@@ -258,19 +258,19 @@ class TubeMQCodec final : public CodecProtocol {
   uint32_t appendContent(BufferPtr &buff, const google::protobuf::MessageLite &message) {
     uint32_t remain = 0;
     uint32_t buff_cnt = 0;
-    buff_cnt = calcBlockCount(message.ByteSize());
+    buff_cnt = calcBlockCount(message.ByteSizeLong());
     for (uint32_t i = 0; i < buff_cnt; i++) {
-      remain = message.ByteSize() - i * (Buffer::kInitialSize - 4);
+      remain = message.ByteSizeLong() - i * (Buffer::kInitialSize - 4);
       if (remain > Buffer::kInitialSize - 4) {
         remain = Buffer::kInitialSize - 4;
       }
-      uint8_t* step_buff = (uint8_t *)malloc(remain);
+      uint8_t *step_buff = (uint8_t *)malloc(remain);
       assert(step_buff);
       int32_t hstep_length = htonl(remain);
       memcpy(step_buff, &hstep_length, 4);
       message.SerializeWithCachedSizesToArray(step_buff + 4);
       buff->Write(step_buff, remain);
-      delete [] step_buff;
+      delete[] step_buff;
     }
     return buff_cnt;
   }
