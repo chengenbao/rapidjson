@@ -40,7 +40,6 @@
 #include "tubemq/tubemq_return.h"
 #include "tubemq/utils.h"
 
-
 namespace tubemq {
 
 class TubeMQCodec final : public CodecProtocol {
@@ -184,7 +183,7 @@ class TubeMQCodec final : public CodecProtocol {
     // check data list
     uint32_t item_len = 0;
     int32_t read_len = 12;
-    std::shared_ptr<Buffer> buf = any_cast<std::shared_ptr<Buffer> >(out);
+    auto buf = std::make_shared<Buffer>();
     for (uint32_t i = 0; i < list_size; i++) {
       if (in->length() < 4) {
         return 0;

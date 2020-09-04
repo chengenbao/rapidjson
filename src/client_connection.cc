@@ -215,14 +215,19 @@ void ClientConnection::requestCallback(uint32_t request_id, ErrorCode* err, Any*
     request_list_.erase(it);
     return;
   }
-  ResponseContext rsp;
-  BufferPtr* buff = any_cast<BufferPtr>(check_out);
-  if (buff != nullptr) {
-    req->req_->codec_->Decode(*buff, rsp.rsp_);
+  if (check_out != nullptr) {
+    ResponseContext rsp;
+    BufferPtr* buff = any_cast<BufferPtr>(check_out);
+    if (buff != nullptr) {
+      req->req_->codec_->Decode(*buff, rsp.rsp_);
+    } else {
+      rsp.rsp_ = *check_out;
+    }
+    req->req_->promise_.SetValue(rsp);
   } else {
-    rsp.rsp_ = *check_out;
+    req->req_->promise_.SetFailed(ErrorCode(err_code::kErrNetworkError, "response is null"));
   }
-  req->req_->promise_.SetValue(rsp);
+
   req->deadline_->cancel();
   request_list_.erase(it);
 }
