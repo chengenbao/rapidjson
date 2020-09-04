@@ -275,7 +275,8 @@ class TubeMQCodec final : public CodecProtocol {
       if (is_first) {
         buff->AppendInt32(message.ByteSizeLong());
         is_first = false;
-        writed_len += 4;        
+        writed_len += 4;
+        remain -= 4;
       }
       message.SerializeWithCachedSizesToArray(step_buff + writed_len);
       buff->Write(step_buff, remain);
