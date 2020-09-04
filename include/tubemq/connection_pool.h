@@ -61,6 +61,7 @@ class ConnectionPool : noncopyable {
       return it->second;
     }
     auto executor = executor_pool_->Get();
+    printf("connect ip=%s,port=%d",request->ip_.c_str(), request->port_);
     auto connect = std::make_shared<ClientConnection>(executor, request->ip_, request->port_);
     connection_pool_[key] = connect;
     connect->SetCloseNotifier(request->close_notifier_);

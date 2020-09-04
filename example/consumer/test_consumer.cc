@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
   string err_info;
   string conf_file = "../conf/client.conf";
   string group_name = "test_c_v8";
-  string master_addr = "100.115.158.208:8066,100.115.158.208:8066";
+  string master_addr = "10.215.128.83:8000,10.215.128.83:8000";
   TubeMQConsumer consumer_1;
   
   set<string> topic_list;

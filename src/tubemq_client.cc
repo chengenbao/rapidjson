@@ -100,6 +100,9 @@ bool TubeMQConsumer::Start(string& err_info, const ConsumerConfig& config) {
     return false;
   }
   this->config_ = config;
+  if(!initMasterAddress(err_info, config.GetMasterAddrInfo())) {
+    return false;
+  }
   this->client_uuid_ = buildUUID();
   this->sub_info_.SetConsumeTarget(this->config_);
   this->rmtdata_cache_.SetConsumerInfo(client_uuid_, config_.GetGroupName());
@@ -1256,6 +1259,7 @@ void TubeMQConsumer::getNextMasterAddr(string& ipaddr, int32_t& port) {
   if (Utils::NeedDnsXfs(ipaddr)) {
     TubeMQService::Instance()->GetXfsMasterAddress(curr_master_addr_, ipaddr);
   }
+    printf("getNextMasterAddr address is %s:%",ipaddr.c_str(),port);
 }
 
 void TubeMQConsumer::getCurrentMasterAddr(string& ipaddr, int32_t& port) {
@@ -1264,6 +1268,7 @@ void TubeMQConsumer::getCurrentMasterAddr(string& ipaddr, int32_t& port) {
   if (Utils::NeedDnsXfs(ipaddr)) {
     TubeMQService::Instance()->GetXfsMasterAddress(curr_master_addr_, ipaddr);
   }
+  printf("getCurrentMasterAddr address is %s:%",ipaddr.c_str(),port);
 }
 
 bool TubeMQConsumer::needGenMasterCertificateInfo(bool force) {
