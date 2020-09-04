@@ -42,7 +42,6 @@ struct RequestContext {
   uint32_t timeout_{0};  // millisecond
   uint32_t connection_pool_id_{0};
   uint64_t create_time_ms_{0};  // create time millisecond
-  bool is_ip6_{false};
 
   CodecProtocolPtr codec_;
   CloseNotifier close_notifier_;
