@@ -257,18 +257,27 @@ class TubeMQCodec final : public CodecProtocol {
  private:
   uint32_t appendContent(BufferPtr &buff, const google::protobuf::MessageLite &message) {
     uint32_t remain = 0;
-    uint32_t buff_cnt = 0;
-    buff_cnt = calcBlockCount(message.ByteSizeLong());
+    uint32_t writed_len = 0;
+    uint32_t buff_cnt = calcBlockCount(message.ByteSizeLong());
+    uint32_t total_len = message.ByteSizeLong() + 4;
+    bool is_first = true;
     for (uint32_t i = 0; i < buff_cnt; i++) {
-      remain = message.ByteSizeLong() - i * (Buffer::kInitialSize - 4);
+      writed_len = 0;
+      remain = total_len - i * (Buffer::kInitialSize - 4);
       if (remain > Buffer::kInitialSize - 4) {
         remain = Buffer::kInitialSize - 4;
       }
+      printf("\n remain = %d, message.ByteSize= %d\n", remain, message.ByteSize());
       uint8_t *step_buff = (uint8_t *)malloc(remain);
       assert(step_buff);
-      int32_t hstep_length = htonl(remain);
-      memcpy(step_buff, &hstep_length, 4);
-      message.SerializeWithCachedSizesToArray(step_buff + 4);
+      buff->AppendInt32(remain);
+      writed_len += 4;
+      if (is_first) {
+        buff->AppendInt32(message.ByteSizeLong());
+        is_first = false;
+        writed_len += 4;        
+      }
+      message.SerializeWithCachedSizesToArray(step_buff + writed_len);
       buff->Write(step_buff, remain);
       delete[] step_buff;
     }
@@ -276,12 +285,13 @@ class TubeMQCodec final : public CodecProtocol {
   }
 
   uint32_t calcBlockCount(uint32_t content_len) {
-    uint32_t block_cnt = content_len / Buffer::kInitialSize;
-    uint32_t remain_size = content_len % Buffer::kInitialSize;
+    uint32_t total_len = content_len + 4;
+    uint32_t block_cnt = total_len / Buffer::kInitialSize;
+    uint32_t remain_size = total_len % Buffer::kInitialSize;
     if (remain_size > 0) {
       block_cnt++;
     }
-    if ((block_cnt * Buffer::kInitialSize) < (content_len + block_cnt * 4)) {
+    if ((block_cnt * Buffer::kInitialSize) < (total_len + block_cnt * 4)) {
       block_cnt++;
     }
     return block_cnt;
