@@ -54,7 +54,7 @@ bool StopTubeMQService(string& err_info);
 
 
 
-class TubeMQConsumer : public BaseClient {
+class TubeMQConsumer : public BaseClient, public std::enable_shared_from_this<TubeMQConsumer> {
  public:
   TubeMQConsumer();
   ~TubeMQConsumer();
@@ -119,6 +119,9 @@ class TubeMQConsumer : public BaseClient {
     bool filter_consume, const string& topic_name,
     GetMessageResponseB2C& rsp_b2c);
 
+ private:
+  thread  master_comm_thread_;
+  thread  rebalance_thread_;
 
  private:
   int32_t client_indexid_;
