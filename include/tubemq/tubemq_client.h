@@ -121,13 +121,15 @@ class TubeMQConsumer : public BaseClient, public std::enable_shared_from_this<Tu
   AtomicBoolean nextauth_2_broker;
   string curr_master_addr_;
   map<string, int32_t> masters_map_;
-  bool is_master_actived_;
+  AtomicBoolean is_master_actived_;
+  AtomicInteger master_reg_status_;
   int32_t master_sh_retry_cnt_;
   int64_t last_master_hbtime_;
   int32_t unreport_times_;
   map<NodeInfo, int32_t> broker_timer_map_;
   // heartbeat timer
   SteadyTimerPtr heart_beat_timer_;
+  AtomicInteger master_hb_status_;
   std::shared_ptr<std::thread> rebalance_thread_ptr_;
 };
 

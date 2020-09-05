@@ -73,10 +73,10 @@ class TubeMQCodec final : public CodecProtocol {
 
   virtual bool Decode(const BufferPtr &buff, Any &out) {
     // check total length
-    printf("\n come here, Decode data in \n");
+    printf("\n full message Decode come, begin decode");
     int32_t total_len = buff->length();
     if (total_len <= 0) {
-      printf("\n total_len <= 0, out, total_len = %d \n", total_len);
+      printf("\n total_len <= 0, out, total_len = %d", total_len);
       // print log
       return false;
     }
@@ -88,12 +88,12 @@ class TubeMQCodec final : public CodecProtocol {
     google::protobuf::io::ArrayInputStream rawOutput(buff->data(), total_len);
     bool result = readDelimitedFrom(&rawOutput, &rpc_header);
     if (!result) {
-      printf("\n parse RpcConnHeader failure, out \n");
+      printf("\n parse RpcConnHeader failure, out");
       return result;
     }
     result = readDelimitedFrom(&rawOutput, &rsp_header);
     if (!result) {
-      printf("\n parse ResponseHeader failure, out \n");
+      printf("\n parse ResponseHeader failure, out");
       return result;
     }
     ResponseHeader_Status rspStatus = rsp_header.status();
@@ -104,7 +104,7 @@ class TubeMQCodec final : public CodecProtocol {
       rsp_protocol->error_msg_ = "OK";
       result = readDelimitedFrom(&rawOutput, &response_body);
       if (!result) {
-        printf("\n parse RspResponseBody failure, out \n");
+        printf("\n parse RspResponseBody failure, out");
         return false;
       }
       rsp_protocol->method_ = response_body.method();
@@ -114,7 +114,7 @@ class TubeMQCodec final : public CodecProtocol {
       rsp_protocol->success_ = false;
       result = readDelimitedFrom(&rawOutput, &rpc_exception);
       if (!result) {
-        printf("\n parse RspExceptionBody failure, out \n");
+        printf("\n parse RspExceptionBody failure, out");
         return false;
       }
       string errInfo = rpc_exception.exceptionname();
@@ -124,7 +124,7 @@ class TubeMQCodec final : public CodecProtocol {
       rsp_protocol->error_msg_ = errInfo;
     }
     out = Any(rsp_protocol);
-    printf("\n parse Decode success , out \n");
+    printf("\n Decode message success , finished");
     return true;
   }
 
@@ -172,7 +172,7 @@ class TubeMQCodec final : public CodecProtocol {
       if (slice_len > Buffer::kInitialSize) {
         slice_len = Buffer::kInitialSize;
       }
-      printf("\n slice_len = %d, serial_len = %d\n", slice_len, serial_len);
+      printf("\n Encode slice [%d] slice_len = %d, serial_len = %d", i, slice_len, serial_len);
 
       buff->AppendInt32(slice_len);
       buff->Write(step_buff + write_pos, slice_len);
@@ -184,11 +184,11 @@ class TubeMQCodec final : public CodecProtocol {
 
   // return code: -1 failed; 0-Unfinished; > 0 package buffer size
   virtual int32_t Check(BufferPtr &in, Any &out, uint32_t &request_id, bool &has_request_id) {
-    printf("\n come here, check data in \n");
+    printf("\n network message come, check data in");
     uint32_t readed_len = 0;
     // check package is valid
     if (in->length() < 12) {
-      printf("\n come here, in->length < 12, is %ld \n", in->length());
+      printf("\n come here, in->length < 12, is %ld", in->length());
       return 0;
     }
     // check frameToken
@@ -204,7 +204,7 @@ class TubeMQCodec final : public CodecProtocol {
     // check list size
     uint32_t list_size = in->ReadUint32();
     if (list_size > rpc_config::kRpcMaxFrameListCnt) {
-      printf("\n come here, list_size over max, is %d \n", list_size);
+      printf("\n come here, list_size over max, is %d", list_size);
       return -1;
     }
     readed_len += 4;    
@@ -213,23 +213,24 @@ class TubeMQCodec final : public CodecProtocol {
     auto buf = std::make_shared<Buffer>();
     for (uint32_t i = 0; i < list_size; i++) {
       if (in->length() < 4) {
-        printf("\n come here, buffer Remaining length < 4, is %ld \n", in->length());
+        printf("\n come here, buffer Remaining length < 4, is %ld", in->length());
         return 0;
       }
       item_len = in->ReadUint32();
       readed_len += 4;
       if (item_len < 0) {
-        printf("\n come here, slice length < 0, is %d \n", in->ReadUint32());
+        printf("\n come here, slice length < 0, is %d", in->ReadUint32());
         return -1;
       }
       if (item_len > in->length()) {
-        printf("\n come here, item_len > Remaining length, item_len is %d, in->length() = %ld \n", item_len, in->length());
+        printf("\n come here, item_len > Remaining length, item_len is %d, in->length() = %ld", item_len, in->length());
         return 0;
       }
       buf->Write(in->data(), item_len);
       readed_len += item_len;
     }
     out = buf;
+    printf("\n network message check finished, success");
     return item_len;
   }
 

@@ -441,15 +441,15 @@ void RmtDataCacheCsm::ClearEvent() {
 
 void RmtDataCacheCsm::OfferEventResult(const ConsumerEvent& event) {
   lock_guard<mutex> lck(event_write_mutex_);
-  rebalance_events_.push_back(event);
+  rebalance_results_.push_back(event);
 }
 
 bool RmtDataCacheCsm::PollEventResult(ConsumerEvent& event) {
   bool result = false;
   lock_guard<mutex> lck(event_write_mutex_);
-  if (!rebalance_events_.empty()) {
-    event = rebalance_events_.front();
-    rebalance_events_.pop_front();
+  if (!rebalance_results_.empty()) {
+    event = rebalance_results_.front();
+    rebalance_results_.pop_front();
     result = true;
   }
   return result;
