@@ -32,10 +32,10 @@
 #include "tubemq/file_ini.h"
 #include "tubemq/noncopyable.h"
 #include "tubemq/rmt_data_cache.h"
+#include "tubemq/thread_pool.h"
 #include "tubemq/tubemq_config.h"
 #include "tubemq/tubemq_message.h"
 #include "tubemq/tubemq_return.h"
-
 
 namespace tubemq {
 
@@ -48,7 +48,7 @@ class BaseClient {
  public:
   explicit BaseClient(bool is_producer);
   virtual ~BaseClient();
-  virtual void ShutDown() { };
+  virtual void ShutDown(){};
   void SetClientIndex(int32_t client_index) { client_index_ = client_index; }
   bool IsProducer() { return is_producer_; }
   const int32_t GetClientIndex() { return client_index_; }
@@ -71,8 +71,15 @@ class TubeMQService : public noncopyable {
   BaseClient* RmvClientObj(int32_t client_index);
   const string& GetLocalHost() const { return local_host_; }
   ExecutorPoolPtr GetTimerExecutorPool() { return timer_executor_; }
+  SteadyTimerPtr CreateTimer() { return timer_executor_->Get()->CreateSteadyTimer(); }
   ExecutorPoolPtr GetNetWorkExecutorPool() { return network_executor_; }
   ConnectionPoolPtr GetConnectionPool() { return connection_pool_; }
+  template <class function>
+  void Post(function f) {
+    if (thread_pool_ != nullptr) {
+      thread_pool_->Post(f);
+    }
+  }
   bool AddMasterAddress(string& err_info, const string& master_info);
   void GetXfsMasterAddress(const string& source, string& target);
 
@@ -99,7 +106,8 @@ class TubeMQService : public noncopyable {
   ExecutorPoolPtr timer_executor_;
   ExecutorPoolPtr network_executor_;
   ConnectionPoolPtr connection_pool_;
-  thread  dns_xfs_thread_;
+  std::shared_ptr<ThreadPool> thread_pool_;
+  thread dns_xfs_thread_;
   mutable mutex dns_mutex_;
   map<string, int32_t> master_source_;
   map<string, string> master_target_;

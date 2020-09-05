@@ -19,40 +19,18 @@
 
 #include <chrono>
 #include <exception>
-#include <functional>
 #include <iostream>
 #include <string>
 #include <thread>
 
-#include "tubemq/executor_pool.h"
+#include "tubemq/thread_pool.h"
 
 using namespace std;
 using namespace tubemq;
 
-void handler(int a, const asio::error_code& error) {
-  if (!error) {
-    // Timer expired.
-    std::cout << "handlertimeout:" << a << endl;
-  }
-}
-
 int main() {
-  using namespace std::placeholders;  // for _1, _2, _3...
-  ExecutorPool pool(4);
-  auto timer = pool.Get()->CreateSteadyTimer();
-  timer->expires_after(std::chrono::seconds(1));
-  std::cout << "startwait" << endl;
-  timer->wait();
-  std::cout << "endwait" << endl;
-
-  timer->expires_after(std::chrono::milliseconds(100));
-  std::cout << "startsyncwait" << endl;
-  timer->async_wait(std::bind(handler, 5, _1));
-  std::cout << "endsyncwait" << endl;
-  std::this_thread::sleep_for(std::chrono::seconds(1));
-  timer->expires_after(std::chrono::milliseconds(100));
-  timer->async_wait(std::bind(handler, 6, _1));
-  std::this_thread::sleep_for(std::chrono::seconds(1));
+  ThreadPool pool(std::thread::hardware_concurrency());
+  pool.Post([] { std::cout << "abcd" << endl; });
   return 0;
 }
 

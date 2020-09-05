@@ -62,13 +62,10 @@ bool StopTubeMQService(string& err_info) {
 TubeMQConsumer::TubeMQConsumer() : BaseClient(false) {
   status_.Set(0);
   unreport_times_ = 0;
-  client_uuid_ = "";
   visit_token_.Set(tb_config::kInvalidValue);
   nextauth_2_master.Set(false);
   nextauth_2_broker.Set(false);
-  curr_master_addr_ = "";
   masters_map_.clear();
-  authorized_info_ = "";
   is_master_actived_ = false;
   last_master_hbtime_ = 0;
   master_sh_retry_cnt_ = 0;
@@ -96,31 +93,36 @@ bool TubeMQConsumer::Start(string& err_info, const ConsumerConfig& config) {
   }
   if (!TubeMQService::Instance()->AddClientObj(err_info, this, client_index_)) {
     client_index_ = tb_config::kInvalidValue;
-    this->status_.CompareAndSet(1, 0);
+    status_.CompareAndSet(1, 0);
     return false;
   }
-  this->config_ = config;
+  config_ = config;
   if (!initMasterAddress(err_info, config.GetMasterAddrInfo())) {
     return false;
   }
-  this->client_uuid_ = buildUUID();
-  this->sub_info_.SetConsumeTarget(this->config_);
-  this->rmtdata_cache_.SetConsumerInfo(client_uuid_, config_.GetGroupName());
+  client_uuid_ = buildUUID();
+  sub_info_.SetConsumeTarget(this->config_);
+  rmtdata_cache_.SetConsumerInfo(client_uuid_, config_.GetGroupName());
   // initial resource
 
   // register to master
   int32_t error_code;
   if (!register2Master(error_code, err_info, false)) {
-    this->status_.CompareAndSet(1, 0);
+    status_.CompareAndSet(1, 0);
     return false;
   }
-  this->status_.CompareAndSet(1, 2);
+  status_.CompareAndSet(1, 2);
+  heart_beat_timer_ = TubeMQService::Instance()->CreateTimer();
+  heart_beat_timer_->expires_after(std::chrono::milliseconds(config_.GetHeartbeatPeriodMs()));
+  heart_beat_timer_->async_wait([this](const std::error_code& ec) { heartBeat2Master(); });
+  rebalance_thread_ptr_ = std::make_shared<std::thread>([this]() { processRebalanceEvent(); });
+
   err_info = "Ok";
   return true;
 }
 
 void TubeMQConsumer::ShutDown() {
-  if (!this->status_.CompareAndSet(2, 0)) {
+  if (status_.CompareAndSet(2, 0)) {
     return;
   }
   // exist rebalance thread
@@ -129,6 +131,9 @@ void TubeMQConsumer::ShutDown() {
   // remove client stub
   TubeMQService::Instance()->RmvClientObj(client_index_);
   client_index_ = tb_config::kInvalidValue;
+  heart_beat_timer_ = nullptr;
+  rebalance_thread_ptr_->join();
+  rebalance_thread_ptr_ = nullptr;
   // process resuorce release
 }
 
@@ -282,7 +287,7 @@ bool TubeMQConsumer::register2Master(int32_t& error_code, string& err_info, bool
   string target_ip;
   int target_port;
   // check client status
-  if (this->status_.Get() == 0) {
+  if (status_.Get() == 0) {
     err_info = "Consumer not startted!";
     return false;
   }
@@ -350,88 +355,102 @@ bool TubeMQConsumer::register2Master(int32_t& error_code, string& err_info, bool
   return result;
 }
 
-void TubeMQConsumer::heartBeat2Master() {
-  // timer task
-  // 1. check if need re-register, if true, first call register
-  // 2. call heartbeat to master
-  // 3. process response
-  // 4. call timer again
-  bool ret_result;
-  int32_t error_code;
-  string error_info;
-  string target_ip;
-  int target_port;
-
-  if (!TubeMQService::Instance()->IsRunning()) {
-    LOG_INFO("[HeartBeat2Master] heartBeat2Master failure, TubeMQ Service is stopped!");
-    return;
-  }
-  if (!isClientRunning()) {
-    LOG_INFO("[HeartBeat2Master] heartBeat2Master failure, TubeMQ Client stopped!");
-    return;
-  }
-  // check status in master
-  // if not actived first register, or send heartbeat
-  if (is_master_actived_ == false) {
-    ret_result = register2Master(error_code, error_info, false);
+void TubeMQConsumer::asyncRegister2Master(bool need_change) {
+  TubeMQService::Instance()->Post([this, need_change]() {
+    int32_t error_code;
+    string error_info;
+    auto ret_result = register2Master(error_code, error_info, need_change);
+    LOG_INFO("asyncRegister2Master ret_result:%d, master_sh_retry_cnt_:%d", ret_result,
+             master_sh_retry_cnt_);
     if (ret_result) {
       is_master_actived_ = true;
       master_sh_retry_cnt_ = 0;
     } else {
       master_sh_retry_cnt_++;
     }
-  } else {
-    // select current master
-    getCurrentMasterAddr(target_ip, target_port);
-    auto request = std::make_shared<RequestContext>();
-    TubeMQCodec::ReqProtocolPtr req_protocol = TubeMQCodec::GetReqProtocol();
-    // build heartbeat 2 master request
-    buidHeartRequestC2M(req_protocol);
-    request->codec_ = std::make_shared<TubeMQCodec>();
-    request->ip_ = target_ip;
-    request->port_ = target_port;
-    request->timeout_ = config_.GetRpcReadTimeoutMs();
-    request->request_id_ = Singleton<UniqueSeqId>::Instance().Next();
-    req_protocol->request_id_ = request->request_id_;
-    req_protocol->rpc_read_timeout_ = config_.GetRpcReadTimeoutMs() - 500;
-    // send message to target
-    ResponseContext response_context;
-    ErrorCode error = SyncRequest(response_context, request, req_protocol);
-    if (error.Value() != err_code::kErrSuccess) {
-      master_sh_retry_cnt_++;
-      LOG_WARN("[HeartBeat2Master] request network failue to (%s:%d) : %s", target_ip.c_str(),
-               target_port, error.Message().c_str());
-    } else {
-      // process response
-      auto rsp = any_cast<TubeMQCodec::RspProtocolPtr>(response_context.rsp_);
-      ret_result = processHBResponseM2C(error_code, error_info, rsp);
-      if (ret_result) {
-        is_master_actived_ = true;
-        master_sh_retry_cnt_ = 0;
-      } else {
-        master_sh_retry_cnt_++;
-        if (error_code == err_code::kErrHbNoNode ||
-            error_info.find("StandbyException") != string::npos) {
-          is_master_actived_ = false;
-          ret_result =
-              register2Master(error_code, error_info, !(error_code == err_code::kErrHbNoNode));
+    heart_beat_timer_->expires_after(std::chrono::milliseconds(nextHeartBeatPeriodms()));
+    heart_beat_timer_->async_wait([this](const std::error_code& ec) { heartBeat2Master(); });
+  });
+}
+
+void TubeMQConsumer::heartBeat2Master() {
+  // timer task
+  // 1. check if need re-register, if true, first call register
+  // 2. call heartbeat to master
+  // 3. process response
+  // 4. call timer again
+  string target_ip;
+  int target_port;
+
+  heart_beat_timer_->cancel();
+  if (!TubeMQService::Instance()->IsRunning()) {
+    LOG_INFO("[HeartBeat2Master] heartBeat2Master failure, TubeMQ Service is stopped!");
+    return;
+  }
+
+  if (!isClientRunning()) {
+    LOG_INFO("[HeartBeat2Master] heartBeat2Master failure, TubeMQ Client stopped!");
+    return;
+  }
+
+  // check status in master
+  // if not actived first register, or send heartbeat
+  if (is_master_actived_ == false) {
+    asyncRegister2Master(false);
+    return;
+  }
+  // select current master
+  getCurrentMasterAddr(target_ip, target_port);
+  auto request = std::make_shared<RequestContext>();
+  TubeMQCodec::ReqProtocolPtr req_protocol = TubeMQCodec::GetReqProtocol();
+  // build heartbeat 2 master request
+  buidHeartRequestC2M(req_protocol);
+  request->codec_ = std::make_shared<TubeMQCodec>();
+  request->ip_ = target_ip;
+  request->port_ = target_port;
+  request->timeout_ = config_.GetRpcReadTimeoutMs();
+  request->request_id_ = Singleton<UniqueSeqId>::Instance().Next();
+  req_protocol->request_id_ = request->request_id_;
+  req_protocol->rpc_read_timeout_ = config_.GetRpcReadTimeoutMs() - 500;
+  // send message to target
+  AsyncRequest(request, req_protocol)
+      .AddCallBack([=](ErrorCode error, const ResponseContext& response_context) {
+        if (error.Value() != err_code::kErrSuccess) {
+          master_sh_retry_cnt_++;
+          LOG_WARN("[HeartBeat2Master] request network failue to (%s:%d) : %s", target_ip.c_str(),
+                   target_port, error.Message().c_str());
+        } else {
+          // process response
+          auto rsp = any_cast<TubeMQCodec::RspProtocolPtr>(response_context.rsp_);
+          int32_t error_code = 0;
+          std::string error_info;
+          auto ret_result = processHBResponseM2C(error_code, error_info, rsp);
           if (ret_result) {
             is_master_actived_ = true;
             master_sh_retry_cnt_ = 0;
+          } else {
+            master_sh_retry_cnt_++;
+            if (error_code == err_code::kErrHbNoNode ||
+                error_info.find("StandbyException") != string::npos) {
+              is_master_actived_ = false;
+              asyncRegister2Master(!(error_code == err_code::kErrHbNoNode));
+              LOG_INFO("heartbeat no node or standby exception. retry to do register2master");
+              return;
+            }
           }
         }
-      }
-    }
-  }
-  // start next heartbeat timer
+        heart_beat_timer_->expires_after(std::chrono::milliseconds(nextHeartBeatPeriodms()));
+        heart_beat_timer_->async_wait([this](const std::error_code& ec) { heartBeat2Master(); });
+      });
+  return;
+}
+
+int32_t TubeMQConsumer::nextHeartBeatPeriodms() {
   int32_t next_hb_periodms = config_.GetHeartbeatPeriodMs();
   if (master_sh_retry_cnt_ >= config_.GetMaxHeartBeatRetryTimes()) {
     next_hb_periodms = config_.GetHeartbeatPeriodAftFailMs();
   }
-  // TODO: start heartbeat timer
-  next_hb_periodms = next_hb_periodms;
-
-  return;
+  return next_hb_periodms;
 }
 
 void TubeMQConsumer::processRebalanceEvent() {

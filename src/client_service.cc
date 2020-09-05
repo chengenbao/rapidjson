@@ -30,7 +30,7 @@ namespace tubemq {
 using std::lock_guard;
 using std::stringstream;
 
-BaseClient::BaseClient(bool is_producer) { 
+BaseClient::BaseClient(bool is_producer) {
   this->is_producer_ = is_producer;
   this->client_index_ = tb_config::kInvalidValue;
 }
@@ -89,6 +89,7 @@ bool TubeMQService::Start(string& err_info, string conf_file) {
   }
   timer_executor_->Resize(2);
   network_executor_->Resize(4);
+  thread_pool_ = std::make_shared<ThreadPool>(4);
   connection_pool_ = std::make_shared<ConnectionPool>(network_executor_);
   iniLogger(fileini, sector);
   iniXfsThread(fileini, sector);
@@ -106,6 +107,7 @@ bool TubeMQService::Stop(string& err_info) {
     timer_executor_->Close();
     network_executor_->Close();
     connection_pool_ = nullptr;
+    thread_pool_ = nullptr;
   }
   err_info = "OK!";
   return true;
