@@ -122,45 +122,56 @@ class TubeMQCodec final : public CodecProtocol {
   }
 
   virtual bool Encode(const Any &in, BufferPtr &buff) {
-    string body_str;
     RequestBody req_body;
     ReqProtocolPtr req_protocol = any_cast<ReqProtocolPtr>(in);
-
     req_body.set_method(req_protocol->method_id_);
     req_body.set_timeout(req_protocol->rpc_read_timeout_);
     req_body.set_request(req_protocol->prot_msg_);
-    bool result = req_body.SerializeToString(&body_str);
-    if (!result) {
-      return result;
-    }
-    //
-    string req_str;
     RequestHeader req_header;
     req_header.set_servicetype(Utils::GetServiceTypeByMethodId(req_protocol->method_id_));
     req_header.set_protocolver(2);
-    result = req_header.SerializeToString(&req_str);
-    if (!result) {
-      return result;
-    }
-    //
-    string rpc_str;
     RpcConnHeader rpc_header;
     rpc_header.set_flag(rpc_config::kRpcFlagMsgRequest);
-    result = rpc_header.SerializeToString(&rpc_str);
-    if (!result) {
+    // calc total list size
+    uint32_t serial_len = 4 + rpc_header.ByteSizeLong()
+                        + 4 + req_header.ByteSizeLong()
+                        + 4 + req_body.ByteSizeLong();
+    uint8_t *step_buff = (uint8_t *)malloc(serial_len);
+    assert(step_buff);
+    google::protobuf::io::ArrayOutputStream rawOutput(step_buff, serial_len);
+    bool result = writeDelimitedTo(rpc_header, &rawOutput);
+    if(!result) {
+      delete[] step_buff;
       return result;
     }
-    // calc total list size
-    int32_t list_size = calcBlockCount(rpc_header.ByteSizeLong()) +
-                        calcBlockCount(req_header.ByteSizeLong()) +
-                        calcBlockCount(req_body.ByteSizeLong());
-    //
+    result = writeDelimitedTo(req_header, &rawOutput);
+    if(!result) {
+      delete[] step_buff;
+      return result;
+    }
+    result = writeDelimitedTo(req_body, &rawOutput);
+    if(!result) {
+      delete[] step_buff;
+      return result;
+    }
+    // append data to buffer
+    uint32_t list_size = calcBlockCount(serial_len);
     buff->AppendInt32((int32_t)rpc_config::kRpcPrtBeginToken);
     buff->AppendInt32((int32_t)req_protocol->request_id_);
     buff->AppendInt32(list_size);
-    appendContent(buff, rpc_header);
-    appendContent(buff, req_header);
-    appendContent(buff, req_body);
+    uint32_t write_pos = 0;
+    for (uint32_t i = 0; i < list_size; i++) {
+      uint32_t slice_len = serial_len - i * Buffer::kInitialSize;
+      if (slice_len > Buffer::kInitialSize) {
+        slice_len = Buffer::kInitialSize;
+      }
+      printf("\n slice_len = %d, serial_len = %d\n", slice_len, serial_len);
+
+      buff->AppendInt32(slice_len);
+      buff->Write(step_buff + write_pos, slice_len);
+      write_pos += slice_len;
+    }
+    delete[] step_buff;
     return true;
   }
 
@@ -254,45 +265,10 @@ class TubeMQCodec final : public CodecProtocol {
     return true;
   }
 
- private:
-  uint32_t appendContent(BufferPtr &buff, const google::protobuf::MessageLite &message) {
-    uint32_t remain = 0;
-    uint32_t writed_len = 0;
-    uint32_t buff_cnt = calcBlockCount(message.ByteSizeLong());
-    uint32_t total_len = message.ByteSizeLong() + 4;
-    bool is_first = true;
-    for (uint32_t i = 0; i < buff_cnt; i++) {
-      writed_len = 0;
-      remain = total_len - i * (Buffer::kInitialSize - 4);
-      if (remain > Buffer::kInitialSize - 4) {
-        remain = Buffer::kInitialSize - 4;
-      }
-      printf("\n remain = %d, message.ByteSize= %d\n", remain, message.ByteSize());
-      uint8_t *step_buff = (uint8_t *)malloc(remain);
-      assert(step_buff);
-      buff->AppendInt32(remain);
-      writed_len += 4;
-      if (is_first) {
-        buff->AppendInt32(message.ByteSizeLong());
-        is_first = false;
-        writed_len += 4;
-        remain -= 4;
-      }
-      message.SerializeWithCachedSizesToArray(step_buff + writed_len);
-      buff->Write(step_buff, remain);
-      delete[] step_buff;
-    }
-    return buff_cnt;
-  }
-
   uint32_t calcBlockCount(uint32_t content_len) {
-    uint32_t total_len = content_len + 4;
-    uint32_t block_cnt = total_len / Buffer::kInitialSize;
-    uint32_t remain_size = total_len % Buffer::kInitialSize;
+    uint32_t block_cnt = content_len / Buffer::kInitialSize;
+    uint32_t remain_size = content_len % Buffer::kInitialSize;
     if (remain_size > 0) {
-      block_cnt++;
-    }
-    if ((block_cnt * Buffer::kInitialSize) < (total_len + block_cnt * 4)) {
       block_cnt++;
     }
     return block_cnt;
