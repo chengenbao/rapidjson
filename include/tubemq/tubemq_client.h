@@ -104,7 +104,6 @@ class TubeMQConsumer : public BaseClient, public std::enable_shared_from_this<Tu
                                const TubeMQCodec::RspProtocolPtr& rsp_protocol);
   void convertMessages(int32_t& msg_size, list<Message>& message_list, bool filter_consume,
                        const string& topic_name, GetMessageResponseB2C& rsp_b2c);
-
   inline int32_t nextHeartBeatPeriodms();
   void asyncRegister2Master(bool need_change);
 

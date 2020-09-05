@@ -73,8 +73,10 @@ class TubeMQCodec final : public CodecProtocol {
 
   virtual bool Decode(const BufferPtr &buff, Any &out) {
     // check total length
-    int total_len = buff->length();
+    printf("\n come here, Decode data in \n");
+    int32_t total_len = buff->length();
     if (total_len <= 0) {
+      printf("\n total_len <= 0, out, total_len = %d \n", total_len);
       // print log
       return false;
     }
@@ -86,10 +88,12 @@ class TubeMQCodec final : public CodecProtocol {
     google::protobuf::io::ArrayInputStream rawOutput(buff->data(), total_len);
     bool result = readDelimitedFrom(&rawOutput, &rpc_header);
     if (!result) {
+      printf("\n parse RpcConnHeader failure, out \n");
       return result;
     }
     result = readDelimitedFrom(&rawOutput, &rsp_header);
     if (!result) {
+      printf("\n parse ResponseHeader failure, out \n");
       return result;
     }
     ResponseHeader_Status rspStatus = rsp_header.status();
@@ -100,6 +104,7 @@ class TubeMQCodec final : public CodecProtocol {
       rsp_protocol->error_msg_ = "OK";
       result = readDelimitedFrom(&rawOutput, &response_body);
       if (!result) {
+        printf("\n parse RspResponseBody failure, out \n");
         return false;
       }
       rsp_protocol->method_ = response_body.method();
@@ -109,6 +114,7 @@ class TubeMQCodec final : public CodecProtocol {
       rsp_protocol->success_ = false;
       result = readDelimitedFrom(&rawOutput, &rpc_exception);
       if (!result) {
+        printf("\n parse RspExceptionBody failure, out \n");
         return false;
       }
       string errInfo = rpc_exception.exceptionname();
@@ -118,91 +124,113 @@ class TubeMQCodec final : public CodecProtocol {
       rsp_protocol->error_msg_ = errInfo;
     }
     out = Any(rsp_protocol);
+    printf("\n parse Decode success , out \n");
     return true;
   }
 
   virtual bool Encode(const Any &in, BufferPtr &buff) {
-    string body_str;
     RequestBody req_body;
     ReqProtocolPtr req_protocol = any_cast<ReqProtocolPtr>(in);
-
     req_body.set_method(req_protocol->method_id_);
     req_body.set_timeout(req_protocol->rpc_read_timeout_);
     req_body.set_request(req_protocol->prot_msg_);
-    bool result = req_body.SerializeToString(&body_str);
-    if (!result) {
-      return result;
-    }
-    //
-    string req_str;
     RequestHeader req_header;
     req_header.set_servicetype(Utils::GetServiceTypeByMethodId(req_protocol->method_id_));
     req_header.set_protocolver(2);
-    result = req_header.SerializeToString(&req_str);
-    if (!result) {
-      return result;
-    }
-    //
-    string rpc_str;
     RpcConnHeader rpc_header;
     rpc_header.set_flag(rpc_config::kRpcFlagMsgRequest);
-    result = rpc_header.SerializeToString(&rpc_str);
-    if (!result) {
+    // calc total list size
+    uint32_t serial_len = 4 + rpc_header.ByteSizeLong()
+                        + 4 + req_header.ByteSizeLong()
+                        + 4 + req_body.ByteSizeLong();
+    uint8_t *step_buff = (uint8_t *)malloc(serial_len);
+    assert(step_buff);
+    google::protobuf::io::ArrayOutputStream rawOutput(step_buff, serial_len);
+    bool result = writeDelimitedTo(rpc_header, &rawOutput);
+    if(!result) {
+      delete[] step_buff;
       return result;
     }
-    // calc total list size
-    int32_t list_size = calcBlockCount(rpc_header.ByteSizeLong()) +
-                        calcBlockCount(req_header.ByteSizeLong()) +
-                        calcBlockCount(req_body.ByteSizeLong());
-    //
+    result = writeDelimitedTo(req_header, &rawOutput);
+    if(!result) {
+      delete[] step_buff;
+      return result;
+    }
+    result = writeDelimitedTo(req_body, &rawOutput);
+    if(!result) {
+      delete[] step_buff;
+      return result;
+    }
+    // append data to buffer
+    uint32_t list_size = calcBlockCount(serial_len);
     buff->AppendInt32((int32_t)rpc_config::kRpcPrtBeginToken);
     buff->AppendInt32((int32_t)req_protocol->request_id_);
     buff->AppendInt32(list_size);
-    appendContent(buff, rpc_header);
-    appendContent(buff, req_header);
-    appendContent(buff, req_body);
+    uint32_t write_pos = 0;
+    for (uint32_t i = 0; i < list_size; i++) {
+      uint32_t slice_len = serial_len - i * Buffer::kInitialSize;
+      if (slice_len > Buffer::kInitialSize) {
+        slice_len = Buffer::kInitialSize;
+      }
+      printf("\n slice_len = %d, serial_len = %d\n", slice_len, serial_len);
+
+      buff->AppendInt32(slice_len);
+      buff->Write(step_buff + write_pos, slice_len);
+      write_pos += slice_len;
+    }
+    delete[] step_buff;
     return true;
   }
 
   // return code: -1 failed; 0-Unfinished; > 0 package buffer size
   virtual int32_t Check(BufferPtr &in, Any &out, uint32_t &request_id, bool &has_request_id) {
+    printf("\n come here, check data in \n");
+    uint32_t readed_len = 0;
     // check package is valid
     if (in->length() < 12) {
+      printf("\n come here, in->length < 12, is %ld \n", in->length());
       return 0;
     }
     // check frameToken
     if (in->ReadUint32() != rpc_config::kRpcPrtBeginToken) {
+      printf("\n come here, first token != rpc_config::kRpcPrtBeginToken, is %d \n", in->ReadUint32());
       return -1;
     }
+    readed_len += 4;
     // get request_id
     request_id = in->ReadUint32();
+    readed_len += 4;    
     has_request_id = true;
     // check list size
     uint32_t list_size = in->ReadUint32();
     if (list_size > rpc_config::kRpcMaxFrameListCnt) {
+      printf("\n come here, list_size over max, is %d \n", list_size);
       return -1;
     }
+    readed_len += 4;    
     // check data list
     uint32_t item_len = 0;
-    int32_t read_len = 12;
     auto buf = std::make_shared<Buffer>();
     for (uint32_t i = 0; i < list_size; i++) {
       if (in->length() < 4) {
+        printf("\n come here, buffer Remaining length < 4, is %ld \n", in->length());
         return 0;
       }
       item_len = in->ReadUint32();
+      readed_len += 4;
       if (item_len < 0) {
+        printf("\n come here, slice length < 0, is %d \n", in->ReadUint32());
         return -1;
       }
-      read_len += 4;
       if (item_len > in->length()) {
+        printf("\n come here, item_len > Remaining length, item_len is %d, in->length() = %ld \n", item_len, in->length());
         return 0;
       }
       buf->Write(in->data(), item_len);
-      read_len += item_len;
+      readed_len += item_len;
     }
     out = buf;
-    return read_len;
+    return item_len;
   }
 
   static ReqProtocolPtr GetReqProtocol() { return std::make_shared<ReqProtocol>(); }
@@ -254,34 +282,10 @@ class TubeMQCodec final : public CodecProtocol {
     return true;
   }
 
- private:
-  uint32_t appendContent(BufferPtr &buff, const google::protobuf::MessageLite &message) {
-    uint32_t remain = 0;
-    uint32_t buff_cnt = 0;
-    buff_cnt = calcBlockCount(message.ByteSizeLong());
-    for (uint32_t i = 0; i < buff_cnt; i++) {
-      remain = message.ByteSizeLong() - i * (Buffer::kInitialSize - 4);
-      if (remain > Buffer::kInitialSize - 4) {
-        remain = Buffer::kInitialSize - 4;
-      }
-      uint8_t *step_buff = (uint8_t *)malloc(remain);
-      assert(step_buff);
-      int32_t hstep_length = htonl(remain);
-      memcpy(step_buff, &hstep_length, 4);
-      message.SerializeWithCachedSizesToArray(step_buff + 4);
-      buff->Write(step_buff, remain);
-      delete[] step_buff;
-    }
-    return buff_cnt;
-  }
-
   uint32_t calcBlockCount(uint32_t content_len) {
     uint32_t block_cnt = content_len / Buffer::kInitialSize;
     uint32_t remain_size = content_len % Buffer::kInitialSize;
     if (remain_size > 0) {
-      block_cnt++;
-    }
-    if ((block_cnt * Buffer::kInitialSize) < (content_len + block_cnt * 4)) {
       block_cnt++;
     }
     return block_cnt;

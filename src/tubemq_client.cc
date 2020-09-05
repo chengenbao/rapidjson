@@ -116,7 +116,6 @@ bool TubeMQConsumer::Start(string& err_info, const ConsumerConfig& config) {
   heart_beat_timer_->expires_after(std::chrono::milliseconds(config_.GetHeartbeatPeriodMs()));
   heart_beat_timer_->async_wait([this](const std::error_code& ec) { heartBeat2Master(); });
   rebalance_thread_ptr_ = std::make_shared<std::thread>([this]() { processRebalanceEvent(); });
-
   err_info = "Ok";
   return true;
 }
@@ -324,6 +323,7 @@ bool TubeMQConsumer::register2Master(int32_t& error_code, string& err_info, bool
     // send message to target
     ResponseContext response_context;
     ErrorCode error = SyncRequest(response_context, request, req_protocol);
+    printf("\n register2Master response come, error.value is %d", error.Value());
     if (error.Value() == err_code::kErrSuccess) {
       // process response
       auto rsp = any_cast<TubeMQCodec::RspProtocolPtr>(response_context.rsp_);
@@ -352,6 +352,8 @@ bool TubeMQConsumer::register2Master(int32_t& error_code, string& err_info, bool
     retry_count++;
     getNextMasterAddr(target_ip, target_port);
   }
+
+  printf("\n register2Master response come, error_code is %d", error_code);
   return result;
 }
 
@@ -854,6 +856,7 @@ bool TubeMQConsumer::processRegisterResponseM2C(int32_t& error_code, string& err
   if (!rsp_protocol->success_) {
     error_code = rsp_protocol->code_;
     err_info = rsp_protocol->error_msg_;
+    printf("\n processRegisterResponseM2C come, rsp_protocol->success_ not true");
     return false;
   }
   RegisterResponseM2C rsp_m2c;
@@ -862,11 +865,15 @@ bool TubeMQConsumer::processRegisterResponseM2C(int32_t& error_code, string& err
   if (!result) {
     error_code = err_code::kErrParseFailure;
     err_info = "Parse RegisterResponseM2C response failure!";
+
+    printf("\n processRegisterResponseM2C come, parse message failure!");
     return false;
   }
   if (!rsp_m2c.success()) {
     error_code = rsp_m2c.errcode();
     err_info = rsp_m2c.errmsg();
+
+    printf("\n processRegisterResponseM2C come, return failure, errorcode = %d!", error_code);
     return false;
   }
   // update policy
@@ -887,6 +894,8 @@ bool TubeMQConsumer::processRegisterResponseM2C(int32_t& error_code, string& err
   }
   error_code = err_code::kErrSuccess;
   err_info = "Ok";
+
+  printf("\n processRegisterResponseM2C success");
   return true;
 }
 
