@@ -655,7 +655,7 @@ void TubeMQConsumer::processHeartBeat2Broker(NodeInfo broker_info) {
     reSetBrokerHBTimer(broker_info);
     return;
   }
-  
+
   set<string> req_part_keys;
   for (it = partition_list.begin(); it != partition_list.end(); ++it) {
     req_part_keys.insert(it->GetPartitionKey());
@@ -677,8 +677,7 @@ void TubeMQConsumer::processHeartBeat2Broker(NodeInfo broker_info) {
       .AddCallBack([=](ErrorCode error, const ResponseContext& response_context) {
         if (error.Value() != err_code::kErrSuccess) {
           LOG_WARN("[Heartbeat2Broker] request network  to failure (%s:%d) : %s",
-                   broker_info.GetHost().c_str(), broker_info.GetPort(),
-                   error.Message().c_str());
+                   broker_info.GetHost().c_str(), broker_info.GetPort(), error.Message().c_str());
         } else {
           // process response
           auto rsp = any_cast<TubeMQCodec::RspProtocolPtr>(response_context.rsp_);
@@ -698,8 +697,8 @@ void TubeMQConsumer::processHeartBeat2Broker(NodeInfo broker_info) {
                       continue;
                     }
                     // int error_code = atoi(fullpart_str.substr(0, pos1).c_str());
-                    string part_str = fullpart_str.substr(
-                      pos1 + token_key.size(), fullpart_str.size());
+                    string part_str =
+                        fullpart_str.substr(pos1 + token_key.size(), fullpart_str.size());
                     Partition part(part_str);
                     partition_keys.insert(part.GetPartitionKey());
                   }
@@ -712,7 +711,7 @@ void TubeMQConsumer::processHeartBeat2Broker(NodeInfo broker_info) {
                            broker_info.GetHost().c_str(), broker_info.GetPort());
                 }
               }
-            } 
+            }
           }
         }
         reSetBrokerHBTimer(broker_info);
@@ -1404,7 +1403,7 @@ void TubeMQConsumer::addBrokerHBTimer(const NodeInfo& broker) {
     timer = TubeMQService::Instance()->CreateTimer();
     broker_timer_map_[broker] = timer;
     timer->expires_after(std::chrono::milliseconds(hb_periodms / 2));
-    timer->async_wait([this](const std::error_code& ec) {
+    timer->async_wait([this, broker](const std::error_code& ec) {
       if (ec) {
         return;
       }
@@ -1425,7 +1424,7 @@ void TubeMQConsumer::reSetBrokerHBTimer(const NodeInfo& broker) {
     if (broker_timer_map_.find(broker) != broker_timer_map_.end()) {
       timer = broker_timer_map_[broker];
       timer->expires_after(std::chrono::milliseconds(hb_periodms));
-      timer->async_wait([this](const std::error_code& ec) {
+      timer->async_wait([this, broker](const std::error_code& ec) {
         if (ec) {
           return;
         }
@@ -1434,9 +1433,5 @@ void TubeMQConsumer::reSetBrokerHBTimer(const NodeInfo& broker) {
     }
   }
 }
-
-}
-
-
 }  // namespace tubemq
 
