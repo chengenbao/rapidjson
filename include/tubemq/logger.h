@@ -73,9 +73,7 @@ class Logger {
         file_num_(10),
         level_(kError),
         base_path_("tubemq"),
-        instance_("TubeMQ") {
-    setup();
-  }
+        instance_("TubeMQ") {}
 
   ~Logger(void) {}
 
