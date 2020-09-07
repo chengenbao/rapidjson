@@ -109,6 +109,22 @@ bool Fileini::Loadini(string& err_info, const string& file_name) {
   conf_file.clear();
   // set parser status
   this->init_flag_ = true;
+
+  // for test begin
+  map<string, map<string, string> >::const_iterator sec_it;
+  map<string, string>::const_iterator kv_it;
+  printf("\n begin print ini configure info");
+  for (sec_it = ini_map_.begin(); sec_it != ini_map_.end(); ++sec_it) {
+    printf("\n sector is %s", sec_it->first.c_str());
+    map<string, string> keyval_map = sec_it->second;
+    for (kv_it = keyval_map.begin(); kv_it != keyval_map.end(); ++kv_it) {
+      printf("\n %s = %s", kv_it->first.c_str(), kv_it->second.c_str());
+    }
+  }
+  printf("\n end print ini configure info");
+
+  // for test end
+
   // end
   err_info = "Ok";
   return true;

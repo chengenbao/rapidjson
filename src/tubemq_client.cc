@@ -304,7 +304,7 @@ bool TubeMQConsumer::register2Master(int32_t& error_code, string& err_info, bool
     return false;
   }
 
-  printf("\n register2Master process begin: ");
+  LOG_INFO("register2Master process begin: ");
   // check client status
   if (status_.Get() == 0) {
     master_reg_status_.CompareAndSet(1, 0);
@@ -343,7 +343,7 @@ bool TubeMQConsumer::register2Master(int32_t& error_code, string& err_info, bool
     // send message to target
     ResponseContext response_context;
     ErrorCode error = SyncRequest(response_context, request, req_protocol);
-    printf("\n register2Master response come, error.value is %d", error.Value());
+    LOG_INFO("register2Master response come, error.value is %d", error.Value());
     if (error.Value() == err_code::kErrSuccess) {
       // process response
       auto rsp = any_cast<TubeMQCodec::RspProtocolPtr>(response_context.rsp_);
@@ -380,7 +380,6 @@ bool TubeMQConsumer::register2Master(int32_t& error_code, string& err_info, bool
   master_reg_status_.CompareAndSet(1, 0);
   LOG_INFO("[CONSUMER] register2Master finished, client=%s, result:%d, err_info:%s",
            client_uuid_.c_str(), result, err_info.c_str());
-  printf("\n register2Master finished, error_code is %d \n", error_code);
   return result;
 }
 
@@ -420,11 +419,11 @@ void TubeMQConsumer::heartBeat2Master() {
 
   // set heartbeat process status to begin
   if (!master_hb_status_.CompareAndSet(0, 1)) {
-    printf("\n check hb process status, heartBeat2Master process has began! \n");
+    LOG_INFO("check hb process status, heartBeat2Master process has began!");
     return;
   }
 
-  printf("\n heartBeat2Master process begin: \n");
+  LOG_INFO("heartBeat2Master process begin:");
 
   if (!TubeMQService::Instance()->IsRunning()) {
     master_hb_status_.CompareAndSet(1, 0);
