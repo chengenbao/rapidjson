@@ -1403,7 +1403,7 @@ void TubeMQConsumer::addBrokerHBTimer(const NodeInfo& broker) {
     timer = TubeMQService::Instance()->CreateTimer();
     broker_timer_map_[broker] = timer;
     timer->expires_after(std::chrono::milliseconds(hb_periodms / 2));
-    timer->async_wait([this, broker](const std::error_code& ec) {
+    timer->async_wait([this, &broker](const std::error_code& ec) {
       if (ec) {
         return;
       }
@@ -1424,7 +1424,7 @@ void TubeMQConsumer::reSetBrokerHBTimer(const NodeInfo& broker) {
     if (broker_timer_map_.find(broker) != broker_timer_map_.end()) {
       timer = broker_timer_map_[broker];
       timer->expires_after(std::chrono::milliseconds(hb_periodms));
-      timer->async_wait([this, broker](const std::error_code& ec) {
+      timer->async_wait([this, &broker](const std::error_code& ec) {
         if (ec) {
           return;
         }
