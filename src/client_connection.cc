@@ -36,7 +36,7 @@ void ClientConnection::AsyncWrite(RequestContextPtr& req) {
       asyncWrite();
     }
     if (req->timeout_ > 0) {
-      transport_req.deadline_ = std::move(executor_->CreateSteadyTimer());
+      transport_req.deadline_ = executor_->CreateSteadyTimer();
       transport_req.deadline_->expires_after(std::chrono::milliseconds(req->timeout_));
       transport_req.deadline_->async_wait(std::bind(&ClientConnection::requestTimeoutHandle,
                                                     shared_from_this(), std::placeholders::_1,
@@ -112,11 +112,11 @@ void ClientConnection::connect(const asio::ip::tcp::resolver::results_type& endp
           close(&ec);
           return;
         }
-        LOG_INFO("%sis connected", context_string_.c_str());
         status_ = kConnected;
         socket_->set_option(asio::ip::tcp::no_delay(true));
         // socket_->set_option(asio::ip::tcp::socket::reuse_address(true));
         contextString();
+        LOG_INFO("%sis connected", context_string_.c_str());
 
         asyncWrite();
         asyncRead();
@@ -124,20 +124,13 @@ void ClientConnection::connect(const asio::ip::tcp::resolver::results_type& endp
 }
 
 void ClientConnection::checkDeadline(const std::error_code& ec) {
+  deadline_->cancel();
   if (IsStop()) {
     return;
   }
-  if (ec) {
-    LOG_ERROR("%sconnect timeout handle error:%d, %s, %s", context_string_.c_str(), ec.value(),
-              ec.message().c_str(), ec.category().name());
-  }
-  if (deadline_->expiry() <= asio::steady_timer::clock_type::now()) {
-    LOG_ERROR("%sconnect timeout", context_string_.c_str());
-    close();
-    deadline_->expires_at(asio::steady_timer::time_point::max());
-  }
-  deadline_->async_wait(
-      std::bind(&ClientConnection::checkDeadline, shared_from_this(), std::placeholders::_1));
+  LOG_ERROR("%sconnect timeout handle error:%d, %s, %s", context_string_.c_str(), ec.value(),
+            ec.message().c_str(), ec.category().name());
+  close();
 }
 
 void ClientConnection::contextString() {
@@ -209,11 +202,11 @@ void ClientConnection::requestCallback(uint32_t request_id, ErrorCode* err, Any*
     return;
   }
   auto req = &it->second;
+  req->deadline_->cancel();
   if (err != nullptr) {
     LOG_ERROR("%srequest[%d] error:%d, msg:%s", context_string_.c_str(), request_id, err->Value(),
               err->Message().c_str());
     req->req_->promise_.SetFailed(*err);
-    req->deadline_->cancel();
     request_list_.erase(it);
     return;
   }
@@ -230,7 +223,6 @@ void ClientConnection::requestCallback(uint32_t request_id, ErrorCode* err, Any*
     req->req_->promise_.SetFailed(ErrorCode(err_code::kErrNetworkError, "response is null"));
   }
 
-  req->deadline_->cancel();
   request_list_.erase(it);
 }
 
