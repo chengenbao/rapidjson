@@ -124,12 +124,16 @@ void ClientConnection::connect(const asio::ip::tcp::resolver::results_type& endp
 }
 
 void ClientConnection::checkDeadline(const std::error_code& ec) {
-  deadline_->cancel();
   if (IsStop()) {
     return;
   }
-  LOG_ERROR("%sconnect timeout handle error:%d, %s, %s", context_string_.c_str(), ec.value(),
-            ec.message().c_str(), ec.category().name());
+  if (ec) {
+    LOG_ERROR("%sdeadline handle error:%d, %s, %s", context_string_.c_str(), ec.value(),
+              ec.message().c_str(), ec.category().name());
+    return;
+  }
+
+  LOG_ERROR("%s connect timeout", context_string_.c_str());
   close();
 }
 

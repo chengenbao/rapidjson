@@ -115,8 +115,13 @@ bool TubeMQConsumer::Start(string& err_info, const ConsumerConfig& config) {
   }
   status_.CompareAndSet(1, 2);
   heart_beat_timer_ = TubeMQService::Instance()->CreateTimer();
-  heart_beat_timer_->expires_after(std::chrono::milliseconds(config_.GetHeartbeatPeriodMs()/2));
-  heart_beat_timer_->async_wait([this](const std::error_code& ec) { heartBeat2Master(); });
+  heart_beat_timer_->expires_after(std::chrono::milliseconds(config_.GetHeartbeatPeriodMs() / 2));
+  heart_beat_timer_->async_wait([this](const std::error_code& ec) {
+    if (ec) {
+      return;
+    }
+    heartBeat2Master();
+  });
   rebalance_thread_ptr_ = std::make_shared<std::thread>([this]() { processRebalanceEvent(); });
   LOG_INFO("[CONSUMER] start consumer success, client=%s", client_uuid_.c_str());
   err_info = "Ok";
@@ -205,18 +210,18 @@ bool TubeMQConsumer::Confirm(const string& confirm_context, bool is_consumed,
   pos1 = confirm_context.find(token1);
   if (string::npos == pos1) {
     result.SetFailureResult(
-      err_code::kErrBadRequest,
-      "Illegel confirm_context content: unregular confirm_context value format!");
+        err_code::kErrBadRequest,
+        "Illegel confirm_context content: unregular confirm_context value format!");
     return false;
   }
   string part_key = Utils::Trim(confirm_context.substr(0, pos1));
   string booked_time_str =
-    Utils::Trim(confirm_context.substr(pos1 + token1.size(), confirm_context.size()));
+      Utils::Trim(confirm_context.substr(pos1 + token1.size(), confirm_context.size()));
   long booked_time = atol(booked_time_str.c_str());
   pos1 = part_key.find(token2);
   if (string::npos == pos1) {
     result.SetFailureResult(err_code::kErrBadRequest,
-      "Illegel confirm_context content: unregular index key value format!");
+                            "Illegel confirm_context content: unregular index key value format!");
     return false;
   }
   pos1 = pos1 + token1.size();
@@ -292,13 +297,13 @@ bool TubeMQConsumer::Confirm(const string& confirm_context, bool is_consumed,
 bool TubeMQConsumer::register2Master(int32_t& error_code, string& err_info, bool need_change) {
   string target_ip;
   int target_port;
-  
+
   // set regist process status to begin
   if (!master_reg_status_.CompareAndSet(0, 1)) {
     err_info = "register2Master process has began!";
     return false;
   }
-  
+
   printf("\n register2Master process begin: ");
   // check client status
   if (status_.Get() == 0) {
@@ -360,12 +365,13 @@ bool TubeMQConsumer::register2Master(int32_t& error_code, string& err_info, bool
       // set regist process status to existed
       master_reg_status_.CompareAndSet(1, 0);
       LOG_WARN("[CONSUMER] register2master(%s:%d) failure exist register, client=%s,reason:%s",
-        target_ip.c_str(), target_port, client_uuid_.c_str(), err_info.c_str());
+               target_ip.c_str(), target_port, client_uuid_.c_str(), err_info.c_str());
       return false;
     } else {
-      LOG_WARN("[CONSUMER] register2master(%s:%d) failure, client=%s, retrycount=(%d-%d), reason:%s",
-        target_ip.c_str(), target_port, client_uuid_.c_str(),
-        maxRetrycount, retry_count + 1, err_info.c_str());
+      LOG_WARN(
+          "[CONSUMER] register2master(%s:%d) failure, client=%s, retrycount=(%d-%d), reason:%s",
+          target_ip.c_str(), target_port, client_uuid_.c_str(), maxRetrycount, retry_count + 1,
+          err_info.c_str());
     }
     retry_count++;
     getNextMasterAddr(target_ip, target_port);
@@ -373,7 +379,7 @@ bool TubeMQConsumer::register2Master(int32_t& error_code, string& err_info, bool
   // set regist process status to existed
   master_reg_status_.CompareAndSet(1, 0);
   LOG_INFO("[CONSUMER] register2Master finished, client=%s, result:%d, err_info:%s",
-    client_uuid_.c_str(), result, err_info.c_str());
+           client_uuid_.c_str(), result, err_info.c_str());
   printf("\n register2Master finished, error_code is %d \n", error_code);
   return result;
 }
@@ -384,8 +390,8 @@ void TubeMQConsumer::asyncRegister2Master(bool need_change) {
     string error_info;
     if (!is_master_actived_.Get()) {
       auto ret_result = register2Master(error_code, error_info, need_change);
-      LOG_INFO("[CONSUMER] asyncRegister2Master ret_result:%d, master_sh_retry_cnt_:%d",
-        ret_result, master_sh_retry_cnt_);
+      LOG_INFO("[CONSUMER] asyncRegister2Master ret_result:%d, master_sh_retry_cnt_:%d", ret_result,
+               master_sh_retry_cnt_);
       if (ret_result) {
         is_master_actived_.Set(true);
         master_sh_retry_cnt_ = 0;
@@ -394,7 +400,12 @@ void TubeMQConsumer::asyncRegister2Master(bool need_change) {
       }
     }
     heart_beat_timer_->expires_after(std::chrono::milliseconds(nextHeartBeatPeriodms()));
-    heart_beat_timer_->async_wait([this](const std::error_code& ec) { heartBeat2Master(); });
+    heart_beat_timer_->async_wait([this](const std::error_code& ec) {
+      if (ec) {
+        return;
+      }
+      heartBeat2Master();
+    });
   });
 }
 
@@ -415,18 +426,17 @@ void TubeMQConsumer::heartBeat2Master() {
 
   printf("\n heartBeat2Master process begin: \n");
 
-  heart_beat_timer_->cancel();
   if (!TubeMQService::Instance()->IsRunning()) {
     master_hb_status_.CompareAndSet(1, 0);
     LOG_INFO("[CONSUMER] heartBeat2Master failure: TubeMQ Service is stopped! client=%s",
-      client_uuid_.c_str());
+             client_uuid_.c_str());
     return;
   }
 
   if (!isClientRunning()) {
     master_hb_status_.CompareAndSet(1, 0);
     LOG_INFO("[CONSUMER] heartBeat2Master failure: TubeMQ Client stopped! client=%s",
-      client_uuid_.c_str());
+             client_uuid_.c_str());
     return;
   }
 
@@ -434,7 +444,7 @@ void TubeMQConsumer::heartBeat2Master() {
   // if not actived first register, or send heartbeat
   if (!is_master_actived_.Get()) {
     LOG_INFO("[CONSUMER] heartBeat2Master found master not active, re-register first! client=%s",
-      client_uuid_.c_str());
+             client_uuid_.c_str());
     asyncRegister2Master(false);
     master_hb_status_.CompareAndSet(1, 0);
     return;
@@ -458,7 +468,7 @@ void TubeMQConsumer::heartBeat2Master() {
         if (error.Value() != err_code::kErrSuccess) {
           master_sh_retry_cnt_++;
           LOG_WARN("[CONSUMER] heartBeat2Master failue to (%s:%d) : %s, client=%s",
-            target_ip.c_str(), target_port, error.Message().c_str(), client_uuid_.c_str());
+                   target_ip.c_str(), target_port, error.Message().c_str(), client_uuid_.c_str());
         } else {
           // process response
           auto rsp = any_cast<TubeMQCodec::RspProtocolPtr>(response_context.rsp_);
@@ -474,7 +484,7 @@ void TubeMQConsumer::heartBeat2Master() {
                 error_info.find("StandbyException") != string::npos) {
               is_master_actived_.Set(false);
               LOG_WARN("[CONSUMER] hb2master found no-node or standby, re-register, client=%s",
-                client_uuid_.c_str());
+                       client_uuid_.c_str());
               asyncRegister2Master(!(error_code == err_code::kErrHbNoNode));
               master_hb_status_.CompareAndSet(1, 0);
               return;
@@ -482,7 +492,12 @@ void TubeMQConsumer::heartBeat2Master() {
           }
         }
         heart_beat_timer_->expires_after(std::chrono::milliseconds(nextHeartBeatPeriodms()));
-        heart_beat_timer_->async_wait([this](const std::error_code& ec) { heartBeat2Master(); });
+        heart_beat_timer_->async_wait([this](const std::error_code& ec) {
+          if (ec) {
+            return;
+          }
+          heartBeat2Master();
+        });
         master_hb_status_.CompareAndSet(1, 0);
       });
   return;
@@ -502,12 +517,12 @@ void TubeMQConsumer::processRebalanceEvent() {
   while (true) {
     if (!TubeMQService::Instance()->IsRunning()) {
       LOG_INFO("[CONSUMER] Rebalance found Service stopped, existed, client=%s",
-        client_uuid_.c_str());
+               client_uuid_.c_str());
       break;
     }
     if (!isClientRunning()) {
       LOG_INFO("[CONSUMER] Rebalance found Client stopped, existed, client=%s",
-        client_uuid_.c_str());
+               client_uuid_.c_str());
       break;
     }
     ConsumerEvent event;
@@ -515,7 +530,7 @@ void TubeMQConsumer::processRebalanceEvent() {
     if (event.GetEventStatus() == tb_config::kInvalidValue &&
         event.GetRebalanceId() == tb_config::kInvalidValue) {
       LOG_INFO("[CONSUMER] Rebalance found Shutdown notify, existed, client=%s",
-        client_uuid_.c_str());
+               client_uuid_.c_str());
       break;
     }
     rmtdata_cache_.ClearEvent();
@@ -545,9 +560,8 @@ void TubeMQConsumer::processRebalanceEvent() {
 void TubeMQConsumer::close2Master() {
   string target_ip;
   int target_port;
-  
-  LOG_INFO("[CONSUMER] close2Master begin, clientid=%s",
-    client_uuid_.c_str());
+
+  LOG_INFO("[CONSUMER] close2Master begin, clientid=%s", client_uuid_.c_str());
   getCurrentMasterAddr(target_ip, target_port);
   auto request = std::make_shared<RequestContext>();
   TubeMQCodec::ReqProtocolPtr req_protocol = TubeMQCodec::GetReqProtocol();
@@ -562,8 +576,7 @@ void TubeMQConsumer::close2Master() {
   req_protocol->rpc_read_timeout_ = config_.GetRpcReadTimeoutMs() - 500;
   // send message to target
   AsyncRequest(request, req_protocol);
-  LOG_INFO("[CONSUMER] close2Master finished, clientid=%s",
-    client_uuid_.c_str());
+  LOG_INFO("[CONSUMER] close2Master finished, clientid=%s", client_uuid_.c_str());
   // not need wait response
   return;
 }
@@ -950,8 +963,9 @@ bool TubeMQConsumer::processHBResponseM2C(int32_t& error_code, string& err_info,
   if (!rsp_protocol->success_) {
     error_code = rsp_protocol->code_;
     err_info = rsp_protocol->error_msg_;
-    
-    printf("\n processHBResponseM2C success_ is false, errcode=%d, errinfo=%s", error_code, err_info.c_str());
+
+    printf("\n processHBResponseM2C success_ is false, errcode=%d, errinfo=%s", error_code,
+           err_info.c_str());
 
     return false;
   }
@@ -961,7 +975,7 @@ bool TubeMQConsumer::processHBResponseM2C(int32_t& error_code, string& err_info,
   if (!result) {
     error_code = err_code::kErrParseFailure;
     err_info = "Parse HeartResponseM2C response failure!";
-    
+
     printf("\n processHBResponseM2C Parse result is false");
     return false;
   }
@@ -1008,7 +1022,7 @@ bool TubeMQConsumer::processHBResponseM2C(int32_t& error_code, string& err_info,
   err_info = "Ok";
 
   printf("\n processHBResponseM2C response process finished!");
-  
+
   return true;
 }
 
