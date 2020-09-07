@@ -205,18 +205,18 @@ bool TubeMQConsumer::Confirm(const string& confirm_context, bool is_consumed,
   pos1 = confirm_context.find(token1);
   if (string::npos == pos1) {
     result.SetFailureResult(
-        err_code::kErrBadRequest,
-        "Illegel confirm_context content: unregular confirm_context value format!");
+      err_code::kErrBadRequest,
+      "Illegel confirm_context content: unregular confirm_context value format!");
     return false;
   }
   string part_key = Utils::Trim(confirm_context.substr(0, pos1));
   string booked_time_str =
-      Utils::Trim(confirm_context.substr(pos1 + token1.size(), confirm_context.size()));
+    Utils::Trim(confirm_context.substr(pos1 + token1.size(), confirm_context.size()));
   long booked_time = atol(booked_time_str.c_str());
   pos1 = part_key.find(token2);
   if (string::npos == pos1) {
     result.SetFailureResult(err_code::kErrBadRequest,
-                            "Illegel confirm_context content: unregular index key value format!");
+      "Illegel confirm_context content: unregular index key value format!");
     return false;
   }
   pos1 = pos1 + token1.size();
