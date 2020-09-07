@@ -95,11 +95,14 @@ bool TubeMQService::Start(string& err_info, string conf_file) {
   iniXfsThread(fileini, sector);
   service_status_.Set(2);
   err_info = "Ok!";
+  LOG_INFO("[TubeMQService] TubeMQ service startted!");
+  
   return true;
 }
 
 bool TubeMQService::Stop(string& err_info) {
   if (service_status_.CompareAndSet(2, -1)) {
+    LOG_INFO("[TubeMQService] TubeMQ service begin to stop!");
     if (dns_xfs_thread_.joinable()) {
       dns_xfs_thread_.join();
     }
@@ -108,6 +111,7 @@ bool TubeMQService::Stop(string& err_info) {
     network_executor_->Close();
     connection_pool_ = nullptr;
     thread_pool_ = nullptr;
+    LOG_INFO("[TubeMQService] TubeMQ service stopped!");
   }
   err_info = "OK!";
   return true;
@@ -221,7 +225,7 @@ void TubeMQService::GetXfsMasterAddress(const string& source, string& target) {
 }
 
 void TubeMQService::thread_task_dnsxfs(int dns_xfs_period_ms) {
-  LOG_INFO("[Service] DSN transfer thread startted!");
+  LOG_INFO("[TubeMQService] DSN transfer thread startted!");
   while (true) {
     if (TubeMQService::Instance()->GetServiceStatus() <= 0) {
       break;
@@ -229,7 +233,7 @@ void TubeMQService::thread_task_dnsxfs(int dns_xfs_period_ms) {
     TubeMQService::Instance()->updMasterAddrByDns();
     std::this_thread::sleep_for(std::chrono::milliseconds(dns_xfs_period_ms));
   }
-  LOG_INFO("[Service] DSN transfer thread stopped!");
+  LOG_INFO("[TubeMQService] DSN transfer thread stopped!");
 }
 
 bool TubeMQService::hasXfsTask(map<string, int32_t>& src_addr_map) {

@@ -118,6 +118,7 @@ bool TubeMQConsumer::Start(string& err_info, const ConsumerConfig& config) {
   heart_beat_timer_->expires_after(std::chrono::milliseconds(config_.GetHeartbeatPeriodMs()/2));
   heart_beat_timer_->async_wait([this](const std::error_code& ec) { heartBeat2Master(); });
   rebalance_thread_ptr_ = std::make_shared<std::thread>([this]() { processRebalanceEvent(); });
+  LOG_INFO("[CONSUMER] start consumer success, client=%s", client_uuid_.c_str());
   err_info = "Ok";
   return true;
 }
@@ -126,9 +127,12 @@ void TubeMQConsumer::ShutDown() {
   if (status_.CompareAndSet(2, 0)) {
     return;
   }
+  LOG_INFO("[CONSUMER] ShutDown consumer begin, client=%s", client_uuid_.c_str());
   // exist rebalance thread
   ConsumerEvent empty_event;
   rmtdata_cache_.OfferEvent(empty_event);
+  // close to master
+  close2Master();
   // remove client stub
   TubeMQService::Instance()->RmvClientObj(client_index_);
   client_index_ = tb_config::kInvalidValue;
@@ -136,6 +140,7 @@ void TubeMQConsumer::ShutDown() {
   rebalance_thread_ptr_->join();
   rebalance_thread_ptr_ = nullptr;
   // process resuorce release
+  LOG_INFO("[CONSUMER] ShutDown consumer finished, client=%s", client_uuid_.c_str());
 }
 
 bool TubeMQConsumer::GetMessage(ConsumerResult& result) {
@@ -200,18 +205,18 @@ bool TubeMQConsumer::Confirm(const string& confirm_context, bool is_consumed,
   pos1 = confirm_context.find(token1);
   if (string::npos == pos1) {
     result.SetFailureResult(
-        err_code::kErrBadRequest,
-        "Illegel confirm_context content: unregular confirm_context value format!");
+      err_code::kErrBadRequest,
+      "Illegel confirm_context content: unregular confirm_context value format!");
     return false;
   }
   string part_key = Utils::Trim(confirm_context.substr(0, pos1));
   string booked_time_str =
-      Utils::Trim(confirm_context.substr(pos1 + token1.size(), confirm_context.size()));
+    Utils::Trim(confirm_context.substr(pos1 + token1.size(), confirm_context.size()));
   long booked_time = atol(booked_time_str.c_str());
   pos1 = part_key.find(token2);
   if (string::npos == pos1) {
     result.SetFailureResult(err_code::kErrBadRequest,
-                            "Illegel confirm_context content: unregular index key value format!");
+      "Illegel confirm_context content: unregular index key value format!");
     return false;
   }
   pos1 = pos1 + token1.size();
@@ -301,7 +306,7 @@ bool TubeMQConsumer::register2Master(int32_t& error_code, string& err_info, bool
     err_info = "Consumer not startted!";
     return false;
   }
-  LOG_DEBUG("[REGISTER], initial register request, clientId= %s", this->client_uuid_.c_str());
+  LOG_DEBUG("[CONSUMER], initial register2master request, clientId=%s", client_uuid_.c_str());
   // get master address and port
   if (need_change) {
     getNextMasterAddr(target_ip, target_port);
@@ -315,7 +320,6 @@ bool TubeMQConsumer::register2Master(int32_t& error_code, string& err_info, bool
   while (retry_count < maxRetrycount) {
     if (!TubeMQService::Instance()->IsRunning()) {
       err_info = "TubeMQ Service is stopped!";
-      LOG_INFO("[REGISTER] register2Master failure, %s", err_info.c_str());
       master_reg_status_.CompareAndSet(1, 0);
       return false;
     }
@@ -355,18 +359,21 @@ bool TubeMQConsumer::register2Master(int32_t& error_code, string& err_info, bool
         error_code == err_code::kErrConsumeContentForbidden) {
       // set regist process status to existed
       master_reg_status_.CompareAndSet(1, 0);
-      LOG_WARN("[REGISTER] register to (%s:%d) failure, reason is %s, exist register process",
-               target_ip.c_str(), target_port, err_info.c_str());
+      LOG_WARN("[CONSUMER] register2master(%s:%d) failure exist register, client=%s,reason:%s",
+        target_ip.c_str(), target_port, client_uuid_.c_str(), err_info.c_str());
       return false;
     } else {
-      LOG_WARN("[REGISTER] register to (%s:%d) failure, retrycount=(%d-%d), reason is %s",
-               target_ip.c_str(), target_port, maxRetrycount, retry_count + 1, err_info.c_str());
+      LOG_WARN("[CONSUMER] register2master(%s:%d) failure, client=%s, retrycount=(%d-%d), reason:%s",
+        target_ip.c_str(), target_port, client_uuid_.c_str(),
+        maxRetrycount, retry_count + 1, err_info.c_str());
     }
     retry_count++;
     getNextMasterAddr(target_ip, target_port);
   }
   // set regist process status to existed
   master_reg_status_.CompareAndSet(1, 0);
+  LOG_INFO("[CONSUMER] register2Master finished, client=%s, result:%d, err_info:%s",
+    client_uuid_.c_str(), result, err_info.c_str());
   printf("\n register2Master finished, error_code is %d \n", error_code);
   return result;
 }
@@ -377,8 +384,8 @@ void TubeMQConsumer::asyncRegister2Master(bool need_change) {
     string error_info;
     if (!is_master_actived_.Get()) {
       auto ret_result = register2Master(error_code, error_info, need_change);
-      LOG_INFO("asyncRegister2Master ret_result:%d, master_sh_retry_cnt_:%d", ret_result,
-               master_sh_retry_cnt_);
+      LOG_INFO("[CONSUMER] asyncRegister2Master ret_result:%d, master_sh_retry_cnt_:%d",
+        ret_result, master_sh_retry_cnt_);
       if (ret_result) {
         is_master_actived_.Set(true);
         master_sh_retry_cnt_ = 0;
@@ -411,19 +418,23 @@ void TubeMQConsumer::heartBeat2Master() {
   heart_beat_timer_->cancel();
   if (!TubeMQService::Instance()->IsRunning()) {
     master_hb_status_.CompareAndSet(1, 0);
-    LOG_INFO("[HeartBeat2Master] heartBeat2Master failure, TubeMQ Service is stopped!");
+    LOG_INFO("[CONSUMER] heartBeat2Master failure: TubeMQ Service is stopped! client=%s",
+      client_uuid_.c_str());
     return;
   }
 
   if (!isClientRunning()) {
     master_hb_status_.CompareAndSet(1, 0);
-    LOG_INFO("[HeartBeat2Master] heartBeat2Master failure, TubeMQ Client stopped!");
+    LOG_INFO("[CONSUMER] heartBeat2Master failure: TubeMQ Client stopped! client=%s",
+      client_uuid_.c_str());
     return;
   }
 
   // check status in master
   // if not actived first register, or send heartbeat
   if (!is_master_actived_.Get()) {
+    LOG_INFO("[CONSUMER] heartBeat2Master found master not active, re-register first! client=%s",
+      client_uuid_.c_str());
     asyncRegister2Master(false);
     master_hb_status_.CompareAndSet(1, 0);
     return;
@@ -446,8 +457,8 @@ void TubeMQConsumer::heartBeat2Master() {
       .AddCallBack([=](ErrorCode error, const ResponseContext& response_context) {
         if (error.Value() != err_code::kErrSuccess) {
           master_sh_retry_cnt_++;
-          LOG_WARN("[HeartBeat2Master] request network failue to (%s:%d) : %s", target_ip.c_str(),
-                   target_port, error.Message().c_str());
+          LOG_WARN("[CONSUMER] heartBeat2Master failue to (%s:%d) : %s, client=%s",
+            target_ip.c_str(), target_port, error.Message().c_str(), client_uuid_.c_str());
         } else {
           // process response
           auto rsp = any_cast<TubeMQCodec::RspProtocolPtr>(response_context.rsp_);
@@ -462,9 +473,10 @@ void TubeMQConsumer::heartBeat2Master() {
             if (error_code == err_code::kErrHbNoNode ||
                 error_info.find("StandbyException") != string::npos) {
               is_master_actived_.Set(false);
+              LOG_WARN("[CONSUMER] hb2master found no-node or standby, re-register, client=%s",
+                client_uuid_.c_str());
               asyncRegister2Master(!(error_code == err_code::kErrHbNoNode));
               master_hb_status_.CompareAndSet(1, 0);
-              LOG_INFO("heartbeat no node or standby exception. retry to do register2master");
               return;
             }
           }
@@ -486,21 +498,24 @@ int32_t TubeMQConsumer::nextHeartBeatPeriodms() {
 
 void TubeMQConsumer::processRebalanceEvent() {
   // thread wait until event come
-  LOG_INFO("begin, rebalance event Handler start");
+  LOG_INFO("[CONSUMER] rebalance event Handler startted!");
   while (true) {
     if (!TubeMQService::Instance()->IsRunning()) {
-      LOG_INFO("[Rebalance Event] TubeMQ Service is stopped, RebalanceEvent existed!");
+      LOG_INFO("[CONSUMER] Rebalance found Service stopped, existed, client=%s",
+        client_uuid_.c_str());
       break;
     }
     if (!isClientRunning()) {
-      LOG_INFO("[Rebalance Event] TubeMQ Client is stopped, RebalanceEvent existed!");
+      LOG_INFO("[CONSUMER] Rebalance found Client stopped, existed, client=%s",
+        client_uuid_.c_str());
       break;
     }
     ConsumerEvent event;
     rmtdata_cache_.TakeEvent(event);
     if (event.GetEventStatus() == tb_config::kInvalidValue &&
         event.GetRebalanceId() == tb_config::kInvalidValue) {
-      LOG_INFO("[Rebalance Event]  found existed ,out RebalanceEvent Task handler!");
+      LOG_INFO("[CONSUMER] Rebalance found Shutdown notify, existed, client=%s",
+        client_uuid_.c_str());
       break;
     }
     rmtdata_cache_.ClearEvent();
@@ -523,17 +538,16 @@ void TubeMQConsumer::processRebalanceEvent() {
     }
   }
 
-  LOG_INFO("end, rebalance event Handler stop");
+  LOG_INFO("[CONSUMER] rebalance event Handler stopped!");
   return;
 }
 
 void TubeMQConsumer::close2Master() {
   string target_ip;
   int target_port;
-  if (!isClientRunning()) {
-    LOG_INFO("Client not running ,out close2Master\n");
-    return;
-  }
+  
+  LOG_INFO("[CONSUMER] close2Master begin, clientid=%s",
+    client_uuid_.c_str());
   getCurrentMasterAddr(target_ip, target_port);
   auto request = std::make_shared<RequestContext>();
   TubeMQCodec::ReqProtocolPtr req_protocol = TubeMQCodec::GetReqProtocol();
@@ -548,6 +562,8 @@ void TubeMQConsumer::close2Master() {
   req_protocol->rpc_read_timeout_ = config_.GetRpcReadTimeoutMs() - 500;
   // send message to target
   AsyncRequest(request, req_protocol);
+  LOG_INFO("[CONSUMER] close2Master finished, clientid=%s",
+    client_uuid_.c_str());
   // not need wait response
   return;
 }
