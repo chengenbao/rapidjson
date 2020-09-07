@@ -618,7 +618,7 @@ void TubeMQConsumer::processConnect2Broker(ConsumerEvent& event) {
           ret_result = processRegResponseB2C(error_code, error_info, rsp);
           if (ret_result) {
             rmtdata_cache_.AddNewPartition(*it);
-            // TODO: add hearbeat timer by broker IP?
+            addBrokerHBTimer(it->GetBrokerInfo());
           }
         }
       }
@@ -652,8 +652,13 @@ void TubeMQConsumer::processHeartBeat2Broker(NodeInfo broker_info) {
   list<PartitionExt>::iterator it;
   rmtdata_cache_.GetPartitionByBroker(broker_info, partition_list);
   if (partition_list.empty()) {
-    // TODO: delete hearbeat timer by broker IP?
+    reSetBrokerHBTimer(broker_info);
     return;
+  }
+  
+  set<string> req_part_keys;
+  for (it = partition_list.begin(); it != partition_list.end(); ++it) {
+    req_part_keys.insert(it->GetPartitionKey());
   }
   auto request = std::make_shared<RequestContext>();
   TubeMQCodec::ReqProtocolPtr req_protocol = TubeMQCodec::GetReqProtocol();
@@ -666,40 +671,52 @@ void TubeMQConsumer::processHeartBeat2Broker(NodeInfo broker_info) {
   request->request_id_ = Singleton<UniqueSeqId>::Instance().Next();
   req_protocol->request_id_ = request->request_id_;
   req_protocol->rpc_read_timeout_ = config_.GetRpcReadTimeoutMs() - 500;
+
   // send message to target
-  ResponseContext response_context;
-  ErrorCode error = SyncRequest(response_context, request, req_protocol);
-  if (error.Value() != err_code::kErrSuccess) {
-    LOG_WARN("[Heartbeat2Broker] request network  to failure (%s:%d) : %s",
-             broker_info.GetHost().c_str(), broker_info.GetPort(), error.Message().c_str());
-  } else {
-    // process response
-    auto rsp = any_cast<TubeMQCodec::RspProtocolPtr>(response_context.rsp_);
-    if (rsp->success_) {
-      HeartBeatResponseB2C rsp_b2c;
-      bool result = rsp_b2c.ParseFromArray(rsp->rsp_body_.data().c_str(),
-                                           (int)(rsp->rsp_body_.data().length()));
-      if (result) {
-        set<string> partition_keys;
-        if (rsp_b2c.has_haspartfailure() && rsp_b2c.haspartfailure()) {
-          for (int tmp_i = 0; tmp_i < rsp_b2c.failureinfo_size(); tmp_i++) {
-            string token_key = delimiter::kDelimiterColon;
-            string fullpart_str = rsp_b2c.failureinfo(tmp_i);
-            string::size_type pos1 = fullpart_str.find(token_key);
-            if (pos1 == string::npos) {
-              continue;
-            }
-            // int error_code = atoi(fullpart_str.substr(0, pos1).c_str());
-            string part_str = fullpart_str.substr(pos1 + token_key.size(), fullpart_str.size());
-            Partition part(part_str);
-            partition_keys.insert(part.GetPartitionKey());
+  AsyncRequest(request, req_protocol)
+      .AddCallBack([=](ErrorCode error, const ResponseContext& response_context) {
+        if (error.Value() != err_code::kErrSuccess) {
+          LOG_WARN("[Heartbeat2Broker] request network  to failure (%s:%d) : %s",
+                   broker_info.GetHost().c_str(), broker_info.GetPort(),
+                   error.Message().c_str());
+        } else {
+          // process response
+          auto rsp = any_cast<TubeMQCodec::RspProtocolPtr>(response_context.rsp_);
+          if (rsp->success_) {
+            HeartBeatResponseB2C rsp_b2c;
+            bool result = rsp_b2c.ParseFromArray(rsp->rsp_body_.data().c_str(),
+                                                 (int)(rsp->rsp_body_.data().length()));
+            if (result) {
+              set<string> partition_keys;
+              if (rsp_b2c.success()) {
+                if (rsp_b2c.has_haspartfailure() && rsp_b2c.haspartfailure()) {
+                  for (int tmp_i = 0; tmp_i < rsp_b2c.failureinfo_size(); tmp_i++) {
+                    string token_key = delimiter::kDelimiterColon;
+                    string fullpart_str = rsp_b2c.failureinfo(tmp_i);
+                    string::size_type pos1 = fullpart_str.find(token_key);
+                    if (pos1 == string::npos) {
+                      continue;
+                    }
+                    // int error_code = atoi(fullpart_str.substr(0, pos1).c_str());
+                    string part_str = fullpart_str.substr(
+                      pos1 + token_key.size(), fullpart_str.size());
+                    Partition part(part_str);
+                    partition_keys.insert(part.GetPartitionKey());
+                  }
+                }
+                rmtdata_cache_.RemovePartition(partition_keys);
+              } else {
+                if (rsp_b2c.errcode() == err_code::kErrCertificateFailure) {
+                  rmtdata_cache_.RemovePartition(req_part_keys);
+                  LOG_WARN("[Heartbeat2Broker] request (%s:%d) CertificateFailure",
+                           broker_info.GetHost().c_str(), broker_info.GetPort());
+                }
+              }
+            } 
           }
         }
-        rmtdata_cache_.RemovePartition(partition_keys);
-      }
-    }
-  }
-  // TODO: add hearbeat timer by broker IP?
+        reSetBrokerHBTimer(broker_info);
+      });
 }
 
 void TubeMQConsumer::buidRegisterRequestC2M(TubeMQCodec::ReqProtocolPtr& req_protocol) {
@@ -1378,6 +1395,48 @@ void TubeMQConsumer::processAuthorizedToken(const MasterAuthorizedInfo& authoriz
     }
   }
 }
+
+void TubeMQConsumer::addBrokerHBTimer(const NodeInfo& broker) {
+  SteadyTimerPtr timer;
+  int32_t hb_periodms = config_.GetHeartbeatPeriodMs();
+  lock_guard<mutex> lck(broker_timer_lock_);
+  if (broker_timer_map_.find(broker) == broker_timer_map_.end()) {
+    timer = TubeMQService::Instance()->CreateTimer();
+    broker_timer_map_[broker] = timer;
+    timer->expires_after(std::chrono::milliseconds(hb_periodms / 2));
+    timer->async_wait([this](const std::error_code& ec) {
+      if (ec) {
+        return;
+      }
+      processHeartBeat2Broker(broker);
+    });
+  }
+}
+
+void TubeMQConsumer::reSetBrokerHBTimer(const NodeInfo& broker) {
+  SteadyTimerPtr timer;
+  list<PartitionExt> partition_list;
+  int32_t hb_periodms = config_.GetHeartbeatPeriodMs();
+  lock_guard<mutex> lck(broker_timer_lock_);
+  rmtdata_cache_.GetPartitionByBroker(broker, partition_list);
+  if (partition_list.empty()) {
+    broker_timer_map_.erase(broker);
+  } else {
+    if (broker_timer_map_.find(broker) != broker_timer_map_.end()) {
+      timer = broker_timer_map_[broker];
+      timer->expires_after(std::chrono::milliseconds(hb_periodms));
+      timer->async_wait([this](const std::error_code& ec) {
+        if (ec) {
+          return;
+        }
+        processHeartBeat2Broker(broker);
+      });
+    }
+  }
+}
+
+}
+
 
 }  // namespace tubemq
 

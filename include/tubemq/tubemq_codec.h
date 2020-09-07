@@ -231,7 +231,7 @@ class TubeMQCodec final : public CodecProtocol {
     }
     out = buf;
     printf("\n network message check finished, success");
-    return item_len;
+    return readed_len;
   }
 
   static ReqProtocolPtr GetReqProtocol() { return std::make_shared<ReqProtocol>(); }
