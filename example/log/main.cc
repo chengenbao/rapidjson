@@ -33,12 +33,13 @@ AtomicInteger ati;
 
 void log() {
   while (1) {
-    LOG_ERROR("atomic:%d", ati.IncrementAndGet());
+    LOG_DEBUG("atomic:%d", ati.IncrementAndGet());
   }
 }
 
 int main() {
   ati.GetAndSet(1);
+  GetLogger().Init("./tubemq", tubemq::Logger::Level(4));
   std::thread t1(log);
   std::thread t2(log);
   std::thread t3(log);

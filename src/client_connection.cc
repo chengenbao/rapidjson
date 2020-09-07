@@ -30,9 +30,9 @@ void ClientConnection::AsyncWrite(RequestContextPtr& req) {
     }
     auto& transport_req = request_list_[req->request_id_];
     transport_req.req_ = req;
+    bool queue_empty = write_queue_.empty();
     write_queue_.push_back(req->request_id_);
-    bool write_in_progress = !write_queue_.empty();
-    if (IsConnected() && !write_in_progress) {
+    if (IsConnected() && queue_empty) {
       asyncWrite();
     }
     if (req->timeout_ > 0) {
@@ -52,8 +52,6 @@ void ClientConnection::Close() {
 
 void ClientConnection::requestTimeoutHandle(const std::error_code& ec, RequestContextPtr req) {
   if (ec) {
-    LOG_ERROR("%srequest timeout handle error:%d, %s, %s", context_string_.c_str(), ec.value(),
-              ec.message().c_str(), ec.category().name());
     return;
   }
   auto request_id = req->request_id_;
@@ -124,15 +122,12 @@ void ClientConnection::connect(const asio::ip::tcp::resolver::results_type& endp
 }
 
 void ClientConnection::checkDeadline(const std::error_code& ec) {
+  if (ec) {
+    return;
+  }
   if (IsStop()) {
     return;
   }
-  if (ec) {
-    LOG_ERROR("%sdeadline handle error:%d, %s, %s", context_string_.c_str(), ec.value(),
-              ec.message().c_str(), ec.category().name());
-    return;
-  }
-
   LOG_ERROR("%s connect timeout", context_string_.c_str());
   close();
 }
