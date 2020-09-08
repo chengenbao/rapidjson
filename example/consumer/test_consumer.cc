@@ -82,7 +82,27 @@ int main(int argc, char* argv[]) {
   }
 
   ConsumerResult gentRet;
-  consumer_1.GetMessage(ConsumerResult & result)
+  ConsumerResult confirm_result;
+  do {
+    if(!consumer_1.IsConsumeReady(1000)) {
+      continue;
+    }
+    result = consumer_1.GetMessage(gentRet);
+    if(result) {
+      list<Message> msgs = gentRet.GetMessageList();
+      printf(" GetMessage success, msssage count =%ld \n",msgs.size());
+      consumer_1.Confirm(gentRet.GetConfirmContext(), true, confirm_result);
+    } else {
+      if (gentRet.GetErrCode() == err_code::kErrNoPartAssigned 
+        || gentRet.GetErrCode() == err_code::kErrAllPartInUse
+        || gentRet.GetErrCode() == err_code::kErrAllPartInUse){
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+      } else {
+        printf(" GetMessage failure, err_code=%d, err_msg is: %s \n",
+          gentRet.GetErrCode(), gentRet.GetErrMessage().c_str());
+      }
+    }
+  } while (true);
 
   getchar();
   consumer_1.ShutDown();
