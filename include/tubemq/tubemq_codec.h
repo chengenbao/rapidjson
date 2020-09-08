@@ -37,6 +37,7 @@
 #include "tubemq/codec_protocol.h"
 #include "tubemq/const_config.h"
 #include "tubemq/const_rpc.h"
+#include "tubemq/logger.h"
 #include "tubemq/tubemq_errcode.h"
 #include "tubemq/tubemq_return.h"
 #include "tubemq/utils.h"
@@ -192,7 +193,7 @@ class TubeMQCodec final : public CodecProtocol {
     uint32_t readed_len = 0;
     // check package is valid
     if (in->length() < 12) {
-      LOG_TRACE("Check: data's length < 12, is %d, out", in->length());
+      LOG_TRACE("Check: data's length < 12, is %ld, out", in->length());
       return 0;
     }
     // check frameToken
@@ -218,7 +219,7 @@ class TubeMQCodec final : public CodecProtocol {
     auto buf = std::make_shared<Buffer>();
     for (uint32_t i = 0; i < list_size; i++) {
       if (in->length() < 4) {
-        LOG_TRACE("Check: buffer Remaining length < 4, is %d, out", in->length());
+        LOG_TRACE("Check: buffer Remaining length < 4, is %ld, out", in->length());
         return 0;
       }
       item_len = in->ReadUint32();
@@ -228,7 +229,7 @@ class TubeMQCodec final : public CodecProtocol {
         return -1;
       }
       if (item_len > in->length()) {
-        LOG_TRACE("Check: item_len(%d) > remaining length(%d), out", item_len, in->length());  
+        LOG_TRACE("Check: item_len(%d) > remaining length(%ld), out", item_len, in->length());  
         return 0;
       }
       buf->Write(in->data(), item_len);
