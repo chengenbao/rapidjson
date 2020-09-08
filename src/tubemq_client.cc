@@ -423,7 +423,7 @@ void TubeMQConsumer::heartBeat2Master() {
     return;
   }
 
-  LOG_INFO("heartBeat2Master process begin:");
+  LOG_TRACE("heartBeat2Master process begin:");
 
   if (!TubeMQService::Instance()->IsRunning()) {
     master_hb_status_.CompareAndSet(1, 0);
@@ -645,7 +645,10 @@ void TubeMQConsumer::processDisConnect2Broker(ConsumerEvent& event) {
 }
 
 void TubeMQConsumer::processHeartBeat2Broker(NodeInfo broker_info) {
+  LOG_TRACE("[Heartbeat2Broker] process hb to broker(%s) startted!",
+    broker_info.GetAddrInfo());
   if (!isClientRunning()) {
+    LOG_TRACE("[Heartbeat2Broker] client not running(%d), out!", status_.Get());
     return;
   }
   list<PartitionExt> partition_list;
@@ -653,6 +656,8 @@ void TubeMQConsumer::processHeartBeat2Broker(NodeInfo broker_info) {
   rmtdata_cache_.GetPartitionByBroker(broker_info, partition_list);
   if (partition_list.empty()) {
     reSetBrokerHBTimer(broker_info);
+    LOG_TRACE("[Heartbeat2Broker] no alive partitions, for broker(%s), out!",
+      broker_info.GetAddrInfo());
     return;
   }
 
@@ -927,10 +932,11 @@ void TubeMQConsumer::buidCommitC2B(const PartitionExt& partition, bool is_last_c
 
 bool TubeMQConsumer::processRegisterResponseM2C(int32_t& error_code, string& err_info,
                                                 const TubeMQCodec::RspProtocolPtr& rsp_protocol) {
+  LOG_TRACE("processRegisterResponseM2C, process message begin");                                                
   if (!rsp_protocol->success_) {
     error_code = rsp_protocol->code_;
     err_info = rsp_protocol->error_msg_;
-    printf("\n processRegisterResponseM2C come, rsp_protocol->success_ not true");
+    LOG_TRACE("processRegisterResponseM2C, rsp_protocol->success_ not true, out");
     return false;
   }
   RegisterResponseM2C rsp_m2c;
@@ -940,14 +946,14 @@ bool TubeMQConsumer::processRegisterResponseM2C(int32_t& error_code, string& err
     error_code = err_code::kErrParseFailure;
     err_info = "Parse RegisterResponseM2C response failure!";
 
-    printf("\n processRegisterResponseM2C come, parse message failure!");
+    LOG_TRACE("processRegisterResponseM2C come, parse message failure!");
     return false;
   }
   if (!rsp_m2c.success()) {
     error_code = rsp_m2c.errcode();
     err_info = rsp_m2c.errmsg();
 
-    printf("\n processRegisterResponseM2C come, return failure, errorcode = %d!", error_code);
+    LOG_TRACE("processRegisterResponseM2C come, return failure, errorcode = %d!", error_code);
     return false;
   }
   // update policy
@@ -968,20 +974,19 @@ bool TubeMQConsumer::processRegisterResponseM2C(int32_t& error_code, string& err
   }
   error_code = err_code::kErrSuccess;
   err_info = "Ok";
+  LOG_TRACE("processRegisterResponseM2C, process finished, out");
 
-  printf("\n processRegisterResponseM2C success");
   return true;
 }
 
 bool TubeMQConsumer::processHBResponseM2C(int32_t& error_code, string& err_info,
                                           const TubeMQCodec::RspProtocolPtr& rsp_protocol) {
+  LOG_TRACE("processHBResponseM2C, process message begin");
   if (!rsp_protocol->success_) {
     error_code = rsp_protocol->code_;
     err_info = rsp_protocol->error_msg_;
-
-    printf("\n processHBResponseM2C success_ is false, errcode=%d, errinfo=%s", error_code,
-           err_info.c_str());
-
+    LOG_TRACE("processHBResponseM2C success_ is false, errcode=%d, errinfo=%s",
+      error_code, err_info.c_str());
     return false;
   }
   HeartResponseM2C rsp_m2c;
@@ -991,13 +996,13 @@ bool TubeMQConsumer::processHBResponseM2C(int32_t& error_code, string& err_info,
     error_code = err_code::kErrParseFailure;
     err_info = "Parse HeartResponseM2C response failure!";
 
-    printf("\n processHBResponseM2C Parse result is false");
+    LOG_TRACE("processHBResponseM2C Parse result failure, out");
     return false;
   }
   if (!rsp_m2c.success()) {
     error_code = rsp_m2c.errcode();
     err_info = rsp_m2c.errmsg();
-    printf("\n processHBResponseM2C response is false, errorInfo = %s", err_info.c_str());
+    LOG_TRACE("processHBResponseM2C response is false, errorInfo=%s, out", err_info.c_str());
     return false;
   }
   // update policy
@@ -1035,8 +1040,7 @@ bool TubeMQConsumer::processHBResponseM2C(int32_t& error_code, string& err_info,
   last_master_hbtime_ = Utils::GetCurrentTimeMillis();
   error_code = err_code::kErrSuccess;
   err_info = "Ok";
-
-  printf("\n processHBResponseM2C response process finished!");
+  LOG_TRACE("processHBResponseM2C, process finished, out");
 
   return true;
 }
@@ -1332,7 +1336,7 @@ void TubeMQConsumer::getNextMasterAddr(string& ipaddr, int32_t& port) {
   if (Utils::NeedDnsXfs(ipaddr)) {
     TubeMQService::Instance()->GetXfsMasterAddress(curr_master_addr_, ipaddr);
   }
-  printf("\n getNextMasterAddr address is %s:%d", ipaddr.c_str(), port);
+  LOG_TRACE("getNextMasterAddr address is %s:%d", ipaddr.c_str(), port);
 }
 
 void TubeMQConsumer::getCurrentMasterAddr(string& ipaddr, int32_t& port) {
@@ -1341,7 +1345,7 @@ void TubeMQConsumer::getCurrentMasterAddr(string& ipaddr, int32_t& port) {
   if (Utils::NeedDnsXfs(ipaddr)) {
     TubeMQService::Instance()->GetXfsMasterAddress(curr_master_addr_, ipaddr);
   }
-  printf("\n getCurrentMasterAddr address is %s:%d", ipaddr.c_str(), port);
+  LOG_TRACE("getCurrentMasterAddr address is %s:%d", ipaddr.c_str(), port);
 }
 
 bool TubeMQConsumer::needGenMasterCertificateInfo(bool force) {
@@ -1398,8 +1402,12 @@ void TubeMQConsumer::processAuthorizedToken(const MasterAuthorizedInfo& authoriz
 void TubeMQConsumer::addBrokerHBTimer(const NodeInfo& broker) {
   SteadyTimerPtr timer;
   int32_t hb_periodms = config_.GetHeartbeatPeriodMs();
+  LOG_TRACE("[addBrokerHBTimer] add hb timer for broker(%s), in!",
+    broker.GetAddrInfo());
   lock_guard<mutex> lck(broker_timer_lock_);
   if (broker_timer_map_.find(broker) == broker_timer_map_.end()) {
+    LOG_TRACE("[addBrokerHBTimer] found no hb timer for broker(%s), add!",
+      broker.GetAddrInfo());
     timer = TubeMQService::Instance()->CreateTimer();
     broker_timer_map_[broker] = timer;
     timer->expires_after(std::chrono::milliseconds(hb_periodms / 2));
@@ -1409,6 +1417,9 @@ void TubeMQConsumer::addBrokerHBTimer(const NodeInfo& broker) {
       }
       processHeartBeat2Broker(broker);
     });
+  } else {
+    LOG_TRACE("[addBrokerHBTimer] found have hb timer for broker(%s), not add!",
+      broker.GetAddrInfo());
   }
 }
 
@@ -1416,10 +1427,14 @@ void TubeMQConsumer::reSetBrokerHBTimer(const NodeInfo& broker) {
   SteadyTimerPtr timer;
   list<PartitionExt> partition_list;
   int32_t hb_periodms = config_.GetHeartbeatPeriodMs();
+  LOG_TRACE("[reSetBrokerHBTimer] reset hb timer for broker(%s), in!",
+    broker.GetAddrInfo());
   lock_guard<mutex> lck(broker_timer_lock_);
   rmtdata_cache_.GetPartitionByBroker(broker, partition_list);
   if (partition_list.empty()) {
     broker_timer_map_.erase(broker);
+    LOG_TRACE("[reSetBrokerHBTimer] no alive partitions for broker(%s), clear timer!",
+      broker.GetAddrInfo());
   } else {
     if (broker_timer_map_.find(broker) != broker_timer_map_.end()) {
       timer = broker_timer_map_[broker];
@@ -1430,6 +1445,8 @@ void TubeMQConsumer::reSetBrokerHBTimer(const NodeInfo& broker) {
         }
         processHeartBeat2Broker(broker);
       });
+      LOG_TRACE("[reSetBrokerHBTimer] have alive partitions for broker(%s), reset timer!",
+        broker.GetAddrInfo());
     }
   }
 }

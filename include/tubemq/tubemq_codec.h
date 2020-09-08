@@ -73,11 +73,10 @@ class TubeMQCodec final : public CodecProtocol {
 
   virtual bool Decode(const BufferPtr &buff, Any &out) {
     // check total length
-    printf("\n full message Decode come, begin decode");
+    LOG_TRACE("Decode: full message Decode come, begin decode");
     int32_t total_len = buff->length();
     if (total_len <= 0) {
-      printf("\n total_len <= 0, out, total_len = %d", total_len);
-      // print log
+      LOG_TRACE("Decode: total_len <= 0, out, total_len = %d", total_len);
       return false;
     }
     // check package is valid
@@ -88,12 +87,12 @@ class TubeMQCodec final : public CodecProtocol {
     google::protobuf::io::ArrayInputStream rawOutput(buff->data(), total_len);
     bool result = readDelimitedFrom(&rawOutput, &rpc_header);
     if (!result) {
-      printf("\n parse RpcConnHeader failure, out");
+      LOG_TRACE("Decode: parse RpcConnHeader failure, out");
       return result;
     }
     result = readDelimitedFrom(&rawOutput, &rsp_header);
     if (!result) {
-      printf("\n parse ResponseHeader failure, out");
+      LOG_TRACE("Decode: parse ResponseHeader failure, out");
       return result;
     }
     ResponseHeader_Status rspStatus = rsp_header.status();
@@ -104,7 +103,7 @@ class TubeMQCodec final : public CodecProtocol {
       rsp_protocol->error_msg_ = "OK";
       result = readDelimitedFrom(&rawOutput, &response_body);
       if (!result) {
-        printf("\n parse RspResponseBody failure, out");
+        LOG_TRACE("Decode: parse RspResponseBody failure, out");
         return false;
       }
       rsp_protocol->method_ = response_body.method();
@@ -114,7 +113,7 @@ class TubeMQCodec final : public CodecProtocol {
       rsp_protocol->success_ = false;
       result = readDelimitedFrom(&rawOutput, &rpc_exception);
       if (!result) {
-        printf("\n parse RspExceptionBody failure, out");
+        LOG_TRACE("Decode: parse RspExceptionBody failure, out");
         return false;
       }
       string errInfo = rpc_exception.exceptionname();
@@ -124,13 +123,17 @@ class TubeMQCodec final : public CodecProtocol {
       rsp_protocol->error_msg_ = errInfo;
     }
     out = Any(rsp_protocol);
-    printf("\n Decode message success , finished");
+    LOG_TRACE("Decode: decode message success, finished");
     return true;
   }
 
   virtual bool Encode(const Any &in, BufferPtr &buff) {
     RequestBody req_body;
     ReqProtocolPtr req_protocol = any_cast<ReqProtocolPtr>(in);
+
+    LOG_TRACE("Encode: begin encode message, request_id=%d, method_id=%d",
+      req_protocol->request_id_, req_protocol->method_id_);
+
     req_body.set_method(req_protocol->method_id_);
     req_body.set_timeout(req_protocol->rpc_read_timeout_);
     req_body.set_request(req_protocol->prot_msg_);
@@ -172,28 +175,30 @@ class TubeMQCodec final : public CodecProtocol {
       if (slice_len > Buffer::kInitialSize) {
         slice_len = Buffer::kInitialSize;
       }
-      printf("\n Encode slice [%d] slice_len = %d, serial_len = %d", i, slice_len, serial_len);
-
+      LOG_TRACE("Encode: encode slice [%d] slice_len = %d, serial_len = %d",
+        i, slice_len, serial_len);
       buff->AppendInt32(slice_len);
       buff->Write(step_buff + write_pos, slice_len);
       write_pos += slice_len;
     }
     delete[] step_buff;
+    LOG_TRACE("Encode: encode message success, finished!");
     return true;
   }
 
   // return code: -1 failed; 0-Unfinished; > 0 package buffer size
   virtual int32_t Check(BufferPtr &in, Any &out, uint32_t &request_id, bool &has_request_id) {
-    printf("\n network message come, check data in");
+    LOG_TRACE("Check: received network message, check data begin");
     uint32_t readed_len = 0;
     // check package is valid
     if (in->length() < 12) {
-      printf("\n come here, in->length < 12, is %ld", in->length());
+      LOG_TRACE("Check: data's length < 12, is %d, out", in->length());
       return 0;
     }
     // check frameToken
-    if (in->ReadUint32() != rpc_config::kRpcPrtBeginToken) {
-      printf("\n come here, first token != rpc_config::kRpcPrtBeginToken, is %d \n", in->ReadUint32());
+    uint32_t token = in->ReadUint32(); 
+    if (token != rpc_config::kRpcPrtBeginToken) {
+      LOG_TRACE("Check: first token is illegal, is %d, out", token);
       return -1;
     }
     readed_len += 4;
@@ -204,7 +209,7 @@ class TubeMQCodec final : public CodecProtocol {
     // check list size
     uint32_t list_size = in->ReadUint32();
     if (list_size > rpc_config::kRpcMaxFrameListCnt) {
-      printf("\n come here, list_size over max, is %d", list_size);
+      LOG_TRACE("Check: list_size over max, is %d, out", list_size);
       return -1;
     }
     readed_len += 4;    
@@ -213,24 +218,24 @@ class TubeMQCodec final : public CodecProtocol {
     auto buf = std::make_shared<Buffer>();
     for (uint32_t i = 0; i < list_size; i++) {
       if (in->length() < 4) {
-        printf("\n come here, buffer Remaining length < 4, is %ld", in->length());
+        LOG_TRACE("Check: buffer Remaining length < 4, is %d, out", in->length());
         return 0;
       }
       item_len = in->ReadUint32();
       readed_len += 4;
       if (item_len < 0) {
-        printf("\n come here, slice length < 0, is %d", in->ReadUint32());
+        LOG_TRACE("Check: slice length < 0, is %d, out", item_len);        
         return -1;
       }
       if (item_len > in->length()) {
-        printf("\n come here, item_len > Remaining length, item_len is %d, in->length() = %ld", item_len, in->length());
+        LOG_TRACE("Check: item_len(%d) > remaining length(%d), out", item_len, in->length());  
         return 0;
       }
       buf->Write(in->data(), item_len);
       readed_len += item_len;
     }
     out = buf;
-    printf("\n network message check finished, success");
+    LOG_TRACE("Check: received message check finished, request_id=%d", request_id);
     return readed_len;
   }
 
