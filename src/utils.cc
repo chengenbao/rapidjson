@@ -95,8 +95,8 @@ const uint32_t crc32_tab[] = {
   0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d};
 
 
-int32_t Utils::Crc32(const uint8_t* buf, size_t size) {
-  const uint8_t *p = buf;
+int32_t Utils::Crc32(const char* buf, size_t size) {
+  const char* p = buf;
   int32_t crc;
   crc = ~0U;
   while (size--) {

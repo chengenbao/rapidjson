@@ -1190,7 +1190,7 @@ void TubeMQConsumer::convertMessages(int32_t& msg_size, list<Message>& message_l
     int32_t payload_length = tsfMsg.payloaddata().length();
     std::unique_ptr<char[]> payload_data(new char[payload_length]);
     memcpy(&payload_data[0], tsfMsg.payloaddata().c_str(), payload_length);
-    int32_t calc_checksum = Utils::Crc32(payload_data, payload_length);
+    int32_t calc_checksum = Utils::Crc32(&payload_data[0], payload_length);
     if (in_check_sum != calc_checksum) {
       continue;
     }

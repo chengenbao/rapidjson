@@ -71,7 +71,7 @@ void ConsumeOffsetInfo::SetConsumeOffsetInfo(
   curr_offset_ = curr_offset;
 }
 
-ConsumeOffsetInfo& ConsumerResult::operator=(
+ConsumeOffsetInfo& ConsumeOffsetInfo::operator=(
   const ConsumeOffsetInfo& target) {
   if (this != &target) {
     this->partition_key_ = target.partition_key_;
