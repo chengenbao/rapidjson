@@ -535,7 +535,7 @@ void RmtDataCacheCsm::rmvMetaInfo(const string& partition_key) {
     }
     partitions_.erase(partition_key);
     part_subinfo_.erase(partition_key);
-    cur_part_cnt_.GetAndIncrement();
+    cur_part_cnt_.DecrementAndGet();
   }
 }
 
