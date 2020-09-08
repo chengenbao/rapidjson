@@ -56,6 +56,21 @@ class PeerInfo {
 };
 
 
+class ConsumeOffsetInfo {
+ public:
+  ConsumeOffsetInfo();
+  ConsumeOffsetInfo(const string& part_key, int64_t curr_offset);
+  void SetConsumeOffsetInfo(const string& part_key, int64_t curr_offset);
+  ConsumeOffsetInfo& operator=(const ConsumeOffsetInfo& target);
+  const string& GetPartitonKey() const { return partition_key_; }
+  const int64_t& GetCurrOffset() const { return curr_offset_; }
+
+ private:
+  string partition_key_;
+  int64_t curr_offset_;
+};
+
+
 
 class ConsumerResult {
  public:

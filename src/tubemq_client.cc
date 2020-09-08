@@ -194,6 +194,35 @@ bool TubeMQConsumer::GetMessage(ConsumerResult& result) {
   }
 }
 
+bool TubeMQConsumer::IsConsumeReady(long max_wait_time_ms) {
+  long start_time = Utils::GetCurrentTimeMillis();
+  do {
+    if (!TubeMQService::Instance()->IsRunning() 
+      || !isClientRunning()) {
+      break;
+    }
+    if (rmtdata_cache_.IsPartitionsReady()) {
+      return true;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+  } while (Utils::GetCurrentTimeMillis() - start_time > max_wait_time_ms);
+  return rmtdata_cache_.IsPartitionsReady();
+}
+
+bool TubeMQConsumer::GetCurConsumedInfo(map<string, ConsumeOffsetInfo>& consume_info_map) {
+  bool has_data = false;
+  consume_info_map.clear();
+  map<string, int64_t> part_offset_map;
+  map<string, int64_t>::iterator it_part;
+  rmtdata_cache_.GetCurPartitionOffsets(part_offset_map);
+  for (it_part = part_offset_map.begin(); it_part != part_offset_map.end(); ++it_part) {
+    ConsumeOffsetInfo tmp_info(it_part->first, it_part->second);
+    consume_info_map[it_part->first] = tmp_info;
+    has_data = true;
+  }
+  return has_data;
+}
+
 bool TubeMQConsumer::Confirm(const string& confirm_context, bool is_consumed,
                              ConsumerResult& result) {
   if (!TubeMQService::Instance()->IsRunning()) {
@@ -1157,12 +1186,11 @@ void TubeMQConsumer::convertMessages(int32_t& msg_size, list<Message>& message_l
     TransferedMessage tsfMsg = rsp_b2c.messages(i);
     int32_t flag = tsfMsg.flag();
     int64_t message_id = tsfMsg.messageid();
-    int64_t in_check_sum = tsfMsg.checksum();
+    int32_t in_check_sum = tsfMsg.checksum();
     int32_t payload_length = tsfMsg.payloaddata().length();
     std::unique_ptr<char[]> payload_data(new char[payload_length]);
     memcpy(&payload_data[0], tsfMsg.payloaddata().c_str(), payload_length);
-    int64_t calc_checksum = 0;
-    // TODO: calc crc 32
+    int32_t calc_checksum = Utils::Crc32(payload_data, payload_length);
     if (in_check_sum != calc_checksum) {
       continue;
     }

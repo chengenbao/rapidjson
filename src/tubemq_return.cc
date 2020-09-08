@@ -53,6 +53,34 @@ void PeerInfo::SetMsgSourceInfo(const Partition& partition, int64_t offset) {
   curr_offset_ = offset;
 }
 
+
+ConsumeOffsetInfo::ConsumeOffsetInfo() {
+  partition_key_ = "";
+  curr_offset_ = tb_config::kInvalidValue;
+}
+
+ConsumeOffsetInfo::ConsumeOffsetInfo(
+  const string& part_key, int64_t curr_offset) {
+  partition_key_ = part_key;
+  curr_offset_ = curr_offset;
+}
+
+void ConsumeOffsetInfo::SetConsumeOffsetInfo(
+  const string& part_key, int64_t curr_offset) {
+  partition_key_ = part_key;
+  curr_offset_ = curr_offset;
+}
+
+ConsumeOffsetInfo& ConsumerResult::operator=(
+  const ConsumeOffsetInfo& target) {
+  if (this != &target) {
+    this->partition_key_ = target.partition_key_;
+    this->curr_offset_ = target.curr_offset_;
+  }
+  return *this;  
+}
+
+
 ConsumerResult::ConsumerResult() {
   success_ = false;
   err_code_ = tb_config::kInvalidValue;

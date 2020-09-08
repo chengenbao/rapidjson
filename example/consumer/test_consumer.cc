@@ -82,6 +82,7 @@ int main(int argc, char* argv[]) {
   }
 
   ConsumerResult gentRet;
+  consumer_1.GetMessage(ConsumerResult & result)
 
   getchar();
   consumer_1.ShutDown();

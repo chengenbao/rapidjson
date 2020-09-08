@@ -120,6 +120,11 @@ void RmtDataCacheCsm::AddNewPartition(const PartitionExt& partition_ext) {
   resetIdlePartition(partition_key, true);
 }
 
+bool RmtDataCacheCsm::IsPartitionsReady() {
+  lock_guard<mutex> lck(meta_lock_);
+  return (!partitions_.empty());
+}
+
 bool RmtDataCacheCsm::SelectPartition(int32_t& error_code, string& err_info,
                                       PartitionExt& partition_ext, string& confirm_context) {
   bool result = false;

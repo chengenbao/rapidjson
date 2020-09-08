@@ -55,6 +55,8 @@ class TubeMQConsumer : public BaseClient, public std::enable_shared_from_this<Tu
   virtual void ShutDown();
   bool GetMessage(ConsumerResult& result);
   bool Confirm(const string& confirm_context, bool is_consumed, ConsumerResult& result);
+  bool IsConsumeReady(long max_wait_time_ms);
+  bool GetCurConsumedInfo(map<string, ConsumeOffsetInfo>& consume_info_map);
 
  private:
   bool register2Master(int32_t& error_code, string& err_info, bool need_change);
