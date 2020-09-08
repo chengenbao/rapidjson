@@ -581,7 +581,11 @@ void TubeMQConsumer::close2Master() {
 }
 
 void TubeMQConsumer::processConnect2Broker(ConsumerEvent& event) {
+  LOG_TRACE("[processConnect2Broker] begin to process connect event, clientid=%s",
+    client_uuid_.c_str());
   if (!isClientRunning()) {
+    LOG_TRACE("[processConnect2Broker] found client not running, clientid=%s",
+      client_uuid_.c_str());
     return;
   }
   bool ret_result;
@@ -595,6 +599,8 @@ void TubeMQConsumer::processConnect2Broker(ConsumerEvent& event) {
     rmtdata_cache_.FilterPartitions(subscribe_info, subscribed_partitions, unsub_partitions);
     if (!unsub_partitions.empty()) {
       for (it = unsub_partitions.begin(); it != unsub_partitions.end(); it++) {
+        LOG_TRACE("[processConnect2Broker] connect to %s, clientid=%s",
+          it->GetPartitionKey().c_str(), client_uuid_.c_str());
         auto request = std::make_shared<RequestContext>();
         TubeMQCodec::ReqProtocolPtr req_protocol = TubeMQCodec::GetReqProtocol();
         // build close2master request
@@ -617,6 +623,8 @@ void TubeMQConsumer::processConnect2Broker(ConsumerEvent& event) {
           auto rsp = any_cast<TubeMQCodec::RspProtocolPtr>(response_context.rsp_);
           ret_result = processRegResponseB2C(error_code, error_info, rsp);
           if (ret_result) {
+            LOG_TRACE("[processConnect2Broker] add broker hb timer for %s, clientid=%s",
+              it->GetBrokerInfo().GetAddrInfo().c_str(), client_uuid_.c_str());
             rmtdata_cache_.AddNewPartition(*it);
             addBrokerHBTimer(it->GetBrokerInfo());
           }
@@ -625,22 +633,32 @@ void TubeMQConsumer::processConnect2Broker(ConsumerEvent& event) {
     }
   }
   event.SetEventStatus(2);
+  LOG_TRACE("[processConnect2Broker] out connect event process, clientid=%s",
+    client_uuid_.c_str());
 }
 
 void TubeMQConsumer::processDisConnect2Broker(ConsumerEvent& event) {
+  LOG_TRACE("[processDisConnect2Broker] begin to process disConnect event, clientid=%s",
+    client_uuid_.c_str());
   if (!isClientRunning()) {
+    LOG_TRACE("[processDisConnect2Broker] found client not running, clientid=%s",
+      client_uuid_.c_str());
     return;
   }
   list<SubscribeInfo> subscribe_info = event.GetSubscribeInfoList();
   if (!subscribe_info.empty()) {
     map<NodeInfo, list<PartitionExt> > rmv_partitions;
-    rmtdata_cache_.RemoveAndGetPartition(subscribe_info, config_.IsRollbackIfConfirmTimeout(),
-                                         rmv_partitions);
+    rmtdata_cache_.RemoveAndGetPartition(subscribe_info,
+      config_.IsRollbackIfConfirmTimeout(), rmv_partitions);
     if (!rmv_partitions.empty()) {
+      LOG_TRACE("[processDisConnect2Broker] unregister 2 broker process, clientid=%s",
+        client_uuid_.c_str());
       unregister2Brokers(rmv_partitions, true);
     }
   }
   event.SetEventStatus(2);
+  LOG_TRACE("[processDisConnect2Broker] out disConnect event process, clientid=%s",
+    client_uuid_.c_str());
   return;
 }
 
@@ -676,6 +694,8 @@ void TubeMQConsumer::processHeartBeat2Broker(NodeInfo broker_info) {
   request->request_id_ = Singleton<UniqueSeqId>::Instance().Next();
   req_protocol->request_id_ = request->request_id_;
   req_protocol->rpc_read_timeout_ = config_.GetRpcReadTimeoutMs() - 500;
+  
+  LOG_TRACE("[Heartbeat2Broker] send hb request to (%s)!", broker_info.GetAddrInfo());
 
   // send message to target
   AsyncRequest(request, req_protocol)
@@ -686,6 +706,7 @@ void TubeMQConsumer::processHeartBeat2Broker(NodeInfo broker_info) {
         } else {
           // process response
           auto rsp = any_cast<TubeMQCodec::RspProtocolPtr>(response_context.rsp_);
+          LOG_TRACE("[Heartbeat2Broker] receive hb response!");
           if (rsp->success_) {
             HeartBeatResponseB2C rsp_b2c;
             bool result = rsp_b2c.ParseFromArray(rsp->rsp_body_.data().c_str(),
@@ -706,6 +727,8 @@ void TubeMQConsumer::processHeartBeat2Broker(NodeInfo broker_info) {
                         fullpart_str.substr(pos1 + token_key.size(), fullpart_str.size());
                     Partition part(part_str);
                     partition_keys.insert(part.GetPartitionKey());
+                    LOG_TRACE("[Heartbeat2Broker] found partiton(%s) hb failure!",
+                      part.GetPartitionKey());
                   }
                 }
                 rmtdata_cache_.RemovePartition(partition_keys);
@@ -719,6 +742,8 @@ void TubeMQConsumer::processHeartBeat2Broker(NodeInfo broker_info) {
             }
           }
         }
+        LOG_TRACE("[Heartbeat2Broker] out hb response process, add broker(%s) timer!",
+          broker_info.GetAddrInfo());
         reSetBrokerHBTimer(broker_info);
       });
 }
@@ -1050,13 +1075,18 @@ void TubeMQConsumer::unregister2Brokers(map<NodeInfo, list<PartitionExt> >& unre
   string err_info;
   map<NodeInfo, list<PartitionExt> >::iterator it;
   list<PartitionExt>::iterator it_part;
+  
+  LOG_TRACE("unregister2Brokers, process begin");
 
   if (unreg_partitions.empty()) {
+    LOG_TRACE("unregister2Brokers, unreg partitions empty, out");
     return;
   }
   for (it = unreg_partitions.begin(); it != unreg_partitions.end(); ++it) {
     list<PartitionExt> part_list = it->second;
     for (it_part = part_list.begin(); it_part != part_list.end(); ++it_part) {
+      LOG_TRACE("unregister2Brokers, partitionkey=%s",
+        it_part->GetPartitionKey().c_str());
       auto request = std::make_shared<RequestContext>();
       TubeMQCodec::ReqProtocolPtr req_protocol = TubeMQCodec::GetReqProtocol();
       // build unregister 2 broker request
@@ -1071,6 +1101,8 @@ void TubeMQConsumer::unregister2Brokers(map<NodeInfo, list<PartitionExt> >& unre
       // send message to target
       ResponseContext response_context;
       ErrorCode error = SyncRequest(response_context, request, req_protocol);
+      LOG_TRACE("unregister2Brokers, partitionkey=%s return come",
+        it_part->GetPartitionKey().c_str());
       if (wait_rsp) {
       }
       // not care result
@@ -1081,9 +1113,11 @@ void TubeMQConsumer::unregister2Brokers(map<NodeInfo, list<PartitionExt> >& unre
 
 bool TubeMQConsumer::processRegResponseB2C(int32_t& error_code, string& err_info,
                                            const TubeMQCodec::RspProtocolPtr& rsp_protocol) {
+  LOG_TRACE("processRegResponseB2C, process begin");
   if (!rsp_protocol->success_) {
     error_code = rsp_protocol->code_;
     err_info = rsp_protocol->error_msg_;
+    LOG_TRACE("processRegResponseB2C, not success, out");
     return false;
   }
   RegisterResponseB2C rsp_b2c;
@@ -1092,15 +1126,18 @@ bool TubeMQConsumer::processRegResponseB2C(int32_t& error_code, string& err_info
   if (!result) {
     error_code = err_code::kErrParseFailure;
     err_info = "Parse RegisterResponseB2C response failure!";
+    LOG_TRACE("processRegResponseB2C, parse body failure, out");
     return false;
   }
   if (!rsp_b2c.success()) {
     error_code = rsp_b2c.errcode();
     err_info = rsp_b2c.errmsg();
+    LOG_TRACE("processRegResponseB2C, return failure, error is %s, out", err_info.c_str());
     return false;
   }
   error_code = err_code::kErrSuccess;
   err_info = "Ok";
+  LOG_TRACE("processRegResponseB2C, success, finished");
   return true;
 }
 
