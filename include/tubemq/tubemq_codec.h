@@ -224,8 +224,13 @@ class TubeMQCodec final : public CodecProtocol {
       }
       item_len = in->ReadUint32();
       readed_len += 4;
-      if (item_len < 0) {
-        LOG_TRACE("Check: slice length < 0, is %d, out", item_len);        
+      if (item_len <= 0) {
+        LOG_TRACE("Check: slice length <= 0, is %d, out", item_len);        
+        return -1;
+      }
+      if (item_len > Buffer::kInitialSize) {
+        LOG_TRACE("Check: item_len(%d) > max item length(%ld), out",
+          item_len, Buffer::kInitialSize);
         return -1;
       }
       if (item_len > in->length()) {
