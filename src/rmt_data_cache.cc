@@ -25,6 +25,7 @@
 
 #include "tubemq/client_service.h"
 #include "tubemq/const_config.h"
+#include "tubemq/logger.h"
 #include "tubemq/meta_info.h"
 #include "tubemq/utils.h"
 

@@ -72,8 +72,8 @@ class TubeMQConsumer : public BaseClient, public std::enable_shared_from_this<Tu
   bool needGenMasterCertificateInfo(bool force);
   void genBrokerAuthenticInfo(AuthorizedInfo* p_authInfo, bool force);
   void processAuthorizedToken(const MasterAuthorizedInfo& authorized_token_info);
-  void addBrokerHBTimer(const NodeInfo& broker);
-  void reSetBrokerHBTimer(const NodeInfo& broker);
+  void addBrokerHBTimer(const NodeInfo broker);
+  void reSetBrokerHBTimer(const NodeInfo broker);
 
  private:
   void buidRegisterRequestC2M(TubeMQCodec::ReqProtocolPtr& req_protocol);

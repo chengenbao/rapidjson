@@ -87,6 +87,7 @@ NodeInfo& NodeInfo::operator=(const NodeInfo& target) {
     this->node_port_ = target.node_port_;
     this->addr_info_ = target.addr_info_;
     this->node_info_ = target.node_info_;
+    buildStrInfo();
   }
   return *this;
 }
@@ -148,7 +149,8 @@ Partition::Partition(const string& partition_info) {
   if (pos != string::npos) {
     string broker_info = partition_info.substr(0, pos);
     broker_info = Utils::Trim(broker_info);
-    this->broker_info_ = NodeInfo(true, broker_info);
+    NodeInfo tmp_node(true, broker_info);
+    this->broker_info_ = tmp_node;
     string part_str = partition_info.substr(pos + seg_key.size(), partition_info.size());
     part_str = Utils::Trim(part_str);
     pos = part_str.find(token_key);
@@ -196,6 +198,7 @@ Partition& Partition::operator=(const Partition& target) {
     this->broker_info_ = target.broker_info_;
     this->partition_key_ = target.partition_key_;
     this->partition_info_ = target.partition_info_;
+    buildPartitionKey();
   }
   return *this;
 }
@@ -443,7 +446,8 @@ SubscribeInfo::SubscribeInfo(const string& sub_info) {
     consumer_info = Utils::Trim(consumer_info);
     string partition_info = sub_info.substr(pos + seg_key.size(), sub_info.size());
     partition_info = Utils::Trim(partition_info);
-    this->partitionext_ = PartitionExt(partition_info);
+    PartitionExt tmp_part(partition_info);
+    this->partitionext_ = tmp_part;
     pos = consumer_info.find(at_key);
     this->consumer_id_ = consumer_info.substr(0, pos);
     this->consumer_id_ = Utils::Trim(this->consumer_id_);
@@ -466,6 +470,7 @@ SubscribeInfo& SubscribeInfo::operator=(const SubscribeInfo& target) {
     this->consumer_id_ = target.consumer_id_;
     this->group_ = target.group_;
     this->partitionext_ = target.partitionext_;
+    buildSubInfo();
   }
   return *this;
 }

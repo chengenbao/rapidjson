@@ -474,6 +474,8 @@ void TubeMQConsumer::heartBeat2Master() {
           int32_t error_code = 0;
           std::string error_info;
           auto ret_result = processHBResponseM2C(error_code, error_info, rsp);
+          LOG_TRACE("[CONSUMER] processHBResponseM2C return result = %d! client=%s",
+            ret_result, client_uuid_.c_str());
           if (ret_result) {
             is_master_actived_.Set(true);
             master_sh_retry_cnt_ = 0;
@@ -498,6 +500,8 @@ void TubeMQConsumer::heartBeat2Master() {
           heartBeat2Master();
         });
         master_hb_status_.CompareAndSet(1, 0);
+        LOG_TRACE("[CONSUMER] processHBResponseM2C process result finished, client=%s",
+          client_uuid_.c_str());
       });
   return;
 }
@@ -1436,7 +1440,7 @@ void TubeMQConsumer::processAuthorizedToken(const MasterAuthorizedInfo& authoriz
   }
 }
 
-void TubeMQConsumer::addBrokerHBTimer(const NodeInfo& broker) {
+void TubeMQConsumer::addBrokerHBTimer(const NodeInfo broker) {
   SteadyTimerPtr timer;
   int32_t hb_periodms = config_.GetHeartbeatPeriodMs();
   LOG_TRACE("[addBrokerHBTimer] add hb timer for broker(%s), in!",
@@ -1448,7 +1452,7 @@ void TubeMQConsumer::addBrokerHBTimer(const NodeInfo& broker) {
     timer = TubeMQService::Instance()->CreateTimer();
     broker_timer_map_[broker] = timer;
     timer->expires_after(std::chrono::milliseconds(hb_periodms / 2));
-    timer->async_wait([this, &broker](const std::error_code& ec) {
+    timer->async_wait([this, broker](const std::error_code& ec) {
       if (ec) {
         return;
       }
@@ -1460,7 +1464,7 @@ void TubeMQConsumer::addBrokerHBTimer(const NodeInfo& broker) {
   }
 }
 
-void TubeMQConsumer::reSetBrokerHBTimer(const NodeInfo& broker) {
+void TubeMQConsumer::reSetBrokerHBTimer(const NodeInfo broker) {
   SteadyTimerPtr timer;
   list<PartitionExt> partition_list;
   int32_t hb_periodms = config_.GetHeartbeatPeriodMs();
@@ -1476,7 +1480,7 @@ void TubeMQConsumer::reSetBrokerHBTimer(const NodeInfo& broker) {
     if (broker_timer_map_.find(broker) != broker_timer_map_.end()) {
       timer = broker_timer_map_[broker];
       timer->expires_after(std::chrono::milliseconds(hb_periodms));
-      timer->async_wait([this, &broker](const std::error_code& ec) {
+      timer->async_wait([this, broker](const std::error_code& ec) {
         if (ec) {
           return;
         }
