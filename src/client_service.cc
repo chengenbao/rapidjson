@@ -146,15 +146,15 @@ int32_t TubeMQService::GetClientObjCnt() {
   return clients_map_.size();
 }
 
-bool TubeMQService::AddClientObj(string& err_info, BaseClient* client_obj, int32_t& client_index) {
+bool TubeMQService::AddClientObj(string& err_info, BaseClient* client_obj) {
   if (!IsRunning()) {
     err_info = "Service not startted!";
     return false;
   }
-  client_index = client_index_base_.IncrementAndGet();
+  int32_t client_index = client_index_base_.IncrementAndGet();
   lock_guard<mutex> lck(mutex_);
-  client_obj->SetClientIndex(client_index);
   this->clients_map_[client_index] = client_obj;
+  client_obj->SetClientIndex(client_index);
   err_info = "Ok";
   return true;
 }
@@ -171,17 +171,15 @@ BaseClient* TubeMQService::GetClientObj(int32_t client_index) const {
   return client_obj;
 }
 
-BaseClient* TubeMQService::RmvClientObj(int32_t client_index) {
-  BaseClient* client_obj = NULL;
+void TubeMQService::RmvClientObj(BaseClient* client_obj) {
   map<int32_t, BaseClient*>::iterator it;
-
-  lock_guard<mutex> lck(mutex_);
-  it = clients_map_.find(client_index);
-  if (it != clients_map_.end()) {
-    client_obj = it->second;
+  if(client_obj != NULL) {
+    lock_guard<mutex> lck(mutex_);
+    int32_t client_index = client_obj->GetClientIndex();
     clients_map_.erase(client_index);
+    client_obj->SetClientIndex(tb_config::kInvalidValue);
   }
-  return client_obj;
+  LOG_TRACE("RmvClientObj finished, curr client count is %ld", clients_map_.size());
 }
 
 void TubeMQService::shutDownClinets() const {

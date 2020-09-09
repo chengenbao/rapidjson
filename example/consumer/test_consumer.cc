@@ -39,6 +39,7 @@
 #include "tubemq/tubemq_message.h"
 #include "tubemq/tubemq_return.h"
 #include "tubemq/logger.h"
+#include "tubemq/utils.h"
 
 
 
@@ -83,24 +84,37 @@ int main(int argc, char* argv[]) {
 
   ConsumerResult gentRet;
   ConsumerResult confirm_result;
+  int64_t start_time = Utils::GetCurrentTimeMillis();
   do {
+    // 1. check if subscribe's topic has finished
     if(!consumer_1.IsConsumeReady(1000)) {
       continue;
     }
+    // 2. get Message;
     result = consumer_1.GetMessage(gentRet);
     if(result) {
+      // 2.1.1  if success, process message
       list<Message> msgs = gentRet.GetMessageList();
       printf(" GetMessage success, msssage count =%ld \n",msgs.size());
+      // 2.1.2 confirm message result
       consumer_1.Confirm(gentRet.GetConfirmContext(), true, confirm_result);
     } else {
+      // 2.2.1 if failure, check error code
+      // if no partitions assigned, all partitions in use, 
+      //    or all partitons idle, sleep and retry
       if (gentRet.GetErrCode() == err_code::kErrNoPartAssigned 
         || gentRet.GetErrCode() == err_code::kErrAllPartInUse
-        || gentRet.GetErrCode() == err_code::kErrAllPartInUse){
+        || gentRet.GetErrCode() == err_code::kErrAllPartWaiting){
         std::this_thread::sleep_for(std::chrono::milliseconds(300));
       } else {
+        // 2.2.2 if another error, print error message
         printf(" GetMessage failure, err_code=%d, err_msg is: %s \n",
           gentRet.GetErrCode(), gentRet.GetErrMessage().c_str());
       }
+    }
+    // only get  a period
+    if (Utils::GetCurrentTimeMillis() - start_time > 1 * 60 * 1000) {
+      break;
     }
   } while (true);
 

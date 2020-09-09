@@ -66,9 +66,9 @@ class TubeMQService : public noncopyable {
   bool IsRunning();
   const int32_t GetServiceStatus() const { return service_status_.Get(); }
   int32_t GetClientObjCnt();
-  bool AddClientObj(string& err_info, BaseClient* client_obj, int32_t& client_index);
+  bool AddClientObj(string& err_info, BaseClient* client_obj);
   BaseClient* GetClientObj(int32_t client_index) const;
-  BaseClient* RmvClientObj(int32_t client_index);
+  void RmvClientObj(BaseClient* client_obj);
   const string& GetLocalHost() const { return local_host_; }
   ExecutorPoolPtr GetTimerExecutorPool() { return timer_executor_; }
   SteadyTimerPtr CreateTimer() { return timer_executor_->Get()->CreateSteadyTimer(); }
