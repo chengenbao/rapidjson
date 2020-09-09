@@ -169,19 +169,26 @@ void ClientConnection::checkPackageDone() {
     LOG_ERROR("check codec func not set");
     return;
   }
+  if (package_length_ > recv_buffer_->length()) {
+    return;
+  }
   uint32_t request_id = 0;
   bool has_request_id = false;
   Any check_out;
   auto buff = recv_buffer_->Slice();
-  auto result = check_(buff, check_out, request_id, has_request_id);
+  size_t package_length = 0;
+  auto result = check_(buff, check_out, request_id, has_request_id, package_length);
   if (result < 0) {
+    package_length_ = 0;
     LOG_ERROR("check codec package result:%d", result);
     recv_buffer_->Reset();
     return;
   }
   if (result == 0) {
+    package_length_ = package_length;
     return;
   }
+  package_length_ = 0;
   recv_buffer_->Skip(result);
   if (!has_request_id) {
     auto it = request_list_.begin();

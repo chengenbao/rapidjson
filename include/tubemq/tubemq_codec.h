@@ -183,7 +183,8 @@ class TubeMQCodec final : public CodecProtocol {
   }
 
   // return code: -1 failed; 0-Unfinished; > 0 package buffer size
-  virtual int32_t Check(BufferPtr &in, Any &out, uint32_t &request_id, bool &has_request_id) {
+  virtual int32_t Check(BufferPtr &in, Any &out, uint32_t &request_id, bool &has_request_id,
+                        size_t &package_length) {
     LOG_TRACE("Check: received network message, check data begin:%s", in->String().c_str());
     // check package is valid
     if (in->length() < 12) {
@@ -239,8 +240,8 @@ class TubeMQCodec final : public CodecProtocol {
     }
     out = buf;
     size_t readed_len = in->PrependableBytes() - start_index;
-    LOG_TRACE("Check: received message check finished, request_id=%d, readed_len:%ld", request_id,
-              readed_len);
+    LOG_TRACE("Check: received message check finished, request_id=%d, readed_len:%ld, in:%s",
+              request_id, readed_len, in->String().c_str());
     return readed_len;
   }
 

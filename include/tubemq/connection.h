@@ -41,13 +41,17 @@
 namespace tubemq {
 
 // Check Package is done
-using ProtocalCheckerFunction = std::function<int(BufferPtr&, Any&, uint32_t&, bool&)>;
+using ProtocalCheckerFunction = std::function<int(BufferPtr&, Any&, uint32_t&, bool&, size_t&)>;
 
 class Connection : noncopyable {
  public:
   enum Status { kConnecting, kConnected, kDisconnected };
   Connection()
-      : connect_id_(unique_id_.Next()), status_(kConnecting), create_time_(std::time(nullptr)) {
+      : connect_id_(unique_id_.Next()),
+        status_(kConnecting),
+        recv_time_(std::time(nullptr)),
+        package_length_(0),
+        create_time_(std::time(nullptr)) {
     formatContextString();
   }
   Connection(const std::string& ip, uint16_t port)
@@ -56,6 +60,7 @@ class Connection : noncopyable {
         connect_id_(unique_id_.Next()),
         status_(kConnecting),
         recv_time_(std::time(nullptr)),
+        package_length_(0),
         create_time_(std::time(nullptr)) {
     formatContextString();
   }
@@ -96,6 +101,7 @@ class Connection : noncopyable {
   std::atomic<Status> status_;
   std::string context_string_;  // for log
   std::time_t recv_time_;
+  size_t package_length_;
 
  private:
   std::time_t create_time_;

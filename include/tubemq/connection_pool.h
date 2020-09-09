@@ -93,10 +93,10 @@ class ConnectionPool : noncopyable {
     connect->SetCloseNotifier(request->close_notifier_);
 
     auto codec = request->codec_;
-    connect->SetProtocalCheck(
-        [codec](BufferPtr& in, Any& out, uint32_t& request_id, bool& has_request_id) -> int {
-          return codec->Check(in, out, request_id, has_request_id);
-        });
+    connect->SetProtocalCheck([codec](BufferPtr& in, Any& out, uint32_t& request_id,
+                                      bool& has_request_id, size_t& package_length) -> int {
+      return codec->Check(in, out, request_id, has_request_id, package_length);
+    });
     return connect;
   }
 

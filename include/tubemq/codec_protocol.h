@@ -42,7 +42,8 @@ class CodecProtocol {
   virtual bool Encode(const Any &in, BufferPtr &buff) = 0;
 
   // return code: -1 failed; 0-Unfinished; > 0 package buffer size
-  virtual int32_t Check(BufferPtr &in, Any &out, uint32_t &request_id, bool &has_request_id) = 0;
+  virtual int32_t Check(BufferPtr &in, Any &out, uint32_t &request_id, bool &has_request_id,
+                        size_t &package_length) = 0;
 
   // get protocol request id
   virtual int32_t GetRequestId(uint32_t &request_id, const Any &rsp) const { return -1; }
