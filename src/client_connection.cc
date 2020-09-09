@@ -143,10 +143,9 @@ void ClientConnection::asyncRead() {
     return;
   }
   if (recv_buffer_->capacity() > rpc_config::kRpcRecvBufferMaxBytes) {
-    LOG_ERROR("check codec func not set");
+    LOG_ERROR("buffer capacity over config:%d", rpc_config::kRpcRecvBufferMaxBytes);
     recv_buffer_->Reset();
   }
-  recv_buffer_->EnsureWritableBytes(rpc_config::kRpcEnsureWriteableBytes);
   auto self = shared_from_this();
   socket_->async_read_some(asio::buffer(recv_buffer_->WriteBegin(), recv_buffer_->WritableBytes()),
                            [self, this](std::error_code ec, std::size_t len) {
@@ -170,8 +169,8 @@ void ClientConnection::checkPackageDone() {
   }
   uint32_t request_id = 0;
   bool has_request_id = false;
-  auto buff = recv_buffer_->Slice();
   Any check_out;
+  auto buff = recv_buffer_->Slice();
   auto result = check_(buff, check_out, request_id, has_request_id);
   if (result < 0) {
     LOG_ERROR("check codec package result:%d", result);

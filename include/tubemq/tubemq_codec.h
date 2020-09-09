@@ -224,7 +224,7 @@ class TubeMQCodec final : public CodecProtocol {
         return -1;
       }
       if (item_len > rpc_config::kRpcMaxBufferSize) {
-        LOG_TRACE("Check: item_len(%d) > max item length(%ld), out", item_len,
+        LOG_TRACE("Check: item_len(%d) > max item length(%d), out", item_len,
                   rpc_config::kRpcMaxBufferSize);
         return -1;
       }
@@ -235,8 +235,10 @@ class TubeMQCodec final : public CodecProtocol {
       buf->Write(in->data(), item_len);
     }
     out = buf;
-    LOG_TRACE("Check: received message check finished, request_id=%d", request_id);
-    return in->PrependableBytes() - start;
+    size_t read_len = in->PrependableBytes() - start;
+    LOG_TRACE("Check: received message check finished, request_id=%d, read_len:%ld", request_id,
+              read_len);
+    return read_len;
   }
 
   static ReqProtocolPtr GetReqProtocol() { return std::make_shared<ReqProtocol>(); }
