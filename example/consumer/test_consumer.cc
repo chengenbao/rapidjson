@@ -86,11 +86,7 @@ int main(int argc, char* argv[]) {
   ConsumerResult confirm_result;
   int64_t start_time = Utils::GetCurrentTimeMillis();
   do {
-    // 1. check if subscribe's topic has finished
-    if(!consumer_1.IsConsumeReady(1000)) {
-      continue;
-    }
-    // 2. get Message;
+    // 1. get Message;
     result = consumer_1.GetMessage(gentRet);
     if(result) {
       // 2.1.1  if success, process message

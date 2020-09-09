@@ -151,6 +151,11 @@ void TubeMQConsumer::ShutDown() {
 }
 
 bool TubeMQConsumer::GetMessage(ConsumerResult& result) {
+  int32_t error_code;
+  string err_info;
+  PartitionExt partition_ext;
+  string confirm_context;
+
   if (!TubeMQService::Instance()->IsRunning()) {
     result.SetFailureResult(err_code::kErrServerStop, "TubeMQ Service stopped!");
     return false;
@@ -159,10 +164,12 @@ bool TubeMQConsumer::GetMessage(ConsumerResult& result) {
     result.SetFailureResult(err_code::kErrClientStop, "TubeMQ Client stopped!");
     return false;
   }
-  int32_t error_code;
-  string err_info;
-  PartitionExt partition_ext;
-  string confirm_context;
+  if (!IsConsumeReady(1000)) {
+    error_code = err_code::kErrNoPartAssigned;
+    err_info = "No partition info in local cache, please retry later!";
+    result.SetFailureResult(error_code, err_info);
+    return false;
+  }
   if (!rmtdata_cache_.SelectPartition(error_code, err_info, partition_ext, confirm_context)) {
     result.SetFailureResult(error_code, err_info);
     return false;
