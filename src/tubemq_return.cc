@@ -77,7 +77,7 @@ ConsumeOffsetInfo& ConsumeOffsetInfo::operator=(
     this->partition_key_ = target.partition_key_;
     this->curr_offset_ = target.curr_offset_;
   }
-  return *this;  
+  return *this;
 }
 
 

@@ -317,7 +317,7 @@ bool Utils::ValidGroupName(string& err_info, const string& group_name, string& t
   regex_t reg;
   regmatch_t pmatch[1];
   //const char* patRule = "^[a-zA-Z][\\w-]+$";
-  const char* patRule = "^[a-zA-Z]\\w+$";  
+  const char* patRule = "^[a-zA-Z]\\w+$";
   regcomp(&reg, patRule, cflags);
   int status = regexec(&reg, tgt_group_name.c_str(), 1, pmatch, 0);
   regfree(&reg);
@@ -505,7 +505,7 @@ void Utils::XfsAddrByDns(const map<string, int32_t>& orig_addr_map,
             char **pptr = NULL;
             unsigned int addr = 0;
             char temp_str[32];
-            memset(temp_str,0,32);
+            memset(temp_str, 0, 32);
             pptr = host->h_addr_list;
             addr = ((unsigned int *) host->h_addr_list[0])[0];
             if ((addr & 0xffff) == 0x0a0a) {
@@ -519,9 +519,9 @@ void Utils::XfsAddrByDns(const map<string, int32_t>& orig_addr_map,
             }
           }
           break;
-          
+
           default:
-            break;    
+            break;
         }
       }
     } else {
@@ -532,12 +532,12 @@ void Utils::XfsAddrByDns(const map<string, int32_t>& orig_addr_map,
 
 bool Utils::NeedDnsXfs(const string& masteraddr) {
   if (masteraddr.length() > 0) {
-    char first_char =  masteraddr.c_str()[0];
+    char first_char = masteraddr.c_str()[0];
     if (isalpha(first_char)) {
       return true;
     }
   }
-  return false;  
+  return false;
 }
 
 string Utils::GenBrokerAuthenticateToken(const string& username,

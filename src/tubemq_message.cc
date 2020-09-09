@@ -148,7 +148,7 @@ bool Message::GetProperty(const string& key, string& value) {
   return false;
 }
 
-bool Message::GetFilterItem(string& value) { 
+bool Message::GetFilterItem(string& value) {
   return GetProperty(tb_config::kRsvPropKeyFilterItem, value);
 }
 
