@@ -179,7 +179,6 @@ void TubeMQService::RmvClientObj(BaseClient* client_obj) {
     clients_map_.erase(client_index);
     client_obj->SetClientIndex(tb_config::kInvalidValue);
   }
-  LOG_TRACE("RmvClientObj finished, curr client count is %ld", clients_map_.size());
 }
 
 void TubeMQService::shutDownClinets() const {

@@ -63,6 +63,7 @@ class TubeMQConsumer : public BaseClient, public std::enable_shared_from_this<Tu
   void heartBeat2Master();
   void processRebalanceEvent();
   void close2Master();
+  void closeAllBrokers();
 
  private:
   string buildUUID();

@@ -133,18 +133,20 @@ void TubeMQConsumer::ShutDown() {
     return;
   }
   LOG_INFO("[CONSUMER] ShutDown consumer begin, client=%s", client_uuid_.c_str());
-  // exist rebalance thread
+  // 1. exist rebalance thread
   ConsumerEvent empty_event;
   rmtdata_cache_.OfferEvent(empty_event);
-  // close to master
+  // 2. close to master
   close2Master();
-  // remove client stub
+  // 3. close all brokers
+  closeAllBrokers();
+  // 4. remove client stub
   TubeMQService::Instance()->RmvClientObj(this);
   client_index_ = tb_config::kInvalidValue;
+  // 5. join hb thread;
   heart_beat_timer_ = nullptr;
   rebalance_thread_ptr_->join();
   rebalance_thread_ptr_ = nullptr;
-  // process resuorce release
   LOG_INFO("[CONSUMER] ShutDown consumer finished, client=%s", client_uuid_.c_str());
 }
 
@@ -694,6 +696,17 @@ void TubeMQConsumer::processDisConnect2Broker(ConsumerEvent& event) {
     client_uuid_.c_str());
   return;
 }
+
+void TubeMQConsumer::closeAllBrokers() {
+  map<NodeInfo, list<PartitionExt> > broker_parts;
+  LOG_INFO("[CONSUMER] closeAllBrokers begin, clientid=%s", client_uuid_.c_str());
+  rmtdata_cache_.GetAllBrokerPartitions(broker_parts);
+  if (!broker_parts.empty()) {
+     unregister2Brokers(broker_parts, false);
+  }
+  LOG_INFO("[CONSUMER] closeAllBrokers end, clientid=%s", client_uuid_.c_str());
+}
+
 
 void TubeMQConsumer::processHeartBeat2Broker(NodeInfo broker_info) {
   LOG_TRACE("[Heartbeat2Broker] process hb to broker(%s) startted!",
