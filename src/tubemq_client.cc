@@ -214,7 +214,7 @@ bool TubeMQConsumer::GetMessage(ConsumerResult& result) {
 bool TubeMQConsumer::IsConsumeReady(long max_wait_time_ms) {
   long start_time = Utils::GetCurrentTimeMillis();
   do {
-    if (!TubeMQService::Instance()->IsRunning() 
+    if (!TubeMQService::Instance()->IsRunning()
       || !isClientRunning()) {
       break;
     }
@@ -254,7 +254,6 @@ bool TubeMQConsumer::Confirm(const string& confirm_context, bool is_consumed,
   LOG_TRACE("[CONSUMER] Confirm begin, confirm_context = %s, is_consumed =%d, client=%s",
     confirm_context.c_str(), is_consumed, client_uuid_.c_str());
 
-  
   string token1 = delimiter::kDelimiterAt;
   string token2 = delimiter::kDelimiterColon;
   string::size_type pos1, pos2;
@@ -316,7 +315,7 @@ bool TubeMQConsumer::Confirm(const string& confirm_context, bool is_consumed,
   // send message to target
   ResponseContext response_context;
   ErrorCode error = SyncRequest(response_context, request, req_protocol);
-  
+
   LOG_TRACE("[CONSUMER] Confirm response result=%d, client=%s",
     error.Value(), client_uuid_.c_str());
 
@@ -352,7 +351,6 @@ bool TubeMQConsumer::Confirm(const string& confirm_context, bool is_consumed,
                               is_consumed);
   LOG_TRACE("[CONSUMER] Confirm response finished, result=%d, client=%s",
     result.IsSuccess(), client_uuid_.c_str());
-  
   return result.IsSuccess();
 }
 
@@ -1034,7 +1032,7 @@ void TubeMQConsumer::buidCommitC2B(const PartitionExt& partition, bool is_last_c
 
 bool TubeMQConsumer::processRegisterResponseM2C(int32_t& error_code, string& err_info,
                                                 const TubeMQCodec::RspProtocolPtr& rsp_protocol) {
-  LOG_TRACE("processRegisterResponseM2C, process message begin");                                                
+  LOG_TRACE("processRegisterResponseM2C, process message begin");
   if (!rsp_protocol->success_) {
     error_code = rsp_protocol->code_;
     err_info = rsp_protocol->error_msg_;
@@ -1152,7 +1150,7 @@ void TubeMQConsumer::unregister2Brokers(map<NodeInfo, list<PartitionExt> >& unre
   string err_info;
   map<NodeInfo, list<PartitionExt> >::iterator it;
   list<PartitionExt>::iterator it_part;
-  
+
   LOG_TRACE("unregister2Brokers, process begin");
 
   if (unreg_partitions.empty()) {
@@ -1227,13 +1225,12 @@ void TubeMQConsumer::convertMessages(int32_t& msg_size, list<Message>& message_l
 
   LOG_TRACE("[CONSUMER] convertMessages, message size=%d, client=%s",
     rsp_b2c.messages_size(), client_uuid_.c_str());
-  
+
   if (rsp_b2c.messages_size() == 0) {
     return;
   }
 
   for (int i = 0; i < rsp_b2c.messages_size(); i++) {
-    
     TransferedMessage tsfMsg = rsp_b2c.messages(i);
     int32_t flag = tsfMsg.flag();
     int64_t message_id = tsfMsg.messageid();
