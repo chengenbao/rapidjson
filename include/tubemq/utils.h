@@ -35,7 +35,7 @@ using std::vector;
 class Utils {
  public:
   // trim string info
-  static int32_t Crc32(const char* buf, size_t size);
+  static int32_t Crc32(const string &buf);
   static string Trim(const string& source);
   // split string to vector
   static void Split(const string& source, vector<string>& result, const string& delimiter);

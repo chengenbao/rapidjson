@@ -1222,23 +1222,18 @@ void TubeMQConsumer::convertMessages(int32_t& msg_size, list<Message>& message_l
   // #lizard forgives
   msg_size = 0;
   message_list.clear();
-
   LOG_TRACE("[CONSUMER] convertMessages, message size=%d, client=%s",
     rsp_b2c.messages_size(), client_uuid_.c_str());
-
   if (rsp_b2c.messages_size() == 0) {
     return;
   }
-
   for (int i = 0; i < rsp_b2c.messages_size(); i++) {
     TransferedMessage tsfMsg = rsp_b2c.messages(i);
     int32_t flag = tsfMsg.flag();
     int64_t message_id = tsfMsg.messageid();
     int32_t in_check_sum = tsfMsg.checksum();
     int32_t payload_length = tsfMsg.payloaddata().length();
-    std::unique_ptr<char[]> payload_data(new char[payload_length]);
-    memcpy(&payload_data[0], tsfMsg.payloaddata().c_str(), payload_length);
-    int32_t calc_checksum = Utils::Crc32(&payload_data[0], payload_length);
+    int32_t calc_checksum = Utils::Crc32(tsfMsg.payloaddata());
     if (in_check_sum != calc_checksum) {
 
       LOG_TRACE("[CONSUMER] convertMessages [%d], Crc32 failure, in=%d, calc=%d, client=%s",
@@ -1249,6 +1244,8 @@ void TubeMQConsumer::convertMessages(int32_t& msg_size, list<Message>& message_l
     int read_pos = 0;
     int data_len = payload_length;
     map<string, string> properties;
+    std::unique_ptr<char[]> payload_data(new char[payload_length]);
+    memcpy(&payload_data[0], tsfMsg.payloaddata().c_str(), payload_length);
     if ((flag & tb_config::kMsgFlagIncProperties) == 1) {
       if (payload_length < 4) {
 
