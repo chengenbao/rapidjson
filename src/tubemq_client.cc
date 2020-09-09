@@ -300,7 +300,7 @@ bool TubeMQConsumer::Confirm(const string& confirm_context, bool is_consumed,
   auto request = std::make_shared<RequestContext>();
   TubeMQCodec::ReqProtocolPtr req_protocol = TubeMQCodec::GetReqProtocol();
   // build CommitC2B request
-  buidCommitC2B(partition_ext, sub_info_.IsFilterConsume(topic_name), req_protocol);
+  buidCommitC2B(partition_ext, is_consumed, req_protocol);
   request->codec_ = std::make_shared<TubeMQCodec>();
   request->ip_ = partition_ext.GetBrokerHost();
   request->port_ = partition_ext.GetBrokerPort();
