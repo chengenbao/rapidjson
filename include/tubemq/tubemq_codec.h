@@ -188,24 +188,27 @@ class TubeMQCodec final : public CodecProtocol {
 
   // return code: -1 failed; 0-Unfinished; > 0 package buffer size
   virtual int32_t Check(BufferPtr &in, Any &out, uint32_t &request_id, bool &has_request_id) {
+    uint32_t readed_len = 0;
     LOG_TRACE("Check: received network message, check data begin:%s", in->String().c_str());
     // check package is valid
     if (in->length() < 12) {
       LOG_TRACE("Check: data's length < 12, is %ld, out", in->length());
       return 0;
     }
-    size_t start = in->PrependableBytes();
     // check frameToken
     uint32_t token = in->ReadUint32();
+    readed_len += 4;
     if (token != rpc_config::kRpcPrtBeginToken) {
       LOG_TRACE("Check: first token is illegal, is %d, out", token);
       return -1;
     }
     // get request_id
     request_id = in->ReadUint32();
+    readed_len += 4;
     has_request_id = true;
     // check list size
     uint32_t list_size = in->ReadUint32();
+    readed_len += 4;
     if (list_size > rpc_config::kRpcMaxFrameListCnt) {
       LOG_TRACE("Check: list_size over max, is %d, out", list_size);
       return -1;
@@ -219,6 +222,7 @@ class TubeMQCodec final : public CodecProtocol {
         return 0;
       }
       item_len = in->ReadUint32();
+      readed_len += 4;
       if (item_len == 0) {
         LOG_TRACE("Check: slice length == 0, is %d, out", item_len);
         return -1;
@@ -233,12 +237,13 @@ class TubeMQCodec final : public CodecProtocol {
         return 0;
       }
       buf->Write(in->data(), item_len);
+      in->Skip(item_len);
+      readed_len += item_len;      
     }
     out = buf;
-    size_t read_len = in->PrependableBytes() - start;
-    LOG_TRACE("Check: received message check finished, request_id=%d, read_len:%ld", request_id,
-              read_len);
-    return read_len;
+    LOG_TRACE("Check: received message check finished, request_id=%d, readed_len:%ld", request_id,
+              readed_len);
+    return readed_len;
   }
 
   static ReqProtocolPtr GetReqProtocol() { return std::make_shared<ReqProtocol>(); }
