@@ -63,6 +63,14 @@ class Buffer {
     capacity_ = 0;
   }
 
+  std::string String() {
+    char buf[1024];
+    snprintf(buf, sizeof(buf),
+             "buffer:%p,capacity:%ld,readindex:%ld,writeindex:%ld,prependsize:%ld,hasmem:%d",
+             buffer_, capacity_, read_index_, write_index_, reserved_prepend_size_, has_mem_);
+    return buf;
+  }
+
   BufferPtr Slice() {
     auto buff = std::make_shared<Buffer>(*this);
     buff->has_mem_ = false;

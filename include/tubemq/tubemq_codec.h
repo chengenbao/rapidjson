@@ -133,7 +133,7 @@ class TubeMQCodec final : public CodecProtocol {
     ReqProtocolPtr req_protocol = any_cast<ReqProtocolPtr>(in);
 
     LOG_TRACE("Encode: begin encode message, request_id=%d, method_id=%d",
-      req_protocol->request_id_, req_protocol->method_id_);
+              req_protocol->request_id_, req_protocol->method_id_);
 
     req_body.set_method(req_protocol->method_id_);
     req_body.set_timeout(req_protocol->rpc_read_timeout_);
@@ -144,24 +144,23 @@ class TubeMQCodec final : public CodecProtocol {
     RpcConnHeader rpc_header;
     rpc_header.set_flag(rpc_config::kRpcFlagMsgRequest);
     // calc total list size
-    uint32_t serial_len = 4 + rpc_header.ByteSizeLong()
-                        + 4 + req_header.ByteSizeLong()
-                        + 4 + req_body.ByteSizeLong();
+    uint32_t serial_len =
+        4 + rpc_header.ByteSizeLong() + 4 + req_header.ByteSizeLong() + 4 + req_body.ByteSizeLong();
     uint8_t *step_buff = (uint8_t *)malloc(serial_len);
     assert(step_buff);
     google::protobuf::io::ArrayOutputStream rawOutput(step_buff, serial_len);
     bool result = writeDelimitedTo(rpc_header, &rawOutput);
-    if(!result) {
+    if (!result) {
       delete[] step_buff;
       return result;
     }
     result = writeDelimitedTo(req_header, &rawOutput);
-    if(!result) {
+    if (!result) {
       delete[] step_buff;
       return result;
     }
     result = writeDelimitedTo(req_body, &rawOutput);
-    if(!result) {
+    if (!result) {
       delete[] step_buff;
       return result;
     }
@@ -172,12 +171,12 @@ class TubeMQCodec final : public CodecProtocol {
     buff->AppendInt32(list_size);
     uint32_t write_pos = 0;
     for (uint32_t i = 0; i < list_size; i++) {
-      uint32_t slice_len = serial_len - i * Buffer::kInitialSize;
-      if (slice_len > Buffer::kInitialSize) {
-        slice_len = Buffer::kInitialSize;
+      uint32_t slice_len = serial_len - i * rpc_config::kRpcMaxBufferSize;
+      if (slice_len > rpc_config::kRpcMaxBufferSize) {
+        slice_len = rpc_config::kRpcMaxBufferSize;
       }
-      LOG_TRACE("Encode: encode slice [%d] slice_len = %d, serial_len = %d",
-        i, slice_len, serial_len);
+      LOG_TRACE("Encode: encode slice [%d] slice_len = %d, serial_len = %d", i, slice_len,
+                serial_len);
       buff->AppendInt32(slice_len);
       buff->Write(step_buff + write_pos, slice_len);
       write_pos += slice_len;
@@ -189,23 +188,21 @@ class TubeMQCodec final : public CodecProtocol {
 
   // return code: -1 failed; 0-Unfinished; > 0 package buffer size
   virtual int32_t Check(BufferPtr &in, Any &out, uint32_t &request_id, bool &has_request_id) {
-    LOG_TRACE("Check: received network message, check data begin");
-    uint32_t readed_len = 0;
+    LOG_TRACE("Check: received network message, check data begin:%s", in->String().c_str());
     // check package is valid
     if (in->length() < 12) {
       LOG_TRACE("Check: data's length < 12, is %ld, out", in->length());
       return 0;
     }
+    size_t start = in->PrependableBytes();
     // check frameToken
-    uint32_t token = in->ReadUint32(); 
+    uint32_t token = in->ReadUint32();
     if (token != rpc_config::kRpcPrtBeginToken) {
       LOG_TRACE("Check: first token is illegal, is %d, out", token);
       return -1;
     }
-    readed_len += 4;
     // get request_id
     request_id = in->ReadUint32();
-    readed_len += 4;    
     has_request_id = true;
     // check list size
     uint32_t list_size = in->ReadUint32();
@@ -213,7 +210,6 @@ class TubeMQCodec final : public CodecProtocol {
       LOG_TRACE("Check: list_size over max, is %d, out", list_size);
       return -1;
     }
-    readed_len += 4;    
     // check data list
     uint32_t item_len = 0;
     auto buf = std::make_shared<Buffer>();
@@ -223,26 +219,24 @@ class TubeMQCodec final : public CodecProtocol {
         return 0;
       }
       item_len = in->ReadUint32();
-      readed_len += 4;
-      if (item_len <= 0) {
-        LOG_TRACE("Check: slice length <= 0, is %d, out", item_len);        
+      if (item_len == 0) {
+        LOG_TRACE("Check: slice length == 0, is %d, out", item_len);
         return -1;
       }
-      if (item_len > Buffer::kInitialSize) {
-        LOG_TRACE("Check: item_len(%d) > max item length(%ld), out",
-          item_len, Buffer::kInitialSize);
+      if (item_len > rpc_config::kRpcMaxBufferSize) {
+        LOG_TRACE("Check: item_len(%d) > max item length(%ld), out", item_len,
+                  rpc_config::kRpcMaxBufferSize);
         return -1;
       }
       if (item_len > in->length()) {
-        LOG_TRACE("Check: item_len(%d) > remaining length(%ld), out", item_len, in->length());  
+        LOG_TRACE("Check: item_len(%d) > remaining length(%ld), out", item_len, in->length());
         return 0;
       }
       buf->Write(in->data(), item_len);
-      readed_len += item_len;
     }
     out = buf;
     LOG_TRACE("Check: received message check finished, request_id=%d", request_id);
-    return readed_len;
+    return in->PrependableBytes() - start;
   }
 
   static ReqProtocolPtr GetReqProtocol() { return std::make_shared<ReqProtocol>(); }
@@ -295,8 +289,8 @@ class TubeMQCodec final : public CodecProtocol {
   }
 
   uint32_t calcBlockCount(uint32_t content_len) {
-    uint32_t block_cnt = content_len / Buffer::kInitialSize;
-    uint32_t remain_size = content_len % Buffer::kInitialSize;
+    uint32_t block_cnt = content_len / rpc_config::kRpcMaxBufferSize;
+    uint32_t remain_size = content_len % rpc_config::kRpcMaxBufferSize;
     if (remain_size > 0) {
       block_cnt++;
     }

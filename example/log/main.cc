@@ -24,6 +24,7 @@
 #include <thread>
 
 #include "tubemq/atomic_def.h"
+#include "tubemq/buffer.h"
 #include "tubemq/logger.h"
 
 using namespace std;
@@ -38,6 +39,17 @@ void log() {
 }
 
 int main() {
+  {
+    auto buf = std::make_shared<Buffer>();
+    std::string data = "abcdef";
+    buf->Write(data.data(), data.size());
+    auto buf2 = buf->Slice();
+    buf2->ReadUint32();
+    buf->Write(data.data(), data.size());
+    printf("%s\n", buf->String().c_str());
+    printf("%s\n", buf2->String().c_str());
+  }
+
   ati.GetAndSet(1);
   GetLogger().Init("./tubemq", tubemq::Logger::Level(4));
   std::thread t1(log);
