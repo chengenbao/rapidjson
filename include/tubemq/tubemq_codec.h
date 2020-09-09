@@ -252,8 +252,8 @@ class TubeMQCodec final : public CodecProtocol {
       in->Skip(item_len);
     }
     out = buf;
-    LOG_TRACE("Check: received message check finished, request_id=%d, readed_len:%ld, in:%s",
-              request_id, readed_len, in->String().c_str());
+    LOG_TRACE("Check: received message check finished, request_id=%d, readed_len:%d",
+      request_id, readed_len);
     return readed_len;
   }
 
