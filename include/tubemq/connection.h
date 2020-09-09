@@ -55,6 +55,7 @@ class Connection : noncopyable {
         port_(port),
         connect_id_(unique_id_.Next()),
         status_(kConnecting),
+        recv_time_(std::time(nullptr)),
         create_time_(std::time(nullptr)) {
     formatContextString();
   }
@@ -74,7 +75,9 @@ class Connection : noncopyable {
 
   void SetProtocalCheck(ProtocalCheckerFunction func) { check_ = func; }
 
-  const std::string& ToString() const { return context_string_; }
+  inline std::time_t GetRecvTime() const { return recv_time_; }
+
+  inline const std::string& ToString() const { return context_string_; }
 
  private:
   void formatContextString() {
@@ -92,6 +95,7 @@ class Connection : noncopyable {
   uint32_t connect_id_;
   std::atomic<Status> status_;
   std::string context_string_;  // for log
+  std::time_t recv_time_;
 
  private:
   std::time_t create_time_;

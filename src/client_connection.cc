@@ -146,6 +146,7 @@ void ClientConnection::asyncRead() {
     LOG_ERROR("buffer capacity over config:%d", rpc_config::kRpcRecvBufferMaxBytes);
     recv_buffer_->Reset();
   }
+  recv_buffer_->EnsureWritableBytes(rpc_config::kRpcEnsureWriteableBytes);
   auto self = shared_from_this();
   socket_->async_read_some(asio::buffer(recv_buffer_->WriteBegin(), recv_buffer_->WritableBytes()),
                            [self, this](std::error_code ec, std::size_t len) {
@@ -155,6 +156,7 @@ void ClientConnection::asyncRead() {
                                close(&ec);
                                return;
                              }
+                             recv_time_ = std::time(nullptr);
                              recv_buffer_->WriteBytes(len);
                              checkPackageDone();
                              asyncRead();

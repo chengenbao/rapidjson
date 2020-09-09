@@ -146,22 +146,19 @@ class TubeMQCodec final : public CodecProtocol {
     // calc total list size
     uint32_t serial_len =
         4 + rpc_header.ByteSizeLong() + 4 + req_header.ByteSizeLong() + 4 + req_body.ByteSizeLong();
-    uint8_t *step_buff = (uint8_t *)malloc(serial_len);
-    assert(step_buff);
-    google::protobuf::io::ArrayOutputStream rawOutput(step_buff, serial_len);
+    std::string step_buff;
+    step_buff.resize(serial_len);
+    google::protobuf::io::ArrayOutputStream rawOutput((void *)step_buff.data(), serial_len);
     bool result = writeDelimitedTo(rpc_header, &rawOutput);
     if (!result) {
-      delete[] step_buff;
       return result;
     }
     result = writeDelimitedTo(req_header, &rawOutput);
     if (!result) {
-      delete[] step_buff;
       return result;
     }
     result = writeDelimitedTo(req_body, &rawOutput);
     if (!result) {
-      delete[] step_buff;
       return result;
     }
     // append data to buffer
@@ -178,51 +175,45 @@ class TubeMQCodec final : public CodecProtocol {
       LOG_TRACE("Encode: encode slice [%d] slice_len = %d, serial_len = %d", i, slice_len,
                 serial_len);
       buff->AppendInt32(slice_len);
-      buff->Write(step_buff + write_pos, slice_len);
+      buff->Write(step_buff.data() + write_pos, slice_len);
       write_pos += slice_len;
     }
-    delete[] step_buff;
     LOG_TRACE("Encode: encode message success, finished!");
     return true;
   }
 
   // return code: -1 failed; 0-Unfinished; > 0 package buffer size
   virtual int32_t Check(BufferPtr &in, Any &out, uint32_t &request_id, bool &has_request_id) {
-    uint32_t readed_len = 0;
     LOG_TRACE("Check: received network message, check data begin:%s", in->String().c_str());
     // check package is valid
     if (in->length() < 12) {
       LOG_TRACE("Check: data's length < 12, is %ld, out", in->length());
       return 0;
     }
+    size_t start_index = in->PrependableBytes();
     // check frameToken
     uint32_t token = in->ReadUint32();
-    readed_len += 4;
     if (token != rpc_config::kRpcPrtBeginToken) {
       LOG_TRACE("Check: first token is illegal, is %d, out", token);
       return -1;
     }
     // get request_id
     request_id = in->ReadUint32();
-    readed_len += 4;
-    has_request_id = true;
     // check list size
     uint32_t list_size = in->ReadUint32();
-    readed_len += 4;
     if (list_size > rpc_config::kRpcMaxFrameListCnt) {
       LOG_TRACE("Check: list_size over max, is %d, out", list_size);
       return -1;
     }
     // check data list
     uint32_t item_len = 0;
-    auto buf = std::make_shared<Buffer>();
+    auto check_buf = in->Slice();
     for (uint32_t i = 0; i < list_size; i++) {
-      if (in->length() < 4) {
-        LOG_TRACE("Check: buffer Remaining length < 4, is %ld, out", in->length());
+      if (check_buf->length() < 4) {
+        LOG_TRACE("Check: buffer Remaining length < 4, is %ld, out", check_buf->length());
         return 0;
       }
-      item_len = in->ReadUint32();
-      readed_len += 4;
+      item_len = check_buf->ReadUint32();
       if (item_len == 0) {
         LOG_TRACE("Check: slice length == 0, is %d, out", item_len);
         return -1;
@@ -232,15 +223,22 @@ class TubeMQCodec final : public CodecProtocol {
                   rpc_config::kRpcMaxBufferSize);
         return -1;
       }
-      if (item_len > in->length()) {
-        LOG_TRACE("Check: item_len(%d) > remaining length(%ld), out", item_len, in->length());
+      if (item_len > check_buf->length()) {
+        LOG_TRACE("Check: item_len(%d) > remaining length(%ld), out", item_len,
+                  check_buf->length());
         return 0;
       }
+      check_buf->Skip(item_len);
+    }
+    has_request_id = true;
+    auto buf = std::make_shared<Buffer>();
+    for (uint32_t i = 0; i < list_size; i++) {
+      item_len = in->ReadUint32();
       buf->Write(in->data(), item_len);
       in->Skip(item_len);
-      readed_len += item_len;      
     }
     out = buf;
+    size_t readed_len = in->PrependableBytes() - start_index;
     LOG_TRACE("Check: received message check finished, request_id=%d, readed_len:%ld", request_id,
               readed_len);
     return readed_len;

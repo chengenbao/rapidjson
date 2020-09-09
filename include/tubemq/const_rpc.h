@@ -35,9 +35,10 @@ static const uint32_t kRpcMaxFrameListCnt = (uint32_t)((1024 * 1024 * 8) / kRpcM
 static const uint32_t kRpcProtocolVersion = 2;
 
 // rps network const
-static const uint32_t kRpcEnsureWriteableBytes = 8192;
+static const uint32_t kRpcEnsureWriteableBytes = 64 * 1024;
 static constexpr uint32_t kRpcRecvBufferMaxBytes =
     uint32_t(kRpcMaxFrameListCnt * kRpcMaxBufferSize * 2 + 1024);
+static const uint32_t kRpcInvalidConnectOverTime = 60 * 3;  // second
 
 // msg type flag
 static const int32_t kRpcFlagMsgRequest = 0x0;
@@ -70,7 +71,6 @@ static const int32_t kBrokerMethoddConsumerGetMsg = 17;
 static const int32_t kBrokerMethoddConsumerCommit = 18;
 static const int32_t kBrokerMethoddConsumerClose = 19;
 static const int32_t kMethodInvalid = 99999;
-
 
 // register operate type
 static const int32_t kRegOpTypeRegister = 31;

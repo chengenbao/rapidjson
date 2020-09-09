@@ -34,6 +34,8 @@
 #include "asio.hpp"
 #include "tubemq/client_connection.h"
 #include "tubemq/connection.h"
+#include "tubemq/const_rpc.h"
+#include "tubemq/logger.h"
 #include "tubemq/noncopyable.h"
 #include "tubemq/transport.h"
 
@@ -41,7 +43,10 @@ namespace tubemq {
 class ConnectionPool : noncopyable {
  public:
   explicit ConnectionPool(ExecutorPoolPtr& executor_pool)
-      : executor_pool_(executor_pool), regular_timer_(executor_pool_->Get()->CreateSteadyTimer()) {}
+      : executor_pool_(executor_pool), regular_timer_(executor_pool_->Get()->CreateSteadyTimer()) {
+    regular_timer_->expires_after(std::chrono::seconds(kRegularTimerSecond));
+    regular_timer_->async_wait([this](const std::error_code& ec) { ClearInvalidConnect(ec); });
+  }
   ~ConnectionPool() { Clear(); }
 
   void Clear() {
@@ -50,6 +55,28 @@ class ConnectionPool : noncopyable {
       connection.second->Close();
     }
     connection_pool_.clear();
+  }
+
+  void ClearInvalidConnect(const std::error_code& ec) {
+    if (ec) {
+      return;
+    }
+    for (auto it = connection_pool_.begin(); it != connection_pool_.end();) {
+      if (it->second->IsStop()) {
+        LOG_INFO("connection pool clear stop connect:%s", it->second->ToString().c_str());
+        it = connection_pool_.erase(it);
+        continue;
+      }
+      if (it->second->GetRecvTime() + rpc_config::kRpcInvalidConnectOverTime < std::time(nullptr)) {
+        it->second->Close();
+        it = connection_pool_.erase(it);
+        LOG_ERROR("connection pool clear overtime connect:%s", it->second->ToString().c_str());
+        continue;
+      }
+      ++it;
+    }
+    regular_timer_->expires_after(std::chrono::seconds(kRegularTimerSecond));
+    regular_timer_->async_wait([this](const std::error_code& ec) { ClearInvalidConnect(ec); });
   }
 
   ConnectionPtr GetConnection(RequestContextPtr& request) {
@@ -89,6 +116,7 @@ class ConnectionPool : noncopyable {
   std::unordered_map<std::string, ConnectionPtr> connection_pool_;
   ExecutorPoolPtr executor_pool_;
   SteadyTimerPtr regular_timer_;
+  static const uint32_t kRegularTimerSecond = 20;
   typedef std::unique_lock<std::mutex> Lock;
 };
 
