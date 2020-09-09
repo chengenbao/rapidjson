@@ -67,7 +67,7 @@ int main(int argc, char* argv[]) {
   }
   result = consumer_config.SetGroupConsumeTarget(err_info, group_name, topic_list);
   if (!result) {
-    printf("\n Set GroupConsume Target failure: %s\n",err_info.c_str());
+    printf("\n Set GroupConsume Target failure: %s\n", err_info.c_str());
     return -1;
   }
   result = StartTubeMQService(err_info, conf_file);
@@ -91,16 +91,16 @@ int main(int argc, char* argv[]) {
     if (result) {
       // 2.1.1  if success, process message
       list<Message> msgs = gentRet.GetMessageList();
-      printf(" GetMessage success, msssage count =%ld \n",msgs.size());
+      printf(" GetMessage success, msssage count =%ld \n", msgs.size());
       // 2.1.2 confirm message result
       consumer_1.Confirm(gentRet.GetConfirmContext(), true, confirm_result);
     } else {
       // 2.2.1 if failure, check error code
-      // if no partitions assigned, all partitions in use, 
+      // if no partitions assigned, all partitions in use,
       //    or all partitons idle, sleep and retry
-      if (gentRet.GetErrCode() == err_code::kErrNoPartAssigned 
+      if (gentRet.GetErrCode() == err_code::kErrNoPartAssigned
         || gentRet.GetErrCode() == err_code::kErrAllPartInUse
-        || gentRet.GetErrCode() == err_code::kErrAllPartWaiting){
+        || gentRet.GetErrCode() == err_code::kErrAllPartWaiting) {
         std::this_thread::sleep_for(std::chrono::milliseconds(300));
       } else {
         // 2.2.2 if another error, print error message

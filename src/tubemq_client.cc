@@ -771,7 +771,7 @@ void TubeMQConsumer::processHeartBeat2Broker(NodeInfo broker_info) {
   request->request_id_ = Singleton<UniqueSeqId>::Instance().Next();
   req_protocol->request_id_ = request->request_id_;
   req_protocol->rpc_read_timeout_ = config_.GetRpcReadTimeoutMs() - 500;
-  
+
   LOG_TRACE("[Heartbeat2Broker] send hb request to (%s)!", broker_info.GetAddrInfo().c_str());
 
   // send message to target

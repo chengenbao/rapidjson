@@ -72,7 +72,7 @@ class RmtDataCacheCsm {
   void AddNewPartition(const PartitionExt& partition_ext);
   bool SelectPartition(int32_t& error_code, string &err_info,
            PartitionExt& partition_ext, string& confirm_context);
-  void BookedPartionInfo(const string& partition_key, int64_t curr_offset);  
+  void BookedPartionInfo(const string& partition_key, int64_t curr_offset);
   void BookedPartionInfo(const string& partition_key, int64_t curr_offset,
                             int32_t error_code, bool esc_limit, int32_t msg_size,
                             int64_t limit_dlt, int64_t cur_data_dlt, bool require_slow);
