@@ -101,7 +101,7 @@ int32_t Utils::Crc32(const string &buf) {
     unsigned char c_data = buf[i];
     crc = crc32_tab[(crc ^ c_data) & 0xFF] ^ (crc >> 8);
   }
-  return ~crc;
+  return ((~crc)& 0x7FFFFFFF);
 }
 
 string Utils::Trim(const string& source) {
