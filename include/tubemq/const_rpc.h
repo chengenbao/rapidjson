@@ -35,7 +35,8 @@ static const uint32_t kRpcMaxFrameListCnt = (uint32_t)((1024 * 1024 * 8) / kRpcM
 static const uint32_t kRpcProtocolVersion = 2;
 
 // rps network const
-static const uint32_t kRpcEnsureWriteableBytes = 64 * 1024;
+static const uint32_t kRpcConnectInitBufferSize = 64 * 1024;
+static const uint32_t kRpcEnsureWriteableBytes = 16 * 1024;
 static constexpr uint32_t kRpcRecvBufferMaxBytes =
     uint32_t(kRpcMaxFrameListCnt * kRpcMaxBufferSize * 2 + 1024);
 static const uint32_t kRpcInvalidConnectOverTime = 60 * 3;  // second

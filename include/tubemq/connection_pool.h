@@ -61,6 +61,7 @@ class ConnectionPool : noncopyable {
     if (ec) {
       return;
     }
+    Lock lock(mutex_);
     for (auto it = connection_pool_.begin(); it != connection_pool_.end();) {
       if (it->second->IsStop()) {
         LOG_INFO("connection pool clear stop connect:%s", it->second->ToString().c_str());
