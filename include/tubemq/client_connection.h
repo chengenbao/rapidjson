@@ -56,7 +56,7 @@ class ClientConnection : public Connection, public std::enable_shared_from_this<
       : Connection(ip, port),
         executor_(executor),
         socket_(std::move(executor->CreateTcpSocket())),
-        recv_buffer_(std::make_shared<Buffer>()),
+        recv_buffer_(std::make_shared<Buffer>(rpc_config::kRpcConnectInitBufferSize)),
         deadline_(std::move(executor->CreateSteadyTimer())) {
     auto endpoints = executor_->CreateTcpResolver()->resolve(ip_, std::to_string(port_));
     connect(endpoints);
