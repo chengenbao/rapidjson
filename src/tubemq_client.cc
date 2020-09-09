@@ -1221,6 +1221,7 @@ bool TubeMQConsumer::processRegResponseB2C(int32_t& error_code, string& err_info
 void TubeMQConsumer::convertMessages(int32_t& msg_size, list<Message>& message_list,
                                      bool filter_consume, const string& topic_name,
                                      GetMessageResponseB2C& rsp_b2c) {
+  // #lizard forgives
   msg_size = 0;
   message_list.clear();
 
