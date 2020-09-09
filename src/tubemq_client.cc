@@ -166,7 +166,7 @@ bool TubeMQConsumer::GetMessage(ConsumerResult& result) {
     result.SetFailureResult(err_code::kErrClientStop, "TubeMQ Client stopped!");
     return false;
   }
-  if (!IsConsumeReady(1000)) {
+  if (!IsConsumeReady(5000)) {
     error_code = err_code::kErrNoPartAssigned;
     err_info = "No partition info in local cache, please retry later!";
     result.SetFailureResult(error_code, err_info);
