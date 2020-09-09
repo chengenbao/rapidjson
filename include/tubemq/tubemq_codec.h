@@ -185,13 +185,12 @@ class TubeMQCodec final : public CodecProtocol {
   // return code: -1 failed; 0-Unfinished; > 0 package buffer size
   virtual int32_t Check(BufferPtr &in, Any &out, uint32_t &request_id, bool &has_request_id,
                         size_t &package_length) {
-    LOG_TRACE("Check: received network message, check data begin:%s", in->String().c_str());
     // check package is valid
     if (in->length() < 12) {
+      package_length = 12;
       LOG_TRACE("Check: data's length < 12, is %ld, out", in->length());
       return 0;
     }
-    size_t start_index = in->PrependableBytes();
     // check frameToken
     uint32_t token = in->ReadUint32();
     if (token != rpc_config::kRpcPrtBeginToken) {
@@ -200,7 +199,6 @@ class TubeMQCodec final : public CodecProtocol {
     }
     // get request_id
     request_id = in->ReadUint32();
-    // check list size
     uint32_t list_size = in->ReadUint32();
     if (list_size > rpc_config::kRpcMaxFrameListCnt) {
       LOG_TRACE("Check: list_size over max, is %d, out", list_size);
@@ -211,6 +209,10 @@ class TubeMQCodec final : public CodecProtocol {
     auto check_buf = in->Slice();
     for (uint32_t i = 0; i < list_size; i++) {
       if (check_buf->length() < 4) {
+        package_length += 4;
+        if (i > 0) {
+          package_length += i * rpc_config::kRpcMaxBufferSize;
+        }
         LOG_TRACE("Check: buffer Remaining length < 4, is %ld, out", check_buf->length());
         return 0;
       }
@@ -225,21 +227,31 @@ class TubeMQCodec final : public CodecProtocol {
         return -1;
       }
       if (item_len > check_buf->length()) {
+        package_length += 4 + item_len;
+        if (i > 0) {
+          package_length += i * rpc_config::kRpcMaxBufferSize;
+        }
         LOG_TRACE("Check: item_len(%d) > remaining length(%ld), out", item_len,
                   check_buf->length());
         return 0;
       }
       check_buf->Skip(item_len);
     }
+
+    LOG_TRACE("Check: end, in->String = %s, check_buf = %s",
+      in->String().c_str(), check_buf->String().c_str());
+
     has_request_id = true;
+    uint32_t readed_len = 12;
     auto buf = std::make_shared<Buffer>();
     for (uint32_t i = 0; i < list_size; i++) {
       item_len = in->ReadUint32();
+      readed_len += 4;
       buf->Write(in->data(), item_len);
+      readed_len += item_len;
       in->Skip(item_len);
     }
     out = buf;
-    size_t readed_len = in->PrependableBytes() - start_index;
     LOG_TRACE("Check: received message check finished, request_id=%d, readed_len:%ld, in:%s",
               request_id, readed_len, in->String().c_str());
     return readed_len;
@@ -302,7 +314,8 @@ class TubeMQCodec final : public CodecProtocol {
     }
     return block_cnt;
   }
-};
+
+ };
 }  // namespace tubemq
 #endif
 
