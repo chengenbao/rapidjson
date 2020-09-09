@@ -88,7 +88,7 @@ int main(int argc, char* argv[]) {
   do {
     // 1. get Message;
     result = consumer_1.GetMessage(gentRet);
-    if(result) {
+    if (result) {
       // 2.1.1  if success, process message
       list<Message> msgs = gentRet.GetMessageList();
       printf(" GetMessage success, msssage count =%ld \n",msgs.size());
@@ -119,7 +119,7 @@ int main(int argc, char* argv[]) {
 
   getchar();
   result = StopTubeMQService(err_info);
-  if(!result) {
+  if (!result) {
     printf(" *** StopTubeMQService failure, reason is %s \n", err_info.c_str());
   }
 
