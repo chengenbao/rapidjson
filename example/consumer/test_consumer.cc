@@ -108,7 +108,7 @@ int main(int argc, char* argv[]) {
           gentRet.GetErrCode(), gentRet.GetErrMessage().c_str());
       }
     }
-    // only get  a period
+    // used for test, consume 10 minutes only
     if (Utils::GetCurrentTimeMillis() - start_time > 1 * 60 * 1000) {
       break;
     }

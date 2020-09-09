@@ -155,6 +155,8 @@ bool TubeMQConsumer::GetMessage(ConsumerResult& result) {
   string err_info;
   PartitionExt partition_ext;
   string confirm_context;
+  
+  LOG_TRACE("[CONSUMER] GetMessage begin, client=%s", client_uuid_.c_str());
 
   if (!TubeMQService::Instance()->IsRunning()) {
     result.SetFailureResult(err_code::kErrServerStop, "TubeMQ Service stopped!");
@@ -188,9 +190,15 @@ bool TubeMQConsumer::GetMessage(ConsumerResult& result) {
   request->request_id_ = Singleton<UniqueSeqId>::Instance().Next();
   req_protocol->request_id_ = request->request_id_;
   req_protocol->rpc_read_timeout_ = config_.GetRpcReadTimeoutMs() - 500;
+
+  LOG_TRACE("[CONSUMER] GetMessage select partition=%s, client=%s",
+    partition_ext.GetPartitionKey().c_str(), client_uuid_.c_str());
+
   // send message to target
   ResponseContext response_context;
   ErrorCode error = SyncRequest(response_context, request, req_protocol);
+  LOG_TRACE("[CONSUMER] GetMessage received response, ret_code=%d, client=%s",
+    error.Value(), client_uuid_.c_str());
   if (error.Value() == err_code::kErrSuccess) {
     // process response
     auto rsp = any_cast<TubeMQCodec::RspProtocolPtr>(response_context.rsp_);
@@ -242,6 +250,11 @@ bool TubeMQConsumer::Confirm(const string& confirm_context, bool is_consumed,
     result.SetFailureResult(err_code::kErrClientStop, "TubeMQ Client stopped!");
     return false;
   }
+
+  LOG_TRACE("[CONSUMER] Confirm begin, confirm_context = %s, is_consumed =%d, client=%s",
+    confirm_context.c_str(), is_consumed, client_uuid_.c_str());
+
+  
   string token1 = delimiter::kDelimiterAt;
   string token2 = delimiter::kDelimiterColon;
   string::size_type pos1, pos2;
@@ -296,9 +309,17 @@ bool TubeMQConsumer::Confirm(const string& confirm_context, bool is_consumed,
   request->request_id_ = Singleton<UniqueSeqId>::Instance().Next();
   req_protocol->request_id_ = request->request_id_;
   req_protocol->rpc_read_timeout_ = config_.GetRpcReadTimeoutMs() - 500;
+
+  LOG_TRACE("[CONSUMER] Confirm to %s, client=%s",
+    partition_ext.GetPartitionKey().c_str(), client_uuid_.c_str());
+
   // send message to target
   ResponseContext response_context;
   ErrorCode error = SyncRequest(response_context, request, req_protocol);
+  
+  LOG_TRACE("[CONSUMER] Confirm response result=%d, client=%s",
+    error.Value(), client_uuid_.c_str());
+
   if (error.Value() == err_code::kErrSuccess) {
     // process response
     auto rsp = any_cast<TubeMQCodec::RspProtocolPtr>(response_context.rsp_);
@@ -329,6 +350,9 @@ bool TubeMQConsumer::Confirm(const string& confirm_context, bool is_consumed,
   rmtdata_cache_.BookedPartionInfo(part_key, curr_offset);
   rmtdata_cache_.RelPartition(err_info, sub_info_.IsFilterConsume(topic_name), confirm_context,
                               is_consumed);
+  LOG_TRACE("[CONSUMER] Confirm response finished, result=%d, client=%s",
+    result.IsSuccess(), client_uuid_.c_str());
+  
   return result.IsSuccess();
 }
 
@@ -1199,10 +1223,16 @@ void TubeMQConsumer::convertMessages(int32_t& msg_size, list<Message>& message_l
                                      GetMessageResponseB2C& rsp_b2c) {
   msg_size = 0;
   message_list.clear();
+
+  LOG_TRACE("[CONSUMER] convertMessages, message size=%d, client=%s",
+    rsp_b2c.messages_size(), client_uuid_.c_str());
+  
   if (rsp_b2c.messages_size() == 0) {
     return;
   }
+
   for (int i = 0; i < rsp_b2c.messages_size(); i++) {
+    
     TransferedMessage tsfMsg = rsp_b2c.messages(i);
     int32_t flag = tsfMsg.flag();
     int64_t message_id = tsfMsg.messageid();
@@ -1212,6 +1242,10 @@ void TubeMQConsumer::convertMessages(int32_t& msg_size, list<Message>& message_l
     memcpy(&payload_data[0], tsfMsg.payloaddata().c_str(), payload_length);
     int32_t calc_checksum = Utils::Crc32(&payload_data[0], payload_length);
     if (in_check_sum != calc_checksum) {
+
+      LOG_TRACE("[CONSUMER] convertMessages [%d], Crc32 failure, in=%d, calc=%d, client=%s",
+        i, in_check_sum, calc_checksum, client_uuid_.c_str());
+
       continue;
     }
     int read_pos = 0;
@@ -1219,12 +1253,18 @@ void TubeMQConsumer::convertMessages(int32_t& msg_size, list<Message>& message_l
     map<string, string> properties;
     if ((flag & tb_config::kMsgFlagIncProperties) == 1) {
       if (payload_length < 4) {
+
+        LOG_TRACE("[CONSUMER] convertMessages [%d], payload_length(%d) < 4, client=%s",
+          i, payload_length, client_uuid_.c_str());
+
         continue;
       }
       int32_t attr_len = ntohl(*(int*)(&payload_data[0]));
       read_pos += 4;
       data_len -= 4;
       if (attr_len > data_len) {
+        LOG_TRACE("[CONSUMER] convertMessages [%d], attr_len(%d) > data_len(%d), client=%s",
+          i, attr_len, data_len, client_uuid_.c_str());
         continue;
       }
       string attribute(&payload_data[0] + read_pos, attr_len);
@@ -1239,6 +1279,8 @@ void TubeMQConsumer::convertMessages(int32_t& msg_size, list<Message>& message_l
           if (it != topic_filter_map.end()) {
             set<string> filters = it->second;
             if (filters.find(msg_key) == filters.end()) {
+              LOG_TRACE("[CONSUMER] convertMessages [%d], filter consume, not matched, client=%s",
+                i, client_uuid_.c_str());
               continue;
             }
           }
@@ -1250,6 +1292,10 @@ void TubeMQConsumer::convertMessages(int32_t& msg_size, list<Message>& message_l
     message_list.push_back(message);
     msg_size += data_len;
   }
+
+  LOG_TRACE("[CONSUMER] convertMessages finished, count=%ld, client=%s",
+    message_list.size(), client_uuid_.c_str());
+
   return;
 }
 
@@ -1258,9 +1304,16 @@ bool TubeMQConsumer::processGetMessageRspB2C(ConsumerResult& result, PeerInfo& p
                                              const string& confirm_context,
                                              const TubeMQCodec::RspProtocolPtr& rsp) {
   string err_info;
+
+  LOG_TRACE("[CONSUMER] processGetMessageRspB2C begin, client=%s", client_uuid_.c_str());
+  
   if (!rsp->success_) {
     rmtdata_cache_.RelPartition(err_info, filter_consume, confirm_context, false);
     result.SetFailureResult(rsp->code_, rsp->error_msg_, partition_ext.GetTopic(), peer_info);
+
+    LOG_TRACE("[CONSUMER] processGetMessageRspB2C failure, code_=%d, error_msg_=%s, client=%s",
+      rsp->code_, rsp->error_msg_.c_str(), client_uuid_.c_str());
+
     return false;
   }
   GetMessageResponseB2C rsp_b2c;
@@ -1271,8 +1324,15 @@ bool TubeMQConsumer::processGetMessageRspB2C(ConsumerResult& result, PeerInfo& p
     result.SetFailureResult(err_code::kErrServerError,
                             "Parse GetMessageResponseB2C response failure!",
                             partition_ext.GetTopic(), peer_info);
+
+    LOG_TRACE("[CONSUMER] processGetMessageRspB2C parse failure, client=%s", client_uuid_.c_str());
+
     return false;
   }
+
+  LOG_TRACE("[CONSUMER] processGetMessageRspB2C result=%d, client=%s",
+    rsp_b2c.errcode(), client_uuid_.c_str());
+
   switch (rsp_b2c.errcode()) {
     case err_code::kErrSuccess: {
       bool esc_limit = (rsp_b2c.has_escflowctrl() && rsp_b2c.escflowctrl());
