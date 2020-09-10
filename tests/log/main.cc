@@ -32,7 +32,7 @@ using namespace tubemq;
 
 AtomicInteger ati;
 
-void log() {
+void logfunc() {
   while (1) {
     LOG_DEBUG("atomic:%d", ati.IncrementAndGet());
   }
@@ -52,10 +52,10 @@ int main() {
 
   ati.GetAndSet(1);
   GetLogger().Init("./tubemq", tubemq::Logger::Level(4));
-  std::thread t1(log);
-  std::thread t2(log);
-  std::thread t3(log);
-  std::thread t4(log);
+  std::thread t1(logfunc);
+  std::thread t2(logfunc);
+  std::thread t3(logfunc);
+  std::thread t4(logfunc);
   t1.join();
   return 0;
 }
