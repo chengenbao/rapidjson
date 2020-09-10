@@ -23,9 +23,9 @@
 #include <string>
 #include <thread>
 
-#include "tubemq/atomic_def.h"
-#include "tubemq/buffer.h"
-#include "tubemq/logger.h"
+#include "buffer.h"
+#include "logger.h"
+#include "tubemq/tubemq_atomic.h"
 
 using namespace std;
 using namespace tubemq;

@@ -20,7 +20,6 @@
 #include "tubemq/tubemq_message.h"
 
 #include <string.h>
-
 #include <sstream>
 
 #include "const_config.h"

@@ -23,7 +23,7 @@
 #include <string>
 #include <thread>
 
-#include "tubemq/thread_pool.h"
+#include "thread_pool.h"
 
 using namespace std;
 using namespace tubemq;

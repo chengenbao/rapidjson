@@ -24,7 +24,7 @@
 #include <string>
 #include <thread>
 
-#include "tubemq/executor_pool.h"
+#include "executor_pool.h"
 
 using namespace std;
 using namespace tubemq;
