@@ -24,9 +24,9 @@
 #include <string>
 #include <thread>
 
-#include "tubemq/connection_pool.h"
-#include "tubemq/executor_pool.h"
-#include "tubemq/logger.h"
+#include "connection_pool.h"
+#include "executor_pool.h"
+#include "logger.h"
 
 using namespace tubemq;
 
