@@ -18,4 +18,4 @@
 #
 
 
-tubemq_add_example(log main.cc)
+tubemq_add_tests(chat_client chat_client.cc)

@@ -124,10 +124,10 @@ void TubeMQService::iniLogger(const Fileini& fileini, const string& sector) {
   int32_t log_num = 10;
   int32_t log_size = 10;
   int32_t log_level = 4;
-  string log_path = "../log/tubemq.log";
+  string log_path = "../log/tubemq";
   fileini.GetValue(err_info, sector, "log_num", log_num, 10);
   fileini.GetValue(err_info, sector, "log_size", log_size, 100);
-  fileini.GetValue(err_info, sector, "log_path", log_path, "../log/tubemq.log");
+  fileini.GetValue(err_info, sector, "log_path", log_path, "../log/tubemq");
   fileini.GetValue(err_info, sector, "log_level", log_level, 4);
   log_level = TUBEMQ_MID(log_level, 0, 4);
   GetLogger().Init(log_path, Logger::Level(log_level), log_size, log_num);
@@ -140,6 +140,15 @@ void TubeMQService::iniXfsThread(const Fileini& fileini, const string& sector) {
   TUBEMQ_MID(dns_xfs_period_ms, tb_config::kMaxIntValue, 10000);
   dns_xfs_thread_ = std::thread(thread_task_dnsxfs, dns_xfs_period_ms);
 }
+
+void TubeMQService::iniXfsThread(const Fileini& fileini, const string& sector) {
+  string err_info;
+  int32_t dns_xfs_period_ms = 30 * 1000;
+  fileini.GetValue(err_info, sector, "dns_xfs_period_ms", dns_xfs_period_ms, 30 * 1000);
+  TUBEMQ_MID(dns_xfs_period_ms, tb_config::kMaxIntValue, 10000);
+  dns_xfs_thread_ = std::thread(thread_task_dnsxfs, dns_xfs_period_ms);
+}
+
 
 int32_t TubeMQService::GetClientObjCnt() {
   lock_guard<mutex> lck(mutex_);

@@ -18,4 +18,4 @@
 #
 
 
-tubemq_add_example(executor_pool main.cc)
+tubemq_add_tests(executor_pool main.cc)

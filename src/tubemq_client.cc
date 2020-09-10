@@ -73,7 +73,7 @@ bool TubeMQConsumer::Start(string& err_info,
   }
   // check status
   if (!status_.CompareAndSet(0, 1)) {
-    err_info = "Duplicated call start api, if you need re-start client, please call ShutDown first!";
+    err_info = "Duplicated call!";
     return false;
   }
   BaseConsumer* rmt_client = new BaseConsumer();
@@ -120,7 +120,7 @@ bool TubeMQConsumer::GetMessage(ConsumerResult& result) {
     return false;
   }
   if (client_id_ == tb_config::kInvalidValue) {
-    result.SetFailureResult(err_code::kErrBadRequest,
+    result.SetFailureResult(err_code::kErrClientStop,
       "Tube client not call init function, please initial first!");
     return false;
   }
@@ -148,7 +148,7 @@ bool TubeMQConsumer::Confirm(const string& confirm_context,
     return false;
   }
   if (client_id_ == tb_config::kInvalidValue) {
-    result.SetFailureResult(err_code::kErrBadRequest,
+    result.SetFailureResult(err_code::kErrClientStop,
       "Tube client not call init function, please initial first!");
     return false;
   }
