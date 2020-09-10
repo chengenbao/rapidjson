@@ -81,7 +81,7 @@ int main(int argc, char* argv[]) {
 
   ConsumerResult gentRet;
   ConsumerResult confirm_result;
-  int64_t start_time = time();
+  int64_t start_time = time(NULL);
   do {
     // 1. get Message;
     result = consumer_1.GetMessage(gentRet);
@@ -106,7 +106,7 @@ int main(int argc, char* argv[]) {
       }
     }
     // used for test, consume 10 minutes only
-    if (time() - start_time > 60) {
+    if (time(NULL) - start_time > 60) {
       break;
     }
   } while (true);
