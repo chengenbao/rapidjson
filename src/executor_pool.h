@@ -30,7 +30,7 @@
 
 #include <asio.hpp>
 #include <asio/ssl.hpp>
-#include "tubemq/noncopyable.h"
+#include "noncopyable.h"
 
 namespace tubemq {
 

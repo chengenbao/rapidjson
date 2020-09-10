@@ -24,8 +24,8 @@
 #include <memory>
 #include <string>
 
-#include "tubemq/any.h"
-#include "tubemq/buffer.h"
+#include "any.h"
+#include "buffer.h"
 
 namespace tubemq {
 

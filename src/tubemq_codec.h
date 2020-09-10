@@ -32,15 +32,15 @@
 #include "BrokerService.pb.h"
 #include "MasterService.pb.h"
 #include "RPC.pb.h"
-#include "tubemq/any.h"
-#include "tubemq/buffer.h"
-#include "tubemq/codec_protocol.h"
-#include "tubemq/const_config.h"
-#include "tubemq/const_rpc.h"
-#include "tubemq/logger.h"
+#include "any.h"
+#include "buffer.h"
+#include "codec_protocol.h"
+#include "const_config.h"
+#include "const_rpc.h"
+#include "logger.h"
 #include "tubemq/tubemq_errcode.h"
 #include "tubemq/tubemq_return.h"
-#include "tubemq/utils.h"
+#include "utils.h"
 
 namespace tubemq {
 

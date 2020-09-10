@@ -17,46 +17,44 @@
  * under the License.
  */
 
-#ifndef _TUBEMQ_SINGLETON_H
-#define _TUBEMQ_SINGLETON_H
+#ifndef _TUBEMQ_TRANSPORT_H_
+#define _TUBEMQ_TRANSPORT_H_
 
-#include <assert.h>
-#include <stdlib.h>
+#include <string>
 
-#include <mutex>
-#include <thread>
-
-#include "tubemq/noncopyable.h"
+#include "any.h"
+#include "buffer.h"
+#include "codec_protocol.h"
+#include "future.h"
 
 namespace tubemq {
 
-template <typename T>
-class Singleton : noncopyable {
- public:
-  static T& Instance() {
-    std::call_once(once_, Singleton::init);
-    assert(value_ != nullptr);
-    return *value_;
-  }
+// On Close Callback
+using CloseNotifier = std::function<void(const std::error_code*)>;
 
- protected:
-  Singleton() {}
-  ~Singleton() {}
+struct ResponseContext;
+using ResponseContextPtr = std::shared_ptr<ResponseContext>;
 
- private:
-  static void init() { value_ = new T(); }
+struct RequestContext {
+  uint32_t request_id_{0};
+  std::string ip_;
+  uint32_t port_;
+  uint32_t timeout_{0};  // millisecond
+  uint32_t connection_pool_id_{0};
+  uint64_t create_time_ms_{0};  // create time millisecond
 
- private:
-  static std::once_flag once_;
-  static T* value_;
+  CodecProtocolPtr codec_;
+  CloseNotifier close_notifier_;
+
+  BufferPtr buf_;
+  Promise<ResponseContext> promise_;
 };
+using RequestContextPtr = std::shared_ptr<RequestContext>;
 
-template <typename T>
-std::once_flag Singleton<T>::once_;
-
-template <typename T>
-T* Singleton<T>::value_ = nullptr;
+struct ResponseContext {
+  Any rsp_;
+};
 
 }  // namespace tubemq
 
-#endif  // _TUBEMQ_SINGLETON_H
+#endif  // _TUBEMQ_TRANSPORT_H_

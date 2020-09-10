@@ -17,10 +17,10 @@
  * under the License.
  */
 
-#include "tubemq/client_subinfo.h"
+#include "client_subinfo.h"
 
-#include "tubemq/const_config.h"
-#include "tubemq/utils.h"
+#include "const_config.h"
+#include "utils.h"
 
 
 

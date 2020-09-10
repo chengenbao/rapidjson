@@ -25,7 +25,6 @@
 #include <list>
 #include <string>
 
-#include "tubemq/meta_info.h"
 #include "tubemq/tubemq_message.h"
 
 
@@ -33,15 +32,17 @@
 
 namespace tubemq {
 
+using std::list;
 using std::string;
+
 
 
 class PeerInfo {
  public:
   PeerInfo();
-  PeerInfo(const Partition& partition, int64_t offset);
+  PeerInfo(const string& broker_host, uint32_t partition_id,
+    const string& partiton_key, int64_t offset);
   PeerInfo& operator=(const PeerInfo& target);
-  void SetMsgSourceInfo(const Partition& partition, int64_t offset);
   const uint32_t GetPartitionId() const { return partition_id_; }
   const string& GetBrokerHost() const { return broker_host_; }
   const string& GetPartitionKey() const { return partition_key_; }

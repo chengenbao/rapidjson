@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "tubemq/flowctrl_def.h"
+#include "flowctrl_def.h"
 
 #include <stdio.h>
 #include <time.h>
@@ -25,9 +25,9 @@
 
 #include <sstream>
 
-#include "tubemq/const_config.h"
-#include "tubemq/logger.h"
-#include "tubemq/utils.h"
+#include "const_config.h"
+#include "logger.h"
+#include "utils.h"
 
 namespace tubemq {
 

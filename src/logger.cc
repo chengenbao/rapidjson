@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "tubemq/logger.h"
+#include "logger.h"
 
 #include <log4cplus/fileappender.h>
 #include <log4cplus/layout.h>
@@ -27,7 +27,7 @@
 
 #include <string>
 
-#include "tubemq/singleton.h"
+#include "singleton.h"
 
 namespace tubemq {
 

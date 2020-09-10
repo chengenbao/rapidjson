@@ -34,12 +34,12 @@
 #include <unordered_map>
 
 #include "asio.hpp"
-#include "tubemq/connection.h"
-#include "tubemq/const_rpc.h"
-#include "tubemq/executor_pool.h"
-#include "tubemq/logger.h"
-#include "tubemq/noncopyable.h"
-#include "tubemq/transport.h"
+#include "connection.h"
+#include "const_rpc.h"
+#include "executor_pool.h"
+#include "logger.h"
+#include "noncopyable.h"
+#include "transport.h"
 
 namespace tubemq {
 

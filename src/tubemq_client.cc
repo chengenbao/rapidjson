@@ -17,24 +17,24 @@
  * under the License.
  */
 
-#include "tubemq/tubemq_client.h"
+#include "tubemq_client.h"
 
 #include <signal.h>
 #include <unistd.h>
 
 #include <sstream>
 
-#include "tubemq/client_service.h"
-#include "tubemq/const_config.h"
-#include "tubemq/const_rpc.h"
-#include "tubemq/logger.h"
-#include "tubemq/singleton.h"
-#include "tubemq/transport.h"
+#include "client_service.h"
+#include "const_config.h"
+#include "const_rpc.h"
+#include "logger.h"
+#include "singleton.h"
+#include "transport.h"
 #include "tubemq/tubemq_config.h"
 #include "tubemq/tubemq_errcode.h"
-#include "tubemq/tubemq_transport.h"
-#include "tubemq/utils.h"
-#include "tubemq/version.h"
+#include "tubemq_transport.h"
+#include "utils.h"
+#include "version.h"
 
 namespace tubemq {
 
@@ -178,7 +178,8 @@ bool TubeMQConsumer::GetMessage(ConsumerResult& result) {
   }
   long curr_offset = tb_config::kInvalidValue;
   bool filter_consume = sub_info_.IsFilterConsume(partition_ext.GetTopic());
-  PeerInfo peer_info(partition_ext, curr_offset);
+  PeerInfo peer_info(partition_ext.GetBrokerHost(), partition_ext.GetPartitionId(),
+    partition_ext.GetPartitionKey(), curr_offset);
   auto request = std::make_shared<RequestContext>();
   TubeMQCodec::ReqProtocolPtr req_protocol = TubeMQCodec::GetReqProtocol();
   // build getmessage request
@@ -296,7 +297,8 @@ bool TubeMQConsumer::Confirm(const string& confirm_context, bool is_consumed,
     return false;
   }
   long curr_offset = tb_config::kInvalidValue;
-  PeerInfo peer_info(partition_ext, curr_offset);
+  PeerInfo peer_info(partition_ext.GetBrokerHost(), partition_ext.GetPartitionId(),
+    partition_ext.GetPartitionKey(), curr_offset);
   auto request = std::make_shared<RequestContext>();
   TubeMQCodec::ReqProtocolPtr req_protocol = TubeMQCodec::GetReqProtocol();
   // build CommitC2B request

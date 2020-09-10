@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "tubemq/client_connection.h"
+#include "client_connection.h"
 
 using namespace tubemq;
 

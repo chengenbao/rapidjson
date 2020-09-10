@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "tubemq/utils.h"
+#include "utils.h"
 
 #include <arpa/inet.h>
 #include <ctype.h>
@@ -34,8 +34,8 @@
 #include <unistd.h>
 #include <sstream>
 #include <vector>
-#include "tubemq/const_config.h"
-#include "tubemq/const_rpc.h"
+#include "const_config.h"
+#include "const_rpc.h"
 
 
 
@@ -97,7 +97,7 @@ static const uint32_t crc32_tab[256] = {
 
 int32_t Utils::Crc32(const string &buf) {
   uint32_t crc = ~0U;
-  for (int32_t i = 0; i < buf.size(); ++i) {
+  for (uint32_t i = 0; i < buf.size(); ++i) {
     unsigned char c_data = buf[i];
     crc = crc32_tab[(crc ^ c_data) & 0xFF] ^ (crc >> 8);
   }

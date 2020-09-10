@@ -26,7 +26,7 @@
 #include <mutex>
 #include <set>
 #include <string>
-#include "tubemq/atomic_def.h"
+#include "atomic_def.h"
 #include "tubemq/tubemq_config.h"
 
 namespace tubemq {

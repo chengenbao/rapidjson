@@ -17,9 +17,46 @@
  * under the License.
  */
 
-#include "connection.h"
+#ifndef _TUBEMQ_SINGLETON_H
+#define _TUBEMQ_SINGLETON_H
 
-using namespace tubemq;
+#include <assert.h>
+#include <stdlib.h>
 
-UniqueSeqId Connection::unique_id_;
+#include <mutex>
+#include <thread>
 
+#include "noncopyable.h"
+
+namespace tubemq {
+
+template <typename T>
+class Singleton : noncopyable {
+ public:
+  static T& Instance() {
+    std::call_once(once_, Singleton::init);
+    assert(value_ != nullptr);
+    return *value_;
+  }
+
+ protected:
+  Singleton() {}
+  ~Singleton() {}
+
+ private:
+  static void init() { value_ = new T(); }
+
+ private:
+  static std::once_flag once_;
+  static T* value_;
+};
+
+template <typename T>
+std::once_flag Singleton<T>::once_;
+
+template <typename T>
+T* Singleton<T>::value_ = nullptr;
+
+}  // namespace tubemq
+
+#endif  // _TUBEMQ_SINGLETON_H

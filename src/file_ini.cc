@@ -17,15 +17,15 @@
  * under the License.
  */
 
-#include "tubemq/file_ini.h"
+#include "file_ini.h"
 
 #include <stdlib.h>
 
 #include <fstream>
 #include <sstream>
 
-#include "tubemq/const_config.h"
-#include "tubemq/utils.h"
+#include "const_config.h"
+#include "utils.h"
 
 namespace tubemq {
 

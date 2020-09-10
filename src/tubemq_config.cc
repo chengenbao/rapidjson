@@ -22,9 +22,9 @@
 #include <sstream>
 #include <vector>
 
-#include "tubemq/const_config.h"
-#include "tubemq/const_rpc.h"
-#include "tubemq/utils.h"
+#include "const_config.h"
+#include "const_rpc.h"
+#include "utils.h"
 
 namespace tubemq {
 

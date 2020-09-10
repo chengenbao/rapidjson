@@ -17,17 +17,17 @@
  * under the License.
  */
 
-#include "tubemq/rmt_data_cache.h"
+#include "rmt_data_cache.h"
 
 #include <stdlib.h>
 
 #include <string>
 
-#include "tubemq/client_service.h"
-#include "tubemq/const_config.h"
-#include "tubemq/logger.h"
-#include "tubemq/meta_info.h"
-#include "tubemq/utils.h"
+#include "client_service.h"
+#include "const_config.h"
+#include "logger.h"
+#include "meta_info.h"
+#include "utils.h"
 
 namespace tubemq {
 

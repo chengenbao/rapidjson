@@ -31,7 +31,7 @@
 #include <thread>
 #include <vector>
 
-#include "tubemq/noncopyable.h"
+#include "noncopyable.h"
 
 namespace tubemq {
 // ThreadPool use one io_context for thread pool

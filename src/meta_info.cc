@@ -17,16 +17,16 @@
  * under the License.
  */
 
-#include "tubemq/meta_info.h"
+#include "meta_info.h"
 
 #include <stdlib.h>
 
 #include <sstream>
 #include <vector>
 
-#include "tubemq/const_config.h"
+#include "const_config.h"
 #include "tubemq/tubemq_errcode.h"
-#include "tubemq/utils.h"
+#include "utils.h"
 
 namespace tubemq {
 

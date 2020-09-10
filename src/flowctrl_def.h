@@ -30,7 +30,7 @@
 #include <string>
 #include <vector>
 
-#include "tubemq/atomic_def.h"
+#include "atomic_def.h"
 
 namespace tubemq {
 

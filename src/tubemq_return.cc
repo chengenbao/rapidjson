@@ -18,7 +18,7 @@
  */
 
 #include "tubemq/tubemq_return.h"
-#include "tubemq/const_config.h"
+#include "const_config.h"
 
 
 
@@ -32,8 +32,13 @@ PeerInfo::PeerInfo() {
   curr_offset_ = tb_config::kInvalidValue;
 }
 
-PeerInfo::PeerInfo(const Partition& partition, int64_t offset) {
-  SetMsgSourceInfo(partition, offset);
+
+PeerInfo::PeerInfo(const string& broker_host, uint32_t partition_id,
+  const string& partiton_key, int64_t offset) {
+  this->broker_host_ = broker_host;
+  this->partition_id_ = partition_id;
+  this->partition_key_ = partiton_key;
+  this->curr_offset_ = offset;
 }
 
 PeerInfo& PeerInfo::operator=(const PeerInfo& target) {
@@ -45,14 +50,6 @@ PeerInfo& PeerInfo::operator=(const PeerInfo& target) {
   }
   return *this;
 }
-
-void PeerInfo::SetMsgSourceInfo(const Partition& partition, int64_t offset) {
-  partition_id_ = partition.GetPartitionId();
-  broker_host_ = partition.GetBrokerHost();
-  partition_key_ = partition.GetPartitionKey();
-  curr_offset_ = offset;
-}
-
 
 ConsumeOffsetInfo::ConsumeOffsetInfo() {
   partition_key_ = "";

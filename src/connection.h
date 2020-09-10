@@ -32,11 +32,11 @@
 #include <string>
 #include <unordered_map>
 
-#include "tubemq/any.h"
-#include "tubemq/buffer.h"
-#include "tubemq/noncopyable.h"
-#include "tubemq/transport.h"
-#include "tubemq/unique_seq_id.h"
+#include "any.h"
+#include "buffer.h"
+#include "noncopyable.h"
+#include "transport.h"
+#include "unique_seq_id.h"
 
 namespace tubemq {
 
