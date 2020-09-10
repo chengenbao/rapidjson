@@ -34,7 +34,7 @@ AtomicInteger ati;
 
 void logfunc() {
   while (1) {
-    LOG_DEBUG("atomic:%d", ati.IncrementAndGet());
+    LOG_TRACE("atomic:%d", ati.IncrementAndGet());
   }
 }
 
@@ -51,7 +51,7 @@ int main() {
   }
 
   ati.GetAndSet(1);
-  GetLogger().Init("./tubemq", tubemq::Logger::Level(4));
+  GetLogger().Init("./tubemq", tubemq::Logger::Level(0));
   std::thread t1(logfunc);
   std::thread t2(logfunc);
   std::thread t3(logfunc);
