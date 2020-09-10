@@ -126,7 +126,7 @@ void TubeMQService::iniLogger(const Fileini& fileini, const string& sector) {
   fileini.GetValue(err_info, sector, "log_size", log_size, 100);
   fileini.GetValue(err_info, sector, "log_path", log_path, "../log/tubemq");
   fileini.GetValue(err_info, sector, "log_level", log_level, 4);
-  log_level = TUBEMQ_MID(log_level, 0, 4);
+  log_level = TUBEMQ_MID(log_level, 4, 0);
   GetLogger().Init(log_path, Logger::Level(log_level), log_size, log_num);
 }
 
