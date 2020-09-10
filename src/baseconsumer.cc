@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "baseclient.h"
+#include "baseconsumer.h"
 
 #include <signal.h>
 #include <unistd.h>
@@ -141,7 +141,7 @@ bool BaseConsumer::GetMessage(ConsumerResult& result) {
   LOG_TRACE("[CONSUMER] GetMessage begin, client=%s", client_uuid_.c_str());
 
   if (!TubeMQService::Instance()->IsRunning()) {
-    result.SetFailureResult(err_code::kErrServerStop, "TubeMQ Service stopped!");
+    result.SetFailureResult(err_code::kErrMQServiceStop, "TubeMQ Service stopped!");
     return false;
   }
   if (!isClientRunning()) {
@@ -226,7 +226,7 @@ bool BaseConsumer::GetCurConsumedInfo(map<string, ConsumeOffsetInfo>& consume_in
 bool BaseConsumer::Confirm(const string& confirm_context, bool is_consumed,
                              ConsumerResult& result) {
   if (!TubeMQService::Instance()->IsRunning()) {
-    result.SetFailureResult(err_code::kErrServerStop, "TubeMQ Service stopped!");
+    result.SetFailureResult(err_code::kErrMQServiceStop, "TubeMQ Service stopped!");
     return false;
   }
   if (!isClientRunning()) {

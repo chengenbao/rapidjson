@@ -23,24 +23,21 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <time.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <string>
 #include <libgen.h>
 #include <sys/time.h>
+#include <chrono>
 #include <set>
-
-
-
-
-#include "tubemq/client_service.h"
+#include <thread>
 #include "tubemq/tubemq_client.h"
 #include "tubemq/tubemq_config.h"
+#include "tubemq/tubemq_errcode.h"
 #include "tubemq/tubemq_message.h"
 #include "tubemq/tubemq_return.h"
-#include "tubemq/logger.h"
-#include "tubemq/utils.h"
-
+#include "tubemq/tubemq_errcode.h"
 
 
 using namespace std;
@@ -84,7 +81,7 @@ int main(int argc, char* argv[]) {
 
   ConsumerResult gentRet;
   ConsumerResult confirm_result;
-  int64_t start_time = Utils::GetCurrentTimeMillis();
+  int64_t start_time = time();
   do {
     // 1. get Message;
     result = consumer_1.GetMessage(gentRet);
@@ -109,7 +106,7 @@ int main(int argc, char* argv[]) {
       }
     }
     // used for test, consume 10 minutes only
-    if (Utils::GetCurrentTimeMillis() - start_time > 1 * 60 * 1000) {
+    if (time() - start_time > 60) {
       break;
     }
   } while (true);

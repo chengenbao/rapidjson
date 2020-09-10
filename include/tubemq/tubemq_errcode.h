@@ -57,8 +57,9 @@ enum Result {
   kErrNetWorkTimeout = 1000,
   kErrNetworkError = 1001,
   kErrServerStop = 2001,
-  kErrClientStop = 2002,
-  kErrConfirmTimeout = 2003,
+  kErrMQServiceStop = 2002,
+  kErrClientStop = 2003,
+  kErrConfirmTimeout = 2004,
   kErrParseFailure = 5001,
 };
 }  // namespace err_code

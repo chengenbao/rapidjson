@@ -24,7 +24,7 @@
 
 #include <sstream>
 
-#include "baseclient.h"
+#include "baseconsumer.h"
 #include "client_service.h"
 #include "const_config.h"
 #include "tubemq/tubemq_config.h"
@@ -77,11 +77,11 @@ bool TubeMQConsumer::Start(string& err_info,
     return false;
   }
   BaseConsumer* rmt_client = new BaseConsumer();
-  if(rmt_client == NULL) {
+  if (rmt_client == NULL) {
     err_info = "No memory for create CONSUMER remote object!";
     return false;
   }
-  if(!rmt_client->Start(err_info, config)) {
+  if (!rmt_client->Start(err_info, config)) {
     rmt_client->ShutDown();
     delete rmt_client;
     return false;
@@ -109,13 +109,19 @@ void TubeMQConsumer::ShutDown() {
 }
 
 bool TubeMQConsumer::GetMessage(ConsumerResult& result) {
+  if (!TubeMQService::Instance()->IsRunning()) {
+    result.SetFailureResult(err_code::kErrMQServiceStop,
+      "TubeMQ Service stopped!");
+    return false;
+  }
+  if (status_.Get() != 2) {
+    result.SetFailureResult(err_code::kErrClientStop,
+      "TubeMQ Service not startted!");
+    return false;
+  }
   if (client_id_ == tb_config::kInvalidValue) {
     result.SetFailureResult(err_code::kErrBadRequest,
       "Tube client not call init function, please initial first!");
-    return false;
-  }
-  if (!TubeMQService::Instance()->IsRunning()) {
-    result.SetFailureResult(err_code::kErrServerStop, "TubeMQ Service stopped!");
     return false;
   }
   BaseConsumer* rmt_client =
@@ -129,14 +135,21 @@ bool TubeMQConsumer::GetMessage(ConsumerResult& result) {
   return rmt_client->GetMessage(result);
 }
 
-bool TubeMQConsumer::Confirm(const string& confirm_context, bool is_consumed, ConsumerResult& result) {
+bool TubeMQConsumer::Confirm(const string& confirm_context,
+  bool is_consumed, ConsumerResult& result) {
+  if (!TubeMQService::Instance()->IsRunning()) {
+    result.SetFailureResult(err_code::kErrMQServiceStop,
+      "TubeMQ Service stopped!");
+    return false;
+  }
+  if (status_.Get() != 2) {
+    result.SetFailureResult(err_code::kErrClientStop,
+      "TubeMQ Service not startted!");
+    return false;
+  }
   if (client_id_ == tb_config::kInvalidValue) {
     result.SetFailureResult(err_code::kErrBadRequest,
       "Tube client not call init function, please initial first!");
-    return false;
-  }
-  if (!TubeMQService::Instance()->IsRunning()) {
-    result.SetFailureResult(err_code::kErrServerStop, "TubeMQ Service stopped!");
     return false;
   }
   BaseConsumer* rmt_client =
@@ -151,10 +164,11 @@ bool TubeMQConsumer::Confirm(const string& confirm_context, bool is_consumed, Co
 }
 
 bool TubeMQConsumer::GetCurConsumedInfo(map<string, ConsumeOffsetInfo>& consume_info_map) {
-  if (client_id_ == tb_config::kInvalidValue) {
+  if (!TubeMQService::Instance()->IsRunning()) {
     return false;
   }
-  if (!TubeMQService::Instance()->IsRunning()) {
+  if (status_.Get() != 2 
+    || client_id_ == tb_config::kInvalidValue) {
     return false;
   }
   BaseConsumer* rmt_client =

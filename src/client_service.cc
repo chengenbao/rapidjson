@@ -173,7 +173,7 @@ BaseClient* TubeMQService::GetClientObj(int32_t client_index) const {
 
 void TubeMQService::RmvClientObj(BaseClient* client_obj) {
   map<int32_t, BaseClient*>::iterator it;
-  if(client_obj != NULL) {
+  if (client_obj != NULL) {
     lock_guard<mutex> lck(mutex_);
     int32_t client_index = client_obj->GetClientIndex();
     clients_map_.erase(client_index);
