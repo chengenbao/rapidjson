@@ -15,3 +15,15 @@ ExternalProject_Add(
     INSTALL_DIR ${CMAKE_BINARY_DIR}/third_party/
     )
 
+ExternalProject_Add(
+    asio_proj
+    URL https://github.com/chriskohlhoff/asio/archive/asio-1-18-0.tar.gz 
+    INSTALL_DIR ${CMAKE_BINARY_DIR}/third_party/
+    CONFIGURE_COMMAND cd ../asio_proj/asio && ./autogen.sh && ./configure --prefix=<INSTALL_DIR> CFLAGS=-std=c++11 CPPFLAGS=-std=c++11 CXXFLAGS=-std=c++11 && make install
+    TEST_BEFORE_INSTALL 0
+    BUILD_IN_SOURCE 0
+    BUILD_COMMAND "" 
+    INSTALL_COMMAND ""
+    )
+
+

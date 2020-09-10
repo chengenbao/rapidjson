@@ -87,7 +87,7 @@ class Logger {
 
   inline void SetInstance(const std::string& instance) { instance_ = instance; }
   inline bool IsEnable(Level level) {
-    if (level_ >= level) {
+    if (level_ <= level) {
       return true;
     } else {
       return false;
