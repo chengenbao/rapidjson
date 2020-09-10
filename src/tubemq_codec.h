@@ -237,10 +237,6 @@ class TubeMQCodec final : public CodecProtocol {
       }
       check_buf->Skip(item_len);
     }
-
-    LOG_TRACE("Check: end, in->String = %s, check_buf = %s",
-      in->String().c_str(), check_buf->String().c_str());
-
     has_request_id = true;
     uint32_t readed_len = 12;
     auto buf = std::make_shared<Buffer>();
