@@ -29,6 +29,7 @@ SET(CMAKE_CXX_FLAGS "-std=c++11 -O2 -g -Wall -Werror -Wsign-compare -Wfloat-equa
 INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR}/proto)
 
 INCLUDE_DIRECTORIES(include)
+INCLUDE_DIRECTORIES(src)
 
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/third_party/rapidjson/include)
 INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR}/third_party/include)
@@ -38,5 +39,6 @@ ADD_SUBDIRECTORY(third_party)
 ADD_SUBDIRECTORY(proto)
 ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(example)
+ADD_SUBDIRECTORY(tests)
 
 
