@@ -30,10 +30,10 @@
 #include <string>
 #include <tuple>
 
-#include "atomic_def.h"
 #include "executor_pool.h"
 #include "flowctrl_def.h"
 #include "meta_info.h"
+#include "tubemq/tubemq_atomic.h"
 #include "tubemq/tubemq_errcode.h"
 
 

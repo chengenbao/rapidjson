@@ -27,12 +27,12 @@
 #include <string>
 #include <thread>
 
-#include "atomic_def.h"
 #include "connection_pool.h"
 #include "file_ini.h"
 #include "noncopyable.h"
 #include "rmt_data_cache.h"
 #include "thread_pool.h"
+#include "tubemq/tubemq_atomic.h"
 #include "tubemq/tubemq_config.h"
 #include "tubemq/tubemq_message.h"
 #include "tubemq/tubemq_return.h"

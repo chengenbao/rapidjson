@@ -72,7 +72,6 @@ class ConsumeOffsetInfo {
 };
 
 
-
 class ConsumerResult {
  public:
   ConsumerResult();
