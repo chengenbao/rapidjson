@@ -61,7 +61,7 @@ BaseConsumer::~BaseConsumer() {
 
 bool BaseConsumer::Start(string& err_info, const ConsumerConfig& config) {
   ConsumerConfig tmp_config;
-  if (!this->status_.CompareAndSet(0, 1)) {
+  if (!status_.CompareAndSet(0, 1)) {
     err_info = "Ok";
     return true;
   }
@@ -85,7 +85,7 @@ bool BaseConsumer::Start(string& err_info, const ConsumerConfig& config) {
     return false;
   }
   client_uuid_ = buildUUID();
-  sub_info_.SetConsumeTarget(this->config_);
+  sub_info_.SetConsumeTarget(config_);
   rmtdata_cache_.SetConsumerInfo(client_uuid_, config_.GetGroupName());
   // initial resource
 
@@ -813,27 +813,27 @@ void BaseConsumer::buidRegisterRequestC2M(TubeMQCodec::ReqProtocolPtr& req_proto
   RegisterRequestC2M c2m_request;
   list<string>::iterator it_topics;
   list<SubscribeInfo>::iterator it_sub;
-  c2m_request.set_clientid(this->client_uuid_);
+  c2m_request.set_clientid(client_uuid_);
   c2m_request.set_hostname(TubeMQService::Instance()->GetLocalHost());
-  c2m_request.set_requirebound(this->sub_info_.IsBoundConsume());
-  c2m_request.set_groupname(this->config_.GetGroupName());
-  c2m_request.set_sessiontime(this->sub_info_.GetSubscribedTime());
+  c2m_request.set_requirebound(sub_info_.IsBoundConsume());
+  c2m_request.set_groupname(config_.GetGroupName());
+  c2m_request.set_sessiontime(sub_info_.GetSubscribedTime());
   // subscribed topic list
-  list<string> sub_topics = this->sub_info_.GetSubTopics();
+  list<string> sub_topics = sub_info_.GetSubTopics();
   for (it_topics = sub_topics.begin(); it_topics != sub_topics.end(); ++it_topics) {
     c2m_request.add_topiclist(*it_topics);
   }
-  c2m_request.set_defflowcheckid(this->rmtdata_cache_.GetDefFlowCtrlId());
-  c2m_request.set_groupflowcheckid(this->rmtdata_cache_.GetGroupFlowCtrlId());
-  c2m_request.set_qrypriorityid(this->rmtdata_cache_.GetGroupQryPriorityId());
+  c2m_request.set_defflowcheckid(rmtdata_cache_.GetDefFlowCtrlId());
+  c2m_request.set_groupflowcheckid(rmtdata_cache_.GetGroupFlowCtrlId());
+  c2m_request.set_qrypriorityid(rmtdata_cache_.GetGroupQryPriorityId());
   // reported subscribed info
   list<SubscribeInfo> subscribe_lst;
-  this->rmtdata_cache_.GetSubscribedInfo(subscribe_lst);
+  rmtdata_cache_.GetSubscribedInfo(subscribe_lst);
   for (it_sub = subscribe_lst.begin(); it_sub != subscribe_lst.end(); ++it_sub) {
     c2m_request.add_subscribeinfo(it_sub->ToString());
   }
   // get topic conditions
-  list<string> topic_conds = this->sub_info_.GetTopicConds();
+  list<string> topic_conds = sub_info_.GetTopicConds();
   for (it_topics = topic_conds.begin(); it_topics != topic_conds.end(); ++it_topics) {
     c2m_request.add_topiccondition(*it_topics);
   }
@@ -854,11 +854,11 @@ void BaseConsumer::buidHeartRequestC2M(TubeMQCodec::ReqProtocolPtr& req_protocol
   HeartRequestC2M c2m_request;
   list<string>::iterator it_topics;
   list<SubscribeInfo>::iterator it_sub;
-  c2m_request.set_clientid(this->client_uuid_);
-  c2m_request.set_groupname(this->config_.GetGroupName());
-  c2m_request.set_defflowcheckid(this->rmtdata_cache_.GetDefFlowCtrlId());
-  c2m_request.set_groupflowcheckid(this->rmtdata_cache_.GetGroupFlowCtrlId());
-  c2m_request.set_qrypriorityid(this->rmtdata_cache_.GetGroupQryPriorityId());
+  c2m_request.set_clientid(client_uuid_);
+  c2m_request.set_groupname(config_.GetGroupName());
+  c2m_request.set_defflowcheckid(rmtdata_cache_.GetDefFlowCtrlId());
+  c2m_request.set_groupflowcheckid(rmtdata_cache_.GetGroupFlowCtrlId());
+  c2m_request.set_qrypriorityid(rmtdata_cache_.GetGroupQryPriorityId());
   c2m_request.set_reportsubscribeinfo(false);
   ConsumerEvent event;
   list<SubscribeInfo>::iterator it;
@@ -868,7 +868,7 @@ void BaseConsumer::buidHeartRequestC2M(TubeMQCodec::ReqProtocolPtr& req_protocol
   if ((has_event) || (++unreport_times_ > config_.GetMaxSubinfoReportIntvl())) {
     unreport_times_ = 0;
     c2m_request.set_reportsubscribeinfo(true);
-    this->rmtdata_cache_.GetSubscribedInfo(subscribe_info_lst);
+    rmtdata_cache_.GetSubscribedInfo(subscribe_info_lst);
     if (has_event) {
       EventProto* event_proto = c2m_request.mutable_event();
       event_proto->set_rebalanceid(event.GetRebalanceId());
@@ -898,8 +898,8 @@ void BaseConsumer::buidHeartRequestC2M(TubeMQCodec::ReqProtocolPtr& req_protocol
 void BaseConsumer::buidCloseRequestC2M(TubeMQCodec::ReqProtocolPtr& req_protocol) {
   string close_msg;
   CloseRequestC2M c2m_request;
-  c2m_request.set_clientid(this->client_uuid_);
-  c2m_request.set_groupname(this->config_.GetGroupName());
+  c2m_request.set_clientid(client_uuid_);
+  c2m_request.set_groupname(config_.GetGroupName());
   if (needGenMasterCertificateInfo(true)) {
     MasterCertificateInfo* pmst_certinfo = c2m_request.mutable_authinfo();
     AuthenticateInfo* pauthinfo = pmst_certinfo->mutable_authinfo();
@@ -918,8 +918,8 @@ void BaseConsumer::buidRegisterRequestC2B(const PartitionExt& partition,
   map<string, set<string> > filter_map;
   string register_msg;
   RegisterRequestC2B c2b_request;
-  c2b_request.set_clientid(this->client_uuid_);
-  c2b_request.set_groupname(this->config_.GetGroupName());
+  c2b_request.set_clientid(client_uuid_);
+  c2b_request.set_groupname(config_.GetGroupName());
   c2b_request.set_optype(rpc_config::kRegOpTypeRegister);
   c2b_request.set_topicname(partition.GetTopic());
   c2b_request.set_partitionid(partition.GetPartitionId());
@@ -953,8 +953,8 @@ void BaseConsumer::buidUnRegRequestC2B(const PartitionExt& partition, bool is_la
                                          TubeMQCodec::ReqProtocolPtr& req_protocol) {
   string unreg_msg;
   RegisterRequestC2B c2b_request;
-  c2b_request.set_clientid(this->client_uuid_);
-  c2b_request.set_groupname(this->config_.GetGroupName());
+  c2b_request.set_clientid(client_uuid_);
+  c2b_request.set_groupname(config_.GetGroupName());
   c2b_request.set_optype(rpc_config::kRegOpTypeUnReg);
   c2b_request.set_topicname(partition.GetTopic());
   c2b_request.set_partitionid(partition.GetPartitionId());
@@ -971,8 +971,8 @@ void BaseConsumer::buidHeartBeatC2B(const list<PartitionExt>& partitions,
   string hb_msg;
   HeartBeatRequestC2B c2b_request;
   list<PartitionExt>::const_iterator it_part;
-  c2b_request.set_clientid(this->client_uuid_);
-  c2b_request.set_groupname(this->config_.GetGroupName());
+  c2b_request.set_clientid(client_uuid_);
+  c2b_request.set_groupname(config_.GetGroupName());
   c2b_request.set_readstatus(getConsumeReadStatus(false));
   c2b_request.set_qrypriorityid(rmtdata_cache_.GetGroupQryPriorityId());
   for (it_part = partitions.begin(); it_part != partitions.end(); ++it_part) {
@@ -989,8 +989,8 @@ void BaseConsumer::buidGetMessageC2B(const PartitionExt& partition, bool is_last
                                        TubeMQCodec::ReqProtocolPtr& req_protocol) {
   string get_msg;
   GetMessageRequestC2B c2b_request;
-  c2b_request.set_clientid(this->client_uuid_);
-  c2b_request.set_groupname(this->config_.GetGroupName());
+  c2b_request.set_clientid(client_uuid_);
+  c2b_request.set_groupname(config_.GetGroupName());
   c2b_request.set_topicname(partition.GetTopic());
   c2b_request.set_escflowctrl(rmtdata_cache_.IsUnderGroupCtrl());
   c2b_request.set_partitionid(partition.GetPartitionId());
@@ -1005,8 +1005,8 @@ void BaseConsumer::buidCommitC2B(const PartitionExt& partition, bool is_last_con
                                    TubeMQCodec::ReqProtocolPtr& req_protocol) {
   string commit_msg;
   CommitOffsetRequestC2B c2b_request;
-  c2b_request.set_clientid(this->client_uuid_);
-  c2b_request.set_groupname(this->config_.GetGroupName());
+  c2b_request.set_clientid(client_uuid_);
+  c2b_request.set_groupname(config_.GetGroupName());
   c2b_request.set_topicname(partition.GetTopic());
   c2b_request.set_partitionid(partition.GetPartitionId());
   c2b_request.set_lastpackconsumed(is_last_consumed);
@@ -1392,11 +1392,11 @@ bool BaseConsumer::processGetMessageRspB2C(ConsumerResult& result, PeerInfo& pee
   return true;
 }
 
-bool BaseConsumer::isClientRunning() { return (this->status_.Get() == 2); }
+bool BaseConsumer::isClientRunning() { return (status_.Get() == 2); }
 
 string BaseConsumer::buildUUID() {
   stringstream ss;
-  ss << this->config_.GetGroupName();
+  ss << config_.GetGroupName();
   ss << "_";
   ss << TubeMQService::Instance()->GetLocalHost();
   ss << "-";
@@ -1413,12 +1413,12 @@ string BaseConsumer::buildUUID() {
 int32_t BaseConsumer::getConsumeReadStatus(bool is_first_reg) {
   int32_t readStatus = rpc_config::kConsumeStatusNormal;
   if (is_first_reg) {
-    if (this->config_.GetConsumePosition() == 0) {
+    if (config_.GetConsumePosition() == 0) {
       readStatus = rpc_config::kConsumeStatusFromMax;
-      LOG_INFO("[Consumer From Max Offset], clientId=%s", this->client_uuid_.c_str());
-    } else if (this->config_.GetConsumePosition() > 0) {
+      LOG_INFO("[Consumer From Max Offset], clientId=%s", client_uuid_.c_str());
+    } else if (config_.GetConsumePosition() > 0) {
       readStatus = rpc_config::kConsumeStatusFromMaxAlways;
-      LOG_INFO("[Consumer From Max Offset Always], clientId=%s", this->client_uuid_.c_str());
+      LOG_INFO("[Consumer From Max Offset Always], clientId=%s", client_uuid_.c_str());
     }
   }
   return readStatus;

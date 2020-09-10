@@ -35,18 +35,18 @@ PeerInfo::PeerInfo() {
 
 PeerInfo::PeerInfo(const string& broker_host, uint32_t partition_id,
   const string& partiton_key, int64_t offset) {
-  this->broker_host_ = broker_host;
-  this->partition_id_ = partition_id;
-  this->partition_key_ = partiton_key;
-  this->curr_offset_ = offset;
+  broker_host_ = broker_host;
+  partition_id_ = partition_id;
+  partition_key_ = partiton_key;
+  curr_offset_ = offset;
 }
 
 PeerInfo& PeerInfo::operator=(const PeerInfo& target) {
   if (this != &target) {
-    this->partition_id_ = target.partition_id_;
-    this->broker_host_ = target.broker_host_;
-    this->partition_key_ = target.partition_key_;
-    this->curr_offset_ = target.curr_offset_;
+    partition_id_ = target.partition_id_;
+    broker_host_ = target.broker_host_;
+    partition_key_ = target.partition_key_;
+    curr_offset_ = target.curr_offset_;
   }
   return *this;
 }
@@ -71,8 +71,8 @@ void ConsumeOffsetInfo::SetConsumeOffsetInfo(
 ConsumeOffsetInfo& ConsumeOffsetInfo::operator=(
   const ConsumeOffsetInfo& target) {
   if (this != &target) {
-    this->partition_key_ = target.partition_key_;
-    this->curr_offset_ = target.curr_offset_;
+    partition_key_ = target.partition_key_;
+    curr_offset_ = target.curr_offset_;
   }
   return *this;
 }
@@ -87,13 +87,13 @@ ConsumerResult::ConsumerResult() {
 }
 
 ConsumerResult::ConsumerResult(const ConsumerResult& target) {
-  this->success_ = target.success_;
-  this->err_code_ = target.err_code_;
-  this->err_msg_ = target.err_msg_;
-  this->topic_name_ = target.topic_name_;
-  this->peer_info_ = target.peer_info_;
-  this->confirm_context_ = target.confirm_context_;
-  this->message_list_ = target.message_list_;
+  success_ = target.success_;
+  err_code_ = target.err_code_;
+  err_msg_ = target.err_msg_;
+  topic_name_ = target.topic_name_;
+  peer_info_ = target.peer_info_;
+  confirm_context_ = target.confirm_context_;
+  message_list_ = target.message_list_;
 }
 
 ConsumerResult::ConsumerResult(int32_t error_code, string err_msg) {
@@ -105,7 +105,7 @@ ConsumerResult::ConsumerResult(int32_t error_code, string err_msg) {
 }
 
 ConsumerResult::~ConsumerResult() {
-  this->message_list_.clear();
+  message_list_.clear();
   success_ = false;
   err_code_ = tb_config::kInvalidValue;
   err_msg_ = "";
@@ -115,13 +115,13 @@ ConsumerResult::~ConsumerResult() {
 
 ConsumerResult& ConsumerResult::operator=(const ConsumerResult& target) {
   if (this != &target) {
-    this->success_ = target.success_;
-    this->err_code_ = target.err_code_;
-    this->err_msg_ = target.err_msg_;
-    this->topic_name_ = target.topic_name_;
-    this->peer_info_ = target.peer_info_;
-    this->confirm_context_ = target.confirm_context_;
-    this->message_list_ = target.message_list_;
+    success_ = target.success_;
+    err_code_ = target.err_code_;
+    err_msg_ = target.err_msg_;
+    topic_name_ = target.topic_name_;
+    peer_info_ = target.peer_info_;
+    confirm_context_ = target.confirm_context_;
+    message_list_ = target.message_list_;
   }
   return *this;
 }
@@ -144,13 +144,13 @@ void ConsumerResult::SetFailureResult(int32_t error_code, string err_msg,
 void ConsumerResult::SetSuccessResult(int32_t error_code,
                                              const string& topic_name,
                                              const PeerInfo& peer_info) {
-  this->success_ = true;
-  this->err_code_ = error_code;
-  this->err_msg_ = "Ok";
-  this->topic_name_ = topic_name;
-  this->peer_info_ = peer_info;
-  this->confirm_context_ = "";
-  this->message_list_.clear();
+  success_ = true;
+  err_code_ = error_code;
+  err_msg_ = "Ok";
+  topic_name_ = topic_name;
+  peer_info_ = peer_info;
+  confirm_context_ = "";
+  message_list_.clear();
 }
 
 void ConsumerResult::SetSuccessResult(int32_t error_code,
@@ -158,21 +158,21 @@ void ConsumerResult::SetSuccessResult(int32_t error_code,
                                              const PeerInfo& peer_info,
                                              const string& confirm_context,
                                              const list<Message>& message_list) {
-  this->success_ = true;
-  this->err_code_ = error_code;
-  this->err_msg_ = "Ok";
-  this->topic_name_ = topic_name;
-  this->peer_info_ = peer_info;
-  this->confirm_context_ = confirm_context;
-  this->message_list_ = message_list;
+  success_ = true;
+  err_code_ = error_code;
+  err_msg_ = "Ok";
+  topic_name_ = topic_name;
+  peer_info_ = peer_info;
+  confirm_context_ = confirm_context;
+  message_list_ = message_list;
 }
 
 const string& ConsumerResult::GetPartitionKey() const {
-  return this->peer_info_.GetPartitionKey();
+  return peer_info_.GetPartitionKey();
 }
 
 const int64_t ConsumerResult::GetCurrOffset() const {
-  return this->peer_info_.GetCurrOffset();
+  return peer_info_.GetCurrOffset();
 }
 
 

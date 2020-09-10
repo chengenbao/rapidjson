@@ -62,23 +62,23 @@ void RmtDataCacheCsm::UpdateGroupFlowCtrlInfo(int32_t qyrpriority_id, int64_t fl
                                                   flowctrl_info);
   }
   if (qyrpriority_id != group_flowctrl_handler_.GetQryPriorityId()) {
-    this->group_flowctrl_handler_.SetQryPriorityId(qyrpriority_id);
+    group_flowctrl_handler_.SetQryPriorityId(qyrpriority_id);
   }
   // update current if under group flowctrl
   int64_t cur_time = Utils::GetCurrentTimeMillis();
   if (cur_time - last_checktime_.Get() > 10000) {
     FlowCtrlResult flowctrl_result;
-    this->under_groupctrl_.Set(
+    under_groupctrl_.Set(
         group_flowctrl_handler_.GetCurDataLimit(tb_config::kMaxLongValue, flowctrl_result));
     last_checktime_.Set(cur_time);
   }
 }
 
 const int64_t RmtDataCacheCsm::GetGroupQryPriorityId() const {
-  return this->group_flowctrl_handler_.GetQryPriorityId();
+  return group_flowctrl_handler_.GetQryPriorityId();
 }
 
-bool RmtDataCacheCsm::IsUnderGroupCtrl() { return this->under_groupctrl_.Get(); }
+bool RmtDataCacheCsm::IsUnderGroupCtrl() { return under_groupctrl_.Get(); }
 
 void RmtDataCacheCsm::AddNewPartition(const PartitionExt& partition_ext) {
   //
@@ -472,7 +472,7 @@ void RmtDataCacheCsm::addDelayTimer(const string& partition_key, int64_t delay_t
   // add timer
   tuple<int64_t, SteadyTimerPtr> timer = std::make_tuple(
       Utils::GetCurrentTimeMillis(),
-      TubeMQService::Instance()->GetTimerExecutorPool()->Get()->CreateSteadyTimer());
+      TubeMQService::Instance()->CreateTimer());
   std::get<1>(timer)->expires_after(std::chrono::milliseconds(delay_time));
   std::get<1>(timer)->async_wait(
       std::bind(&RmtDataCacheCsm::HandleTimeout, this, partition_key, std::placeholders::_1));

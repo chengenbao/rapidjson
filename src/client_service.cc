@@ -31,8 +31,8 @@ using std::lock_guard;
 using std::stringstream;
 
 BaseClient::BaseClient(bool is_producer) {
-  this->is_producer_ = is_producer;
-  this->client_index_ = tb_config::kInvalidValue;
+  is_producer_ = is_producer;
+  client_index_ = tb_config::kInvalidValue;
 }
 
 BaseClient::~BaseClient() {
@@ -41,7 +41,7 @@ BaseClient::~BaseClient() {
 
 TubeMQService* TubeMQService::_instance = NULL;
 
-mutex tubemq_mutex_service_;
+static mutex tubemq_mutex_service_;
 
 TubeMQService* TubeMQService::Instance() {
   if (NULL == _instance) {
@@ -167,7 +167,7 @@ bool TubeMQService::AddClientObj(string& err_info, BaseClient* client_obj) {
   }
   int32_t client_index = client_index_base_.IncrementAndGet();
   lock_guard<mutex> lck(mutex_);
-  this->clients_map_[client_index] = client_obj;
+  clients_map_[client_index] = client_obj;
   client_obj->SetClientIndex(client_index);
   err_info = "Ok";
   return true;
@@ -282,10 +282,10 @@ void TubeMQService::updMasterAddrByDns() {
   lock_guard<mutex> lck(mutex_);
   if (tmp_tgt_addr_map.empty()) {
     for (it = tmp_src_addr_map.begin(); it != tmp_src_addr_map.end(); it++) {
-      this->master_target_[it->first] = it->first;
+      master_target_[it->first] = it->first;
     }
   } else {
-    this->master_target_ = tmp_tgt_addr_map;
+    master_target_ = tmp_tgt_addr_map;
   }
 }
 
