@@ -31,7 +31,8 @@
 
 namespace tubemq {
 
-bool StartTubeMQService(string& err_info, const string& conf_file = "../conf/client.conf");
+bool StartTubeMQService(string& err_info,
+  const string& conf_file = "../conf/client.conf");
 bool StopTubeMQService(string& err_info);
 
 

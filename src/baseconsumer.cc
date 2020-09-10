@@ -154,7 +154,8 @@ bool BaseConsumer::GetMessage(ConsumerResult& result) {
     result.SetFailureResult(error_code, err_info);
     return false;
   }
-  if (!rmtdata_cache_.SelectPartition(error_code, err_info, partition_ext, confirm_context)) {
+  if (!rmtdata_cache_.SelectPartition(error_code,
+    err_info, partition_ext, confirm_context)) {
     result.SetFailureResult(error_code, err_info);
     return false;
   }
