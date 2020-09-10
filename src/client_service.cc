@@ -87,10 +87,7 @@ bool TubeMQService::Start(string& err_info, string conf_file) {
     err_info = "TubeMQ Service has startted or Stopped!";
     return false;
   }
-  timer_executor_->Resize(2);
-  network_executor_->Resize(4);
-  thread_pool_ = std::make_shared<ThreadPool>(4);
-  connection_pool_ = std::make_shared<ConnectionPool>(network_executor_);
+  iniPoolThreads(fileini, sector);
   iniLogger(fileini, sector);
   iniXfsThread(fileini, sector);
   service_status_.Set(2);
@@ -141,14 +138,22 @@ void TubeMQService::iniXfsThread(const Fileini& fileini, const string& sector) {
   dns_xfs_thread_ = std::thread(thread_task_dnsxfs, dns_xfs_period_ms);
 }
 
-void TubeMQService::iniXfsThread(const Fileini& fileini, const string& sector) {
+void TubeMQService::iniPoolThreads(const Fileini& fileini, const string& sector) {
   string err_info;
-  int32_t dns_xfs_period_ms = 30 * 1000;
-  fileini.GetValue(err_info, sector, "dns_xfs_period_ms", dns_xfs_period_ms, 30 * 1000);
-  TUBEMQ_MID(dns_xfs_period_ms, tb_config::kMaxIntValue, 10000);
-  dns_xfs_thread_ = std::thread(thread_task_dnsxfs, dns_xfs_period_ms);
+  int32_t timer_threads = 2;
+  int32_t network_threads = 4;
+  int32_t signal_threads = 8;
+  fileini.GetValue(err_info, sector, "timer_threads", timer_threads, 2);
+  TUBEMQ_MID(timer_threads, 50, 2);
+  fileini.GetValue(err_info, sector, "network_threads", network_threads, 4);
+  TUBEMQ_MID(network_threads, 50, 4);
+  fileini.GetValue(err_info, sector, "signal_threads", signal_threads, 8);
+  TUBEMQ_MID(signal_threads, 50, 4);
+  timer_executor_->Resize(timer_threads);
+  network_executor_->Resize(network_threads);
+  thread_pool_ = std::make_shared<ThreadPool>(signal_threads);
+  connection_pool_ = std::make_shared<ConnectionPool>(network_executor_);
 }
-
 
 int32_t TubeMQService::GetClientObjCnt() {
   lock_guard<mutex> lck(mutex_);

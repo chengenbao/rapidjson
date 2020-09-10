@@ -90,6 +90,7 @@ class TubeMQService : public noncopyable {
   TubeMQService();
   ~TubeMQService();
   void iniLogger(const Fileini& fileini, const string& sector);
+  void iniPoolThreads(const Fileini& fileini, const string& sector);
   void iniXfsThread(const Fileini& fileini, const string& sector);
   static void thread_task_dnsxfs(int dns_xfs_period_ms);
   void shutDownClinets() const;
