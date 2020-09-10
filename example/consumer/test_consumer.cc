@@ -111,16 +111,15 @@ int main(int argc, char* argv[]) {
     }
   } while (true);
 
-  getchar();
+  getchar(); // for test hold the test thread
   consumer_1.ShutDown();
 
-  getchar();
+  getchar(); // for test hold the test thread
   result = StopTubeMQService(err_info);
   if (!result) {
     printf(" *** StopTubeMQService failure, reason is %s \n", err_info.c_str());
   }
 
-  getchar();
   printf("\n finishe test exist \n");
   return 0;
 }
