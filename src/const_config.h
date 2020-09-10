@@ -64,7 +64,7 @@ static const int32_t kSessionKeyMaxLength = 1024;
 // max subscribe info report times
 static const int32_t kSubInfoReportMaxIntervalTimes = 6;
 // default message not found response wait period
-static const int32_t kMsgNotfoundWaitPeriodMsDef = 200;
+static const int32_t kMsgNotfoundWaitPeriodMsDef = 400;
 // default confirm wait period if rebalance meeting
 static const int32_t kRebConfirmWaitPeriodMsDef = 3000;
 // max confirm wait period anyway

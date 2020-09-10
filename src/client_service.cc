@@ -87,8 +87,8 @@ bool TubeMQService::Start(string& err_info, string conf_file) {
     err_info = "TubeMQ Service has startted or Stopped!";
     return false;
   }
-  iniPoolThreads(fileini, sector);
   iniLogger(fileini, sector);
+  iniPoolThreads(fileini, sector);
   iniXfsThread(fileini, sector);
   service_status_.Set(2);
   err_info = "Ok!";
