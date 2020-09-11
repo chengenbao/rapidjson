@@ -43,7 +43,8 @@ int main(int argc, char* argv[]) {
   request->port_ = std::atoi(argv[2]);
   auto connection_pool = std::make_shared<ConnectionPool>(pool);
   auto connect = connection_pool->GetConnection(request);
-  connect->AsyncWrite(request);
+  // connect->AsyncWrite(request);
+  std::this_thread::sleep_for(std::chrono::seconds(180));
   return 0;
 }
 

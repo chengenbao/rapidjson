@@ -64,7 +64,7 @@ void ClientConnection::close(const std::error_code* err) {
     return;
   }
   status_ = kDisconnected;
-  LOG_INFO("%scloseed", context_string_.c_str());
+  LOG_INFO("%scloseed", ToString().c_str());
   socket_->close();
   if (notifier_ != nullptr) {
     notifier_(err);
@@ -105,7 +105,7 @@ void ClientConnection::connect(const asio::ip::tcp::resolver::results_type& endp
         deadline_->cancel();
         if (ec) {
           status_ = kDisconnected;
-          LOG_ERROR("%s[%s:%d]async connect error:%d, %s, %s", context_string_.c_str(), ip_.c_str(),
+          LOG_ERROR("%s[%s:%d]async connect error:%d, %s, %s", ToString().c_str(), ip_.c_str(),
                     port_, ec.value(), ec.message().c_str(), ec.category().name());
           close(&ec);
           return;
@@ -114,7 +114,7 @@ void ClientConnection::connect(const asio::ip::tcp::resolver::results_type& endp
         socket_->set_option(asio::ip::tcp::no_delay(true));
         // socket_->set_option(asio::ip::tcp::socket::reuse_address(true));
         contextString();
-        LOG_INFO("%sis connected", context_string_.c_str());
+        LOG_INFO("%sis connected", ToString().c_str());
 
         asyncWrite();
         asyncRead();
@@ -128,7 +128,7 @@ void ClientConnection::checkDeadline(const std::error_code& ec) {
   if (IsStop()) {
     return;
   }
-  LOG_ERROR("%s connect timeout", context_string_.c_str());
+  LOG_ERROR("%s connect timeout", ToString().c_str());
   close();
 }
 
@@ -143,7 +143,8 @@ void ClientConnection::asyncRead() {
     return;
   }
   if (recv_buffer_->capacity() > rpc_config::kRpcRecvBufferMaxBytes) {
-    LOG_ERROR("buffer capacity over config:%d", rpc_config::kRpcRecvBufferMaxBytes);
+    LOG_ERROR("%sbuffer capacity over config:%d", ToString().c_str(),
+              rpc_config::kRpcRecvBufferMaxBytes);
     recv_buffer_->Reset();
   }
   recv_buffer_->EnsureWritableBytes(rpc_config::kRpcEnsureWriteableBytes);
@@ -151,7 +152,7 @@ void ClientConnection::asyncRead() {
   socket_->async_read_some(asio::buffer(recv_buffer_->WriteBegin(), recv_buffer_->WritableBytes()),
                            [self, this](std::error_code ec, std::size_t len) {
                              if (ec) {
-                               LOG_ERROR("[%s]async read error:%d, %s, %s", context_string_.c_str(),
+                               LOG_ERROR("[%s]async read error:%d, %s, %s", ToString().c_str(),
                                          ec.value(), ec.message().c_str(), ec.category().name());
                                close(&ec);
                                return;
@@ -180,7 +181,7 @@ void ClientConnection::checkPackageDone() {
   auto result = check_(buff, check_out, request_id, has_request_id, package_length);
   if (result < 0) {
     package_length_ = 0;
-    LOG_ERROR("check codec package result:%d", result);
+    LOG_ERROR("%s, check codec package result:%d", ToString().c_str(), result);
     recv_buffer_->Reset();
     return;
   }
@@ -188,12 +189,13 @@ void ClientConnection::checkPackageDone() {
     package_length_ = package_length;
     return;
   }
+  ++read_package_number_;
   package_length_ = 0;
   recv_buffer_->Skip(result);
   if (!has_request_id) {
     auto it = request_list_.begin();
     if (it == request_list_.end()) {
-      LOG_ERROR("check codec package result:%d", result);
+      LOG_ERROR("%s, not find request", ToString().c_str());
       return;
     }
     requestCallback(it->first, nullptr, &check_out);
@@ -205,13 +207,13 @@ void ClientConnection::checkPackageDone() {
 void ClientConnection::requestCallback(uint32_t request_id, ErrorCode* err, Any* check_out) {
   auto it = request_list_.find(request_id);
   if (it == request_list_.end()) {
-    LOG_INFO("%srequest[%d] not find from request_list_", context_string_.c_str(), request_id);
+    LOG_INFO("%srequest[%d] not find from request_list_", ToString().c_str(), request_id);
     return;
   }
   auto req = &it->second;
   req->deadline_->cancel();
   if (err != nullptr) {
-    LOG_ERROR("%srequest[%d] error:%d, msg:%s", context_string_.c_str(), request_id, err->Value(),
+    LOG_ERROR("%srequest[%d] error:%d, msg:%s", ToString().c_str(), request_id, err->Value(),
               err->Message().c_str());
     req->req_->promise_.SetFailed(*err);
     request_list_.erase(it);
@@ -229,7 +231,6 @@ void ClientConnection::requestCallback(uint32_t request_id, ErrorCode* err, Any*
   } else {
     req->req_->promise_.SetFailed(ErrorCode(err_code::kErrNetworkError, "response is null"));
   }
-
   request_list_.erase(it);
 }
 
@@ -265,10 +266,11 @@ void ClientConnection::asyncWrite() {
       [self, this, req](std::error_code ec, std::size_t length) {
         if (ec) {
           close(&ec);
-          LOG_ERROR("[%s]async write error:%d, message:%s, category:%s", context_string_.c_str(),
+          LOG_ERROR("[%s]async write error:%d, message:%s, category:%s", ToString().c_str(),
                     ec.value(), ec.message().c_str(), ec.category().name());
           return;
         }
+        ++write_package_number_;
         asyncWrite();
       });
 }
