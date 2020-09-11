@@ -48,7 +48,7 @@ class BaseClient {
  public:
   explicit BaseClient(bool is_producer);
   virtual ~BaseClient();
-  virtual void ShutDown() {};
+  virtual void ShutDown(){};
   void SetClientIndex(int32_t client_index) { client_index_ = client_index; }
   bool IsProducer() { return is_producer_; }
   const int32_t GetClientIndex() { return client_index_; }
@@ -92,7 +92,7 @@ class TubeMQService : public noncopyable {
   void iniLogger(const Fileini& fileini, const string& sector);
   void iniPoolThreads(const Fileini& fileini, const string& sector);
   void iniXfsThread(const Fileini& fileini, const string& sector);
-  static void thread_task_dnsxfs(int dns_xfs_period_ms);
+  void thread_task_dnsxfs(int dns_xfs_period_ms);
   void shutDownClinets() const;
   bool hasXfsTask(map<string, int32_t>& src_addr_map);
   bool addNeedDnsXfsAddr(map<string, int32_t>& src_addr_map);

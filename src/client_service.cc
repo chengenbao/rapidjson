@@ -94,7 +94,7 @@ bool TubeMQService::Start(string& err_info, string conf_file) {
   service_status_.Set(2);
   err_info = "Ok!";
   LOG_INFO("[TubeMQService] TubeMQ service startted!");
-  
+
   return true;
 }
 
@@ -136,7 +136,7 @@ void TubeMQService::iniXfsThread(const Fileini& fileini, const string& sector) {
   int32_t dns_xfs_period_ms = 30 * 1000;
   fileini.GetValue(err_info, sector, "dns_xfs_period_ms", dns_xfs_period_ms, 30 * 1000);
   TUBEMQ_MID(dns_xfs_period_ms, tb_config::kMaxIntValue, 10000);
-  dns_xfs_thread_ = std::thread(thread_task_dnsxfs, dns_xfs_period_ms);
+  dns_xfs_thread_ = std::thread(&TubeMQService::thread_task_dnsxfs, this, dns_xfs_period_ms);
 }
 
 void TubeMQService::iniPoolThreads(const Fileini& fileini, const string& sector) {
@@ -242,8 +242,7 @@ void TubeMQService::thread_task_dnsxfs(int dns_xfs_period_ms) {
     if (TubeMQService::Instance()->GetServiceStatus() <= 0) {
       break;
     }
-    if ((Utils::GetCurrentTimeMillis() - last_check_time_)
-      >= dns_xfs_period_ms) {
+    if ((Utils::GetCurrentTimeMillis() - last_check_time_) >= dns_xfs_period_ms) {
       TubeMQService::Instance()->updMasterAddrByDns();
       last_check_time_ = Utils::GetCurrentTimeMillis();
     }
