@@ -264,20 +264,22 @@ void RmtDataCacheCsm::GetSubscribedInfo(list<SubscribeInfo>& subscribe_info_lst)
   }
 }
 
-void RmtDataCacheCsm::GetAllBrokerPartitions(map<NodeInfo, list<PartitionExt> >& broker_parts) {
+void RmtDataCacheCsm::GetAllClosedBrokerParts(map<NodeInfo, list<PartitionExt> >& broker_parts) {
   map<string, PartitionExt>::iterator it_part;
   map<NodeInfo, list<PartitionExt> >::iterator it_broker;
 
   broker_parts.clear();
   lock_guard<mutex> lck(meta_lock_);
   for (it_part = partitions_.begin(); it_part != partitions_.end(); ++it_part) {
-    it_broker = broker_parts.find(it_part->second.GetBrokerInfo());
+    PartitionExt tmp_part = it_part->second;
+    tmp_part.SetLastConsumed(false);
+    it_broker = broker_parts.find(tmp_part.GetBrokerInfo());
     if (it_broker == broker_parts.end()) {
       list<PartitionExt> tmp_part_lst;
-      tmp_part_lst.push_back(it_part->second);
-      broker_parts[it_part->second.GetBrokerInfo()] = tmp_part_lst;
+      tmp_part_lst.push_back(tmp_part);
+      broker_parts[tmp_part.GetBrokerInfo()] = tmp_part_lst;
     } else {
-      it_broker->second.push_back(it_part->second);
+      it_broker->second.push_back(tmp_part);
     }
   }
 }

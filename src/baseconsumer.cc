@@ -137,8 +137,6 @@ bool BaseConsumer::GetMessage(ConsumerResult& result) {
   string err_info;
   PartitionExt partition_ext;
   string confirm_context;
-  
-  LOG_TRACE("[CONSUMER] GetMessage begin, client=%s", client_uuid_.c_str());
 
   if (!TubeMQService::Instance()->IsRunning()) {
     result.SetFailureResult(err_code::kErrMQServiceStop, "TubeMQ Service stopped!");
@@ -183,6 +181,14 @@ bool BaseConsumer::GetMessage(ConsumerResult& result) {
   ErrorCode error = SyncRequest(response_context, request, req_protocol);
   LOG_TRACE("[CONSUMER] GetMessage received response, ret_code=%d, client=%s",
     error.Value(), client_uuid_.c_str());
+  if (!TubeMQService::Instance()->IsRunning()) {
+    result.SetFailureResult(err_code::kErrMQServiceStop, "TubeMQ Service stopped!");
+    return false;
+  }
+  if (!isClientRunning()) {
+    result.SetFailureResult(err_code::kErrClientStop, "TubeMQ Client stopped!");
+    return false;
+  }
   if (error.Value() == err_code::kErrSuccess) {
     // process response
     auto rsp = any_cast<TubeMQCodec::RspProtocolPtr>(response_context.rsp_);
@@ -300,6 +306,14 @@ bool BaseConsumer::Confirm(const string& confirm_context, bool is_consumed,
   // send message to target
   ResponseContext response_context;
   ErrorCode error = SyncRequest(response_context, request, req_protocol);
+  if (!TubeMQService::Instance()->IsRunning()) {
+    result.SetFailureResult(err_code::kErrMQServiceStop, "TubeMQ Service stopped!");
+    return false;
+  }
+  if (!isClientRunning()) {
+    result.SetFailureResult(err_code::kErrClientStop, "TubeMQ Client stopped!");
+    return false;
+  }
 
   LOG_TRACE("[CONSUMER] Confirm response result=%d, client=%s",
     error.Value(), client_uuid_.c_str());
@@ -633,8 +647,6 @@ void BaseConsumer::processConnect2Broker(ConsumerEvent& event) {
   LOG_TRACE("[processConnect2Broker] begin to process connect event, clientid=%s",
     client_uuid_.c_str());
   if (!isClientRunning()) {
-    LOG_TRACE("[processConnect2Broker] found client not running, clientid=%s",
-      client_uuid_.c_str());
     return;
   }
   bool ret_result;
@@ -690,8 +702,6 @@ void BaseConsumer::processDisConnect2Broker(ConsumerEvent& event) {
   LOG_TRACE("[processDisConnect2Broker] begin to process disConnect event, clientid=%s",
     client_uuid_.c_str());
   if (!isClientRunning()) {
-    LOG_TRACE("[processDisConnect2Broker] found client not running, clientid=%s",
-      client_uuid_.c_str());
     return;
   }
   list<SubscribeInfo> subscribe_info = event.GetSubscribeInfoList();
@@ -714,7 +724,7 @@ void BaseConsumer::processDisConnect2Broker(ConsumerEvent& event) {
 void BaseConsumer::closeAllBrokers() {
   map<NodeInfo, list<PartitionExt> > broker_parts;
   LOG_INFO("[CONSUMER] closeAllBrokers begin, clientid=%s", client_uuid_.c_str());
-  rmtdata_cache_.GetAllBrokerPartitions(broker_parts);
+  rmtdata_cache_.GetAllClosedBrokerParts(broker_parts);
   if (!broker_parts.empty()) {
      unregister2Brokers(broker_parts, false);
   }
@@ -726,7 +736,6 @@ void BaseConsumer::processHeartBeat2Broker(NodeInfo broker_info) {
   LOG_TRACE("[Heartbeat2Broker] process hb to broker(%s) startted!",
     broker_info.GetAddrInfo().c_str());
   if (!isClientRunning()) {
-    LOG_TRACE("[Heartbeat2Broker] client not running(%d), out!", status_.Get());
     return;
   }
   list<PartitionExt> partition_list;
@@ -1159,14 +1168,15 @@ void BaseConsumer::unregister2Brokers(map<NodeInfo, list<PartitionExt> >& unreg_
       req_protocol->request_id_ = request->request_id_;
       req_protocol->rpc_read_timeout_ = config_.GetRpcReadTimeoutMs() - 500;
       // send message to target
+      // not need process
       ResponseContext response_context;
-      ErrorCode error = SyncRequest(response_context, request, req_protocol);
+      if (wait_rsp) {
+        SyncRequest(response_context, request, req_protocol);
+      } else {
+        AsyncRequest(request, req_protocol);
+      }
       LOG_TRACE("unregister2Brokers, partitionkey=%s return come",
         it_part->GetPartitionKey().c_str());
-      if (wait_rsp) {
-      }
-      // not care result
-      // TODO:  process result
     }
   }
 }
@@ -1207,8 +1217,6 @@ void BaseConsumer::convertMessages(int32_t& msg_size, list<Message>& message_lis
   // #lizard forgives
   msg_size = 0;
   message_list.clear();
-  LOG_TRACE("[CONSUMER] convertMessages, message size=%d, client=%s",
-    rsp_b2c.messages_size(), client_uuid_.c_str());
   if (rsp_b2c.messages_size() == 0) {
     return;
   }
@@ -1285,8 +1293,6 @@ bool BaseConsumer::processGetMessageRspB2C(ConsumerResult& result, PeerInfo& pee
                                              const TubeMQCodec::RspProtocolPtr& rsp) {
   string err_info;
 
-  LOG_TRACE("[CONSUMER] processGetMessageRspB2C begin, client=%s", client_uuid_.c_str());
-  
   if (!rsp->success_) {
     rmtdata_cache_.RelPartition(err_info, filter_consume, confirm_context, false);
     result.SetFailureResult(rsp->code_, rsp->error_msg_, partition_ext.GetTopic(), peer_info);
@@ -1309,9 +1315,6 @@ bool BaseConsumer::processGetMessageRspB2C(ConsumerResult& result, PeerInfo& pee
 
     return false;
   }
-
-  LOG_TRACE("[CONSUMER] processGetMessageRspB2C result=%d, client=%s",
-    rsp_b2c.errcode(), client_uuid_.c_str());
 
   switch (rsp_b2c.errcode()) {
     case err_code::kErrSuccess: {
