@@ -242,6 +242,9 @@ void TubeMQService::thread_task_dnsxfs(int dns_xfs_period_ms) {
       break;
     }
     TubeMQService::Instance()->updMasterAddrByDns();
+    if (TubeMQService::Instance()->GetServiceStatus() <= 0) {
+      break;
+    }
     std::this_thread::sleep_for(std::chrono::milliseconds(dns_xfs_period_ms));
   }
   LOG_INFO("[TubeMQService] DSN transfer thread stopped!");
