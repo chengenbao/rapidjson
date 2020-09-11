@@ -110,6 +110,7 @@ class TubeMQService : public noncopyable {
   std::shared_ptr<ThreadPool> thread_pool_;
   thread dns_xfs_thread_;
   mutable mutex dns_mutex_;
+  int64_t last_check_time_;
   map<string, int32_t> master_source_;
   map<string, string> master_target_;
 };

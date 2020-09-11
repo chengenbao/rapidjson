@@ -58,6 +58,7 @@ TubeMQService::TubeMQService()
       network_executor_(std::make_shared<ExecutorPool>(4)) {
   service_status_.Set(0);
   client_index_base_.Set(0);
+  last_check_time_ = 0;
 }
 
 TubeMQService::~TubeMQService() {
@@ -241,11 +242,12 @@ void TubeMQService::thread_task_dnsxfs(int dns_xfs_period_ms) {
     if (TubeMQService::Instance()->GetServiceStatus() <= 0) {
       break;
     }
-    TubeMQService::Instance()->updMasterAddrByDns();
-    if (TubeMQService::Instance()->GetServiceStatus() <= 0) {
-      break;
+    if ((Utils::GetCurrentTimeMillis() - last_check_time_)
+      >= dns_xfs_period_ms) {
+      TubeMQService::Instance()->updMasterAddrByDns();
+      last_check_time_ = Utils::GetCurrentTimeMillis();
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(dns_xfs_period_ms));
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
   }
   LOG_INFO("[TubeMQService] DSN transfer thread stopped!");
 }
