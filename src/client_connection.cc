@@ -145,7 +145,8 @@ void ClientConnection::asyncRead() {
   if (recv_buffer_->capacity() > rpc_config::kRpcRecvBufferMaxBytes) {
     LOG_ERROR("%sbuffer capacity over config:%d", ToString().c_str(),
               rpc_config::kRpcRecvBufferMaxBytes);
-    recv_buffer_->Reset();
+    close();
+    return;
   }
   recv_buffer_->EnsureWritableBytes(rpc_config::kRpcEnsureWriteableBytes);
   auto self = shared_from_this();
@@ -182,7 +183,7 @@ void ClientConnection::checkPackageDone() {
   if (result < 0) {
     package_length_ = 0;
     LOG_ERROR("%s, check codec package result:%d", ToString().c_str(), result);
-    recv_buffer_->Reset();
+    close();
     return;
   }
   if (result == 0) {
