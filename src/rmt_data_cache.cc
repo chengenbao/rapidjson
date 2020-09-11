@@ -416,15 +416,13 @@ void RmtDataCacheCsm::RemoveAndGetPartition(const list<SubscribeInfo>& subscribe
 }
 
 bool RmtDataCacheCsm::IsPartitionFirstReg(const string& partition_key) {
-  bool result = false;
   map<string, bool>::iterator it;
-
   lock_guard<mutex> lck(data_book_mutex_);
   it = part_reg_booked_.find(partition_key);
   if (it == part_reg_booked_.end()) {
     part_reg_booked_[partition_key] = true;
   }
-  return result;
+  return part_reg_booked_[partition_key];
 }
 
 void RmtDataCacheCsm::OfferEvent(const ConsumerEvent& event) {
