@@ -72,7 +72,7 @@ void thread_task_pull(int32_t thread_no) {
   do {
     msg_count = 0;
     // 1. get Message;
-    result = consumer_1.GetMessage(gentRet);
+    result = consumer_1.GetMessage(gentRet, 60 * 1000);
     if (result) {
       // 2.1.1  if success, process message
       list<Message> msgs = gentRet.GetMessageList();
@@ -81,21 +81,19 @@ void thread_task_pull(int32_t thread_no) {
       consumer_1.Confirm(gentRet.GetConfirmContext(), true, confirm_result);
     } else {
       // 2.2.1 if failure, check error code
-      // if no partitions assigned, all partitions in use,
-      //    or all partitons idle, sleep and retry
-      if (gentRet.GetErrCode() == err_code::kErrNoPartAssigned
+      // print error message if errcode not in 
+      // [no partitions assigned, all partitions in use,
+      //    or all partitons idle, reach max position]
+      if (!(gentRet.GetErrCode() == err_code::kErrNotFound
+        || gentRet.GetErrCode() == err_code::kErrNoPartAssigned
         || gentRet.GetErrCode() == err_code::kErrAllPartInUse
-        || gentRet.GetErrCode() == err_code::kErrAllPartWaiting) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(300));
-      } else if (gentRet.GetErrCode() == err_code::kErrMQServiceStop 
-      || gentRet.GetErrCode() == err_code::kErrClientStop) {
-        break;
-      } else {
-        // 2.2.2 if another error, print error message
-        if (gentRet.GetErrCode() != err_code::kErrNotFound) {
-          printf("\n GetMessage failure, err_code=%d, err_msg is: %s",
-            gentRet.GetErrCode(), gentRet.GetErrMessage().c_str());
+        || gentRet.GetErrCode() == err_code::kErrAllPartWaiting)) {
+        if (gentRet.GetErrCode() == err_code::kErrMQServiceStop 
+          || gentRet.GetErrCode() == err_code::kErrClientStop) {
+          break;
         }
+        printf("\n GetMessage failure, err_code=%d, err_msg is: %s ",
+          gentRet.GetErrCode(), gentRet.GetErrMessage().c_str());
       }
     }
     calc_message_count(msg_count);

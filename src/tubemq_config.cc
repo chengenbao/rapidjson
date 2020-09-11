@@ -226,6 +226,7 @@ ConsumerConfig::ConsumerConfig() {
   is_confirm_in_local_ = false;
   is_rollback_if_confirm_timout_ = true;
   max_subinfo_report_intvl_ = tb_config::kSubInfoReportMaxIntervalTimes;
+  cosume_status_check_ms_ = tb_config::kConsumeStatusCheckPeriodMsDef;
   msg_notfound_wait_period_ms_ = tb_config::kMsgNotfoundWaitPeriodMsDef;
   reb_confirm_wait_period_ms_ = tb_config::kRebConfirmWaitPeriodMsDef;
   max_confirm_wait_period_ms_ = tb_config::kConfirmWaitPeriodMsMax;
@@ -466,19 +467,30 @@ void ConsumerConfig::SetConsumePosition(ConsumePosition consume_from_where) {
 
 const ConsumePosition ConsumerConfig::GetConsumePosition() const { return consume_position_; }
 
-const int ConsumerConfig::GetMsgNotFoundWaitPeriodMs() const {
+const int32_t ConsumerConfig::GetMsgNotFoundWaitPeriodMs() const {
   return msg_notfound_wait_period_ms_;
 }
 
-void ConsumerConfig::SetMsgNotFoundWaitPeriodMs(int msg_notfound_wait_period_ms) {
+void ConsumerConfig::SetMsgNotFoundWaitPeriodMs(int32_t msg_notfound_wait_period_ms) {
   msg_notfound_wait_period_ms_ = msg_notfound_wait_period_ms;
 }
 
-const int ConsumerConfig::GetMaxSubinfoReportIntvl() const {
+const int32_t ConsumerConfig::GetConsumeStatusCheckMs() const {
+  return cosume_status_check_ms_;
+}
+
+void ConsumerConfig::SetConsumeStatusCheckMs(int32_t cosume_status_check_ms) {
+  if (cosume_status_check_ms > 50 
+    && cosume_status_check_ms < 1000) {
+    cosume_status_check_ms_ = cosume_status_check_ms;
+  }
+}
+
+const int32_t ConsumerConfig::GetMaxSubinfoReportIntvl() const {
   return max_subinfo_report_intvl_;
 }
 
-void ConsumerConfig::SetMaxSubinfoReportIntvl(int max_subinfo_report_intvl) {
+void ConsumerConfig::SetMaxSubinfoReportIntvl(int32_t max_subinfo_report_intvl) {
   max_subinfo_report_intvl_ = max_subinfo_report_intvl;
 }
 
@@ -488,9 +500,11 @@ void ConsumerConfig::SetConfirmInLocal(bool confirm_in_local) {
   is_confirm_in_local_ = confirm_in_local;
 }
 
-bool ConsumerConfig::IsRollbackIfConfirmTimeout() { return is_rollback_if_confirm_timout_; }
+bool ConsumerConfig::IsRollbackIfConfirmTimeout() {
+  return is_rollback_if_confirm_timout_; }
 
-void ConsumerConfig::setRollbackIfConfirmTimeout(bool is_rollback_if_confirm_timeout) {
+void ConsumerConfig::setRollbackIfConfirmTimeout(
+  bool is_rollback_if_confirm_timeout) {
   is_rollback_if_confirm_timout_ = is_rollback_if_confirm_timeout;
 }
 
@@ -498,21 +512,25 @@ const int ConsumerConfig::GetWaitPeriodIfConfirmWaitRebalanceMs() const {
   return reb_confirm_wait_period_ms_;
 }
 
-void ConsumerConfig::SetWaitPeriodIfConfirmWaitRebalanceMs(int reb_confirm_wait_period_ms) {
+void ConsumerConfig::SetWaitPeriodIfConfirmWaitRebalanceMs(
+  int32_t reb_confirm_wait_period_ms) {
   reb_confirm_wait_period_ms_ = reb_confirm_wait_period_ms;
 }
 
-const int ConsumerConfig::GetMaxConfirmWaitPeriodMs() const { return max_confirm_wait_period_ms_; }
+const int32_t ConsumerConfig::GetMaxConfirmWaitPeriodMs() const {
+  return max_confirm_wait_period_ms_; }
 
-void ConsumerConfig::SetMaxConfirmWaitPeriodMs(int max_confirm_wait_period_ms) {
+void ConsumerConfig::SetMaxConfirmWaitPeriodMs(
+  int32_t max_confirm_wait_period_ms) {
   max_confirm_wait_period_ms_ = max_confirm_wait_period_ms;
 }
 
-const int ConsumerConfig::GetShutdownRebWaitPeriodMs() const {
+const int32_t ConsumerConfig::GetShutdownRebWaitPeriodMs() const {
   return shutdown_reb_wait_period_ms_;
 }
 
-void ConsumerConfig::SetShutdownRebWaitPeriodMs(int wait_period_when_shutdown_ms) {
+void ConsumerConfig::SetShutdownRebWaitPeriodMs(
+  int32_t wait_period_when_shutdown_ms) {
   shutdown_reb_wait_period_ms_ = wait_period_when_shutdown_ms;
 }
 
@@ -573,6 +591,8 @@ string ConsumerConfig::ToString() {
   ss << max_subinfo_report_intvl_;
   ss << ", msg_notfound_wait_period_ms_=";
   ss << msg_notfound_wait_period_ms_;
+  ss << ", cosume_status_check_ms_=";
+  ss << cosume_status_check_ms_;
   ss << ", is_confirm_in_local_=";
   ss << is_confirm_in_local_;
   ss << ", is_rollback_if_confirm_timout_=";

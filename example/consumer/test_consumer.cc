@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
   int64_t start_time = time(NULL);
   do {
     // 1. get Message;
-    result = consumer_1.GetMessage(gentRet);
+    result = consumer_1.GetMessage(gentRet, 60 * 000);
     if (result) {
       // 2.1.1  if success, process message
       list<Message> msgs = gentRet.GetMessageList();
@@ -93,22 +93,19 @@ int main(int argc, char* argv[]) {
       consumer_1.Confirm(gentRet.GetConfirmContext(), true, confirm_result);
     } else {
       // 2.2.1 if failure, check error code
-      // if no partitions assigned, all partitions in use,
-      //    or all partitons idle, sleep and retry
-      if (gentRet.GetErrCode() == err_code::kErrNoPartAssigned
+      // print error message if errcode not in 
+      // [no partitions assigned, all partitions in use,
+      //    or all partitons idle, reach max position]
+      if (!(gentRet.GetErrCode() == err_code::kErrNotFound
+        || gentRet.GetErrCode() == err_code::kErrNoPartAssigned
         || gentRet.GetErrCode() == err_code::kErrAllPartInUse
-        || gentRet.GetErrCode() == err_code::kErrAllPartWaiting) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(300));
-      } else {
-        // 2.2.2 if another error, print error message
-        if (gentRet.GetErrCode() != err_code::kErrNotFound) {
-          printf("\n GetMessage failure, err_code=%d, err_msg is: %s ",
-            gentRet.GetErrCode(), gentRet.GetErrMessage().c_str());
-        }        
+        || gentRet.GetErrCode() == err_code::kErrAllPartWaiting)) {
+        printf("\n GetMessage failure, err_code=%d, err_msg is: %s ",
+          gentRet.GetErrCode(), gentRet.GetErrMessage().c_str());
       }
     }
     // used for test, consume 10 minutes only
-    if (time(NULL) - start_time > 60) {
+    if (time(NULL) - start_time > 10 * 60) {
       break;
     }
   } while (true);

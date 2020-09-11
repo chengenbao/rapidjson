@@ -108,7 +108,8 @@ void TubeMQConsumer::ShutDown() {
   }
 }
 
-bool TubeMQConsumer::GetMessage(ConsumerResult& result) {
+bool TubeMQConsumer::GetMessage(
+  ConsumerResult& result, int64_t max_wait_periodms) {
   if (!TubeMQService::Instance()->IsRunning()) {
     result.SetFailureResult(err_code::kErrMQServiceStop,
       "TubeMQ Service stopped!");
@@ -132,7 +133,7 @@ bool TubeMQConsumer::GetMessage(ConsumerResult& result) {
       "Rmt client CB has been released, please re-start this client");
     return false;
   }
-  return rmt_client->GetMessage(result);
+  return rmt_client->GetMessage(result, max_wait_periodms);
 }
 
 bool TubeMQConsumer::Confirm(const string& confirm_context,

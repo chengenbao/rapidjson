@@ -66,6 +66,7 @@ class RmtDataCacheCsm {
   const int64_t GetDefFlowCtrlId() const { return def_flowctrl_handler_.GetFlowCtrlId(); }
   const int64_t GetGroupFlowCtrlId() const { return group_flowctrl_handler_.GetFlowCtrlId(); }
   bool IsUnderGroupCtrl();
+  int32_t GetCurConsumeStatus();
   bool IsPartitionsReady();
   int32_t GetCurPartCount() const { return cur_part_cnt_.Get(); }
   bool IsPartitionInUse(string partition_key, long used_time);

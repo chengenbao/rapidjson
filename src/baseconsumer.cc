@@ -132,24 +132,14 @@ void BaseConsumer::ShutDown() {
   LOG_INFO("[CONSUMER] ShutDown consumer finished, client=%s", client_uuid_.c_str());
 }
 
-bool BaseConsumer::GetMessage(ConsumerResult& result) {
+bool BaseConsumer::GetMessage(
+  ConsumerResult& result, int64_t max_wait_periodms) {
   int32_t error_code;
   string err_info;
   PartitionExt partition_ext;
   string confirm_context;
-
-  if (!TubeMQService::Instance()->IsRunning()) {
-    result.SetFailureResult(err_code::kErrMQServiceStop, "TubeMQ Service stopped!");
-    return false;
-  }
-  if (!isClientRunning()) {
-    result.SetFailureResult(err_code::kErrClientStop, "TubeMQ Client stopped!");
-    return false;
-  }
-  if (!IsConsumeReady(5000)) {
-    error_code = err_code::kErrNoPartAssigned;
-    err_info = "No partition info in local cache, please retry later!";
-    result.SetFailureResult(error_code, err_info);
+  
+  if (!IsConsumeReady(result, max_wait_periodms)) {
     return false;
   }
   if (!rmtdata_cache_.SelectPartition(error_code,
@@ -201,19 +191,49 @@ bool BaseConsumer::GetMessage(ConsumerResult& result) {
   }
 }
 
-bool BaseConsumer::IsConsumeReady(long max_wait_time_ms) {
-  long start_time = Utils::GetCurrentTimeMillis();
-  do {
-    if (!TubeMQService::Instance()->IsRunning()
-      || !isClientRunning()) {
-      break;
+bool BaseConsumer::IsConsumeReady(ConsumerResult& result, int64_t max_wait_time_ms) {
+  int32_t ret_code;
+  int64_t start_time = Utils::GetCurrentTimeMillis();
+  while (true) {
+    if (!TubeMQService::Instance()->IsRunning()) {
+      result.SetFailureResult(err_code::kErrMQServiceStop, "TubeMQ Service stopped!");
+      return false;
     }
-    if (rmtdata_cache_.IsPartitionsReady()) {
+    if (!isClientRunning()) {
+      result.SetFailureResult(err_code::kErrClientStop, "TubeMQ Client stopped!");
+      return false;
+    }
+    ret_code = rmtdata_cache_.GetCurConsumeStatus();
+    if (err_code::kErrSuccess == ret_code) {
       return true;
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(250));
-  } while (Utils::GetCurrentTimeMillis() - start_time > max_wait_time_ms);
-  return rmtdata_cache_.IsPartitionsReady();
+    if ((max_wait_time_ms >= 0)
+      && (Utils::GetCurrentTimeMillis() - start_time > max_wait_time_ms)) {
+      switch (ret_code) {
+        case err_code::kErrNoPartAssigned: {
+          result.SetFailureResult(ret_code,
+            "No partition info in local cache, please retry later!");
+        }
+        break;
+
+        case err_code::kErrAllPartInUse: {
+          result.SetFailureResult(ret_code,
+            "No idle partition to consume, please retry later!");
+        }
+        break;
+
+        case err_code::kErrAllPartWaiting:
+        default: {
+          result.SetFailureResult(ret_code,
+            "All partitions reach max position, please retry later!");
+        }
+        break;
+      }
+      return false;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(config_.GetConsumeStatusCheckMs()));
+  }
+  return true;
 }
 
 bool BaseConsumer::GetCurConsumedInfo(map<string, ConsumeOffsetInfo>& consume_info_map) {
@@ -1424,6 +1444,8 @@ int32_t BaseConsumer::getConsumeReadStatus(bool is_first_reg) {
       LOG_INFO("[Consumer From Max Offset Always], clientId=%s", client_uuid_.c_str());
     }
   }
+  LOG_INFO("[getConsumeReadStatus], readStatus=%d, is_first_reg=%d, config_.GetConsumePosition()=%d",
+    readStatus, is_first_reg, config_.GetConsumePosition());
   return readStatus;
 }
 

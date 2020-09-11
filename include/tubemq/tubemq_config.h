@@ -111,7 +111,9 @@ class ConsumerConfig : public BaseConfig {
   void SetConsumePosition(ConsumePosition consume_from_where);
   const ConsumePosition GetConsumePosition() const;
   const int32_t GetMsgNotFoundWaitPeriodMs() const;
-  void SetMsgNotFoundWaitPeriodMs(int msg_notfound_wait_period_ms);
+  void SetMsgNotFoundWaitPeriodMs(int32_t msg_notfound_wait_period_ms);
+  const int32_t GetConsumeStatusCheckMs() const;
+  void SetConsumeStatusCheckMs(int32_t cosume_status_check_ms);
   const int32_t GetMaxSubinfoReportIntvl() const;
   void SetMaxSubinfoReportIntvl(int32_t max_subinfo_report_intvl);
   bool IsConfirmInLocal();
@@ -143,6 +145,7 @@ class ConsumerConfig : public BaseConfig {
   ConsumePosition consume_position_;
   int32_t max_subinfo_report_intvl_;
   int32_t msg_notfound_wait_period_ms_;
+  int32_t cosume_status_check_ms_;
   bool is_confirm_in_local_;
   bool is_rollback_if_confirm_timout_;
   int32_t reb_confirm_wait_period_ms_;

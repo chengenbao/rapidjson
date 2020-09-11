@@ -71,6 +71,8 @@ static const int32_t kRebConfirmWaitPeriodMsDef = 3000;
 static const int32_t kConfirmWaitPeriodMsMax = 60000;
 // default rebalance wait if shutdown meeting
 static const int32_t kRebWaitPeriodWhenShutdownMs = 10000;
+// default consume status check period
+static const int32_t kConsumeStatusCheckPeriodMsDef = 200;
 
 // max int value
 static const int32_t kMaxIntValue = 0x7fffffff;

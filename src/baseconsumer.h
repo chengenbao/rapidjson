@@ -52,9 +52,9 @@ class BaseConsumer : public BaseClient, public std::enable_shared_from_this<Base
   ~BaseConsumer();
   bool Start(string& err_info, const ConsumerConfig& config);
   virtual void ShutDown();
-  bool GetMessage(ConsumerResult& result);
+  bool GetMessage(ConsumerResult& result, int64_t max_wait_periodms);
   bool Confirm(const string& confirm_context, bool is_consumed, ConsumerResult& result);
-  bool IsConsumeReady(long max_wait_time_ms);
+  bool IsConsumeReady(ConsumerResult& result, int64_t max_wait_time_ms);
   bool GetCurConsumedInfo(map<string, ConsumeOffsetInfo>& consume_info_map);
 
  private:
