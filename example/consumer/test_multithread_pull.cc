@@ -113,6 +113,7 @@ int main(int argc, char* argv[]) {
   string conf_file = "../conf/client.conf";
   string group_name = "test_c_v8";
   string master_addr = "10.215.128.83:8000,10.215.128.83:8000";
+  int32_t thread_num =15;
   
   set<string> topic_list;
   topic_list.insert("test_1");
@@ -141,15 +142,15 @@ int main(int argc, char* argv[]) {
     return -2;
   }
   
-  std::thread pull_threads[10];
-  for (int32_t i = 0; i < 10; i++) {
+  std::thread pull_threads[thread_num];
+  for (int32_t i = 0; i < thread_num; i++) {
     pull_threads[i] = std::thread(thread_task_pull, i);
   }
 
   getchar(); // for test hold the test thread
   consumer_1.ShutDown();
   // 
-  for (int32_t i = 0; i < 10; i++) {
+  for (int32_t i = 0; i < thread_num; i++) {
     if (pull_threads[i].joinable()) {
       pull_threads[i].join();
     }
