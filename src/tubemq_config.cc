@@ -410,7 +410,7 @@ bool ConsumerConfig::setGroupConsumeTarget(
       err_info = ss.str();
       return false;
     }
-    if (tmp_sub_map.find(result[1]) != tmp_sub_map.end()) {
+    if (tmp_sub_map.find(result[1]) == tmp_sub_map.end()) {
       stringstream ss;
       ss << "Illegal parameter: ";
       ss << it_part->first;
