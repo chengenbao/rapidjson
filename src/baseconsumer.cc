@@ -718,6 +718,7 @@ void BaseConsumer::processConnect2Broker(ConsumerEvent& event) {
       }
     }
   }
+  sub_info_.BookFstRegistered();
   event.SetEventStatus(2);
   LOG_TRACE("[processConnect2Broker] out connect event process, clientid=%s",
     client_uuid_.c_str());
@@ -954,11 +955,9 @@ void BaseConsumer::buidCloseRequestC2M(TubeMQCodec::ReqProtocolPtr& req_protocol
 
 void BaseConsumer::buidRegisterRequestC2B(const PartitionExt& partition,
                                             TubeMQCodec::ReqProtocolPtr& req_protocol) {
-  bool is_first_reg;
-  int64_t part_offset;
+  string register_msg;
   set<string> filter_cond_set;
   map<string, set<string> > filter_map;
-  string register_msg;
   RegisterRequestC2B c2b_request;
   c2b_request.set_clientid(client_uuid_);
   c2b_request.set_groupname(config_.GetGroupName());
@@ -966,7 +965,7 @@ void BaseConsumer::buidRegisterRequestC2B(const PartitionExt& partition,
   c2b_request.set_topicname(partition.GetTopic());
   c2b_request.set_partitionid(partition.GetPartitionId());
   c2b_request.set_qrypriorityid(rmtdata_cache_.GetGroupQryPriorityId());
-  is_first_reg = rmtdata_cache_.IsPartitionFirstReg(partition.GetPartitionKey());
+  bool is_first_reg = rmtdata_cache_.IsPartitionFirstReg(partition.GetPartitionKey());
   c2b_request.set_readstatus(getConsumeReadStatus(is_first_reg));
   if (sub_info_.IsFilterConsume(partition.GetTopic())) {
     filter_map = sub_info_.GetTopicFilterMap();
@@ -978,11 +977,10 @@ void BaseConsumer::buidRegisterRequestC2B(const PartitionExt& partition,
       }
     }
   }
-  if (is_first_reg) {
-    sub_info_.GetAssignedPartOffset(partition.GetPartitionKey(), part_offset);
-    if (part_offset != tb_config::kInvalidValue) {
-      c2b_request.set_curroffset(part_offset);
-    }
+  int64_t part_offset = tb_config::kInvalidValue;
+  sub_info_.GetAssignedPartOffset(partition.GetPartitionKey(), part_offset);
+  if (part_offset != tb_config::kInvalidValue) {
+    c2b_request.set_curroffset(part_offset);
   }
   AuthorizedInfo* p_authInfo = c2b_request.mutable_authinfo();
   genBrokerAuthenticInfo(p_authInfo, true);
