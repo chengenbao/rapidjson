@@ -978,7 +978,7 @@ void BaseConsumer::buidRegisterRequestC2B(const PartitionExt& partition,
       }
     }
   }
-  if (is_first_reg && sub_info_.IsBoundConsume() && sub_info_.IsNotAllocated()) {
+  if (is_first_reg) {
     sub_info_.GetAssignedPartOffset(partition.GetPartitionKey(), part_offset);
     if (part_offset != tb_config::kInvalidValue) {
       c2b_request.set_curroffset(part_offset);
