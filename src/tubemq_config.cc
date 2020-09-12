@@ -384,7 +384,8 @@ bool ConsumerConfig::setGroupConsumeTarget(
   }
   // check session_key
   string tgt_session_key = Utils::Trim(session_key);
-  if (tgt_session_key.length() == 0 || tgt_session_key.length() > tb_config::kSessionKeyMaxLength) {
+  if (tgt_session_key.length() == 0 
+    || tgt_session_key.length() > tb_config::kSessionKeyMaxLength) {
     if (tgt_session_key.length() == 0) {
       err_info = "Illegal parameter: session_key is empty!";
     } else {

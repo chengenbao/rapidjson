@@ -871,6 +871,14 @@ void BaseConsumer::buidRegisterRequestC2M(TubeMQCodec::ReqProtocolPtr& req_proto
   for (it_topics = topic_conds.begin(); it_topics != topic_conds.end(); ++it_topics) {
     c2m_request.add_topiccondition(*it_topics);
   }
+  // add bound consume info
+  if (sub_info_.IsBoundConsume()) {
+    c2m_request.set_sessionkey(sub_info_.GetSessionKey());
+    c2m_request.set_selectbig(sub_info_.SelectBig());
+    c2m_request.set_totalcount(sub_info_.GetSourceCnt());
+    c2m_request.set_requiredpartition(sub_info_.GetBoundPartInfo());
+    c2m_request.set_notallocated(sub_info_.IsNotAllocated());
+  }
   // authenticate info
   if (needGenMasterCertificateInfo(true)) {
     MasterCertificateInfo* pmst_certinfo = c2m_request.mutable_authinfo();
