@@ -57,10 +57,11 @@ AtomicLong last_print_count(0);
 void calc_message_count(int64_t msg_count) {
   int64_t last_time = last_print_time.Get();
   int64_t cur_count = last_msg_count.AddAndGet(msg_count);
+  int64_t cur_time = time(NULL);
   if (cur_count - last_print_count.Get() >= 50000 
-    || time(NULL) - last_time > 90) {
-    if (last_print_time.CompareAndSet(last_time, time(NULL))) {
-      printf("\n Current message count=%ld", last_msg_count.Get());
+    || cur_time - last_time > 90) {
+    if (last_print_time.CompareAndSet(last_time, cur_time)) {
+      printf("\n %ld Current message count=%ld", cur_time, last_msg_count.Get());
       last_print_count.Set(cur_count);
     }
   }
