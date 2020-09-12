@@ -439,8 +439,8 @@ bool BaseConsumer::register2Master(int32_t& error_code, string& err_info, bool n
       error_code = error.Value();
       err_info = error.Message();
     }
-    if (error_code == err_code::kErrConsumeGroupForbidden ||
-        error_code == err_code::kErrConsumeContentForbidden) {
+    if (error_code == err_code::kErrConsumeGroupForbidden 
+      || error_code == err_code::kErrConsumeContentForbidden) {
       // set regist process status to existed
       master_reg_status_.CompareAndSet(1, 0);
       LOG_WARN("[CONSUMER] register2master(%s:%d) failure exist register, client=%s,reason:%s",
