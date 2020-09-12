@@ -50,14 +50,18 @@ TubeMQConsumer consumer_1;
 
 AtomicLong last_print_time(0);
 AtomicLong last_msg_count(0);
+AtomicLong last_print_count(0);
+
 
 
 void calc_message_count(int64_t msg_count) {
   int64_t last_time = last_print_time.Get();
-  last_msg_count.GetAndAdd(msg_count);
-  if (time(NULL) - last_time > 90) {
+  int64_t cur_count = last_msg_count.AddAndGet(msg_count);
+  if (cur_count - last_print_count.Get() >= 50000 
+    || time(NULL) - last_time > 90) {
     if (last_print_time.CompareAndSet(last_time, time(NULL))) {
       printf("\n Current message count=%ld", last_msg_count.Get());
+      last_print_count.Set(cur_count);
     }
   }
 }
