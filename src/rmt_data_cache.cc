@@ -428,6 +428,37 @@ void RmtDataCacheCsm::RemoveAndGetPartition(const list<SubscribeInfo>& subscribe
   }
 }
 
+void RmtDataCacheCsm::handleExpiredPartitions(int64_t max_wait_period_ms) {
+  int64_t curr_time;
+  set<string> expired_keys;
+  set<string>::iterator it_lst;
+  map<string, int64_t>::iterator it_used;
+  map<string, PartitionExt>::iterator it_map;
+
+  lock_guard<mutex> lck(meta_lock_);
+  if (!partition_useds_.empty()) {
+    curr_time = Utils::GetCurrentTimeMillis();
+    for (it_used = partition_useds_.begin();
+      it_used != partition_useds_.end(); ++it_used) {
+      if (curr_time - it_used->second > max_wait_period_ms) {
+        expired_keys.insert(it_used->first);
+        it_map = partitions_.find(it_used->first);
+        if (it_map != partitions_.end()) {
+          it_map->second.SetLastConsumed(false);
+        }
+      }
+    }
+    if (!expired_keys.empty()) {
+      for (it_lst = expired_keys.begin();
+        it_lst != expired_keys.end(); it_lst++) {
+        resetIdlePartition(*it_lst, true);
+      }
+    }
+  }
+}
+
+
+
 bool RmtDataCacheCsm::IsPartitionFirstReg(const string& partition_key) {
   map<string, bool>::iterator it;
   lock_guard<mutex> lck(data_book_mutex_);

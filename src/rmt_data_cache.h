@@ -68,6 +68,7 @@ class RmtDataCacheCsm {
   bool IsUnderGroupCtrl();
   int32_t GetCurConsumeStatus();
   bool IsPartitionsReady();
+  void handleExpiredPartitions(int64_t max_wait_period_ms);
   int32_t GetCurPartCount() const { return cur_part_cnt_.Get(); }
   bool IsPartitionInUse(string partition_key, long used_time);
   void AddNewPartition(const PartitionExt& partition_ext);

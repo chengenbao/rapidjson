@@ -527,6 +527,11 @@ void BaseConsumer::heartBeat2Master() {
     master_hb_status_.CompareAndSet(1, 0);
     return;
   }
+  // check partition status
+  if (Utils::GetCurrentTimeMillis() - last_master_hbtime_ > 30000) {
+    rmtdata_cache_.handleExpiredPartitions(
+      config_.GetMaxConfirmWaitPeriodMs());
+  }
   // select current master
   getCurrentMasterAddr(target_ip, target_port);
   auto request = std::make_shared<RequestContext>();
