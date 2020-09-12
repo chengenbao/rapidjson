@@ -132,14 +132,13 @@ void BaseConsumer::ShutDown() {
   LOG_INFO("[CONSUMER] ShutDown consumer finished, client=%s", client_uuid_.c_str());
 }
 
-bool BaseConsumer::GetMessage(
-  ConsumerResult& result, int64_t max_wait_periodms) {
+bool BaseConsumer::GetMessage(ConsumerResult& result) {
   int32_t error_code;
   string err_info;
   PartitionExt partition_ext;
   string confirm_context;
   
-  if (!IsConsumeReady(result, max_wait_periodms)) {
+  if (!IsConsumeReady(result)) {
     return false;
   }
   if (!rmtdata_cache_.SelectPartition(error_code,
@@ -154,7 +153,7 @@ bool BaseConsumer::GetMessage(
   auto request = std::make_shared<RequestContext>();
   TubeMQCodec::ReqProtocolPtr req_protocol = TubeMQCodec::GetReqProtocol();
   // build getmessage request
-  buidGetMessageC2B(partition_ext, partition_ext.IsLastConsumed(), req_protocol);
+  buidGetMessageC2B(partition_ext, req_protocol);
   request->codec_ = std::make_shared<TubeMQCodec>();
   request->ip_ = partition_ext.GetBrokerHost();
   request->port_ = partition_ext.GetBrokerPort();
@@ -191,7 +190,7 @@ bool BaseConsumer::GetMessage(
   }
 }
 
-bool BaseConsumer::IsConsumeReady(ConsumerResult& result, int64_t max_wait_time_ms) {
+bool BaseConsumer::IsConsumeReady(ConsumerResult& result) {
   int32_t ret_code;
   int64_t start_time = Utils::GetCurrentTimeMillis();
   while (true) {
@@ -207,8 +206,9 @@ bool BaseConsumer::IsConsumeReady(ConsumerResult& result, int64_t max_wait_time_
     if (err_code::kErrSuccess == ret_code) {
       return true;
     }
-    if ((max_wait_time_ms >= 0)
-      && (Utils::GetCurrentTimeMillis() - start_time > max_wait_time_ms)) {
+    if ((config_.GetMaxPartCheckPeriodMs() > 0)
+      && (Utils::GetCurrentTimeMillis() - start_time 
+      > config_.GetMaxPartCheckPeriodMs())) {
       switch (ret_code) {
         case err_code::kErrNoPartAssigned: {
           result.SetFailureResult(ret_code,
@@ -231,7 +231,7 @@ bool BaseConsumer::IsConsumeReady(ConsumerResult& result, int64_t max_wait_time_
       }
       return false;
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(config_.GetConsumeStatusCheckMs()));
+    std::this_thread::sleep_for(std::chrono::milliseconds(config_.GetPartCheckSliceMs()));
   }
   return true;
 }
@@ -978,8 +978,8 @@ void BaseConsumer::buidRegisterRequestC2B(const PartitionExt& partition,
   req_protocol->prot_msg_ = register_msg;
 }
 
-void BaseConsumer::buidUnRegRequestC2B(const PartitionExt& partition, bool is_last_consumed,
-                                         TubeMQCodec::ReqProtocolPtr& req_protocol) {
+void BaseConsumer::buidUnRegRequestC2B(const PartitionExt& partition,
+                                          TubeMQCodec::ReqProtocolPtr& req_protocol) {
   string unreg_msg;
   RegisterRequestC2B c2b_request;
   c2b_request.set_clientid(client_uuid_);
@@ -987,7 +987,7 @@ void BaseConsumer::buidUnRegRequestC2B(const PartitionExt& partition, bool is_la
   c2b_request.set_optype(rpc_config::kRegOpTypeUnReg);
   c2b_request.set_topicname(partition.GetTopic());
   c2b_request.set_partitionid(partition.GetPartitionId());
-  c2b_request.set_readstatus(is_last_consumed ? 0 : 1);
+  c2b_request.set_readstatus(1);
   AuthorizedInfo* p_authInfo = c2b_request.mutable_authinfo();
   genBrokerAuthenticInfo(p_authInfo, true);
   c2b_request.SerializeToString(&unreg_msg);
@@ -1014,7 +1014,7 @@ void BaseConsumer::buidHeartBeatC2B(const list<PartitionExt>& partitions,
   req_protocol->prot_msg_ = hb_msg;
 }
 
-void BaseConsumer::buidGetMessageC2B(const PartitionExt& partition, bool is_last_consumed,
+void BaseConsumer::buidGetMessageC2B(const PartitionExt& partition,
                                        TubeMQCodec::ReqProtocolPtr& req_protocol) {
   string get_msg;
   GetMessageRequestC2B c2b_request;
@@ -1023,7 +1023,7 @@ void BaseConsumer::buidGetMessageC2B(const PartitionExt& partition, bool is_last
   c2b_request.set_topicname(partition.GetTopic());
   c2b_request.set_escflowctrl(rmtdata_cache_.IsUnderGroupCtrl());
   c2b_request.set_partitionid(partition.GetPartitionId());
-  c2b_request.set_lastpackconsumed(is_last_consumed);
+  c2b_request.set_lastpackconsumed(partition.IsLastConsumed());
   c2b_request.set_manualcommitoffset(false);
   c2b_request.SerializeToString(&get_msg);
   req_protocol->method_id_ = rpc_config::kBrokerMethoddConsumerGetMsg;
@@ -1179,7 +1179,7 @@ void BaseConsumer::unregister2Brokers(map<NodeInfo, list<PartitionExt> >& unreg_
       auto request = std::make_shared<RequestContext>();
       TubeMQCodec::ReqProtocolPtr req_protocol = TubeMQCodec::GetReqProtocol();
       // build unregister 2 broker request
-      buidUnRegRequestC2B(*it_part, it_part->IsLastConsumed(), req_protocol);
+      buidUnRegRequestC2B(*it_part, req_protocol);
       request->codec_ = std::make_shared<TubeMQCodec>();
       request->ip_ = it_part->GetBrokerHost();
       request->port_ = it_part->GetBrokerPort();

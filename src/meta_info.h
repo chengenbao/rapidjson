@@ -107,7 +107,7 @@ class PartitionExt : public Partition {
     int32_t errcode, int32_t msg_size, bool req_esc_limit, int64_t rsp_dlt_limit,
     int64_t last_datadlt, bool require_slow);
   void SetLastConsumed(bool last_consumed);
-  bool IsLastConsumed();
+  bool IsLastConsumed() const;
 
  private:
   void resetParameters();

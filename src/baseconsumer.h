@@ -52,9 +52,9 @@ class BaseConsumer : public BaseClient, public std::enable_shared_from_this<Base
   ~BaseConsumer();
   bool Start(string& err_info, const ConsumerConfig& config);
   virtual void ShutDown();
-  bool GetMessage(ConsumerResult& result, int64_t max_wait_periodms);
+  bool GetMessage(ConsumerResult& result);
   bool Confirm(const string& confirm_context, bool is_consumed, ConsumerResult& result);
-  bool IsConsumeReady(ConsumerResult& result, int64_t max_wait_time_ms);
+  bool IsConsumeReady(ConsumerResult& result);
   bool GetCurConsumedInfo(map<string, ConsumeOffsetInfo>& consume_info_map);
 
  private:
@@ -83,11 +83,11 @@ class BaseConsumer : public BaseClient, public std::enable_shared_from_this<Base
   void buidCloseRequestC2M(TubeMQCodec::ReqProtocolPtr& req_protocol);
   void buidRegisterRequestC2B(const PartitionExt& partition,
     TubeMQCodec::ReqProtocolPtr& req_protocol);
-  void buidUnRegRequestC2B(const PartitionExt& partition, bool is_last_consumed,
+  void buidUnRegRequestC2B(const PartitionExt& partition,
     TubeMQCodec::ReqProtocolPtr& req_protocol);
   void buidHeartBeatC2B(const list<PartitionExt>& partitions,
     TubeMQCodec::ReqProtocolPtr& req_protocol);
-  void buidGetMessageC2B(const PartitionExt& partition, bool is_last_consumed,
+  void buidGetMessageC2B(const PartitionExt& partition,
     TubeMQCodec::ReqProtocolPtr& req_protocol);
   void buidCommitC2B(const PartitionExt& partition, bool is_last_consumed,
     TubeMQCodec::ReqProtocolPtr& req_protocol);

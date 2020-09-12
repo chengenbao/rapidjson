@@ -370,7 +370,7 @@ void PartitionExt::SetLastConsumed(bool last_consumed) {
   is_last_consumed_ = last_consumed;
 }
 
-bool PartitionExt::IsLastConsumed() {
+bool PartitionExt::IsLastConsumed() const {
   return is_last_consumed_;
 }
 

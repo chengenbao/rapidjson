@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
   int64_t start_time = time(NULL);
   do {
     // 1. get Message;
-    result = consumer_1.GetMessage(gentRet, 60 * 000);
+    result = consumer_1.GetMessage(gentRet);
     if (result) {
       // 2.1.1  if success, process message
       list<Message> msgs = gentRet.GetMessageList();

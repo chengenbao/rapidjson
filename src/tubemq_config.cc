@@ -223,10 +223,10 @@ ConsumerConfig::ConsumerConfig() {
   source_count_ = 0;
   is_select_big_ = true;
   consume_position_ = kConsumeFromLatestOffset;
-  is_confirm_in_local_ = false;
   is_rollback_if_confirm_timout_ = true;
   max_subinfo_report_intvl_ = tb_config::kSubInfoReportMaxIntervalTimes;
-  cosume_status_check_ms_ = tb_config::kConsumeStatusCheckPeriodMsDef;
+  max_part_check_period_ms_ = tb_config::kMaxPartCheckPeriodMsDef;
+  part_check_slice_ms_ = tb_config::kPartCheckSliceMsDef;
   msg_notfound_wait_period_ms_ = tb_config::kMsgNotfoundWaitPeriodMsDef;
   reb_confirm_wait_period_ms_ = tb_config::kRebConfirmWaitPeriodMsDef;
   max_confirm_wait_period_ms_ = tb_config::kConfirmWaitPeriodMsMax;
@@ -252,7 +252,6 @@ ConsumerConfig& ConsumerConfig::operator=(const ConsumerConfig& target) {
     consume_position_ = target.consume_position_;
     max_subinfo_report_intvl_ = target.max_subinfo_report_intvl_;
     msg_notfound_wait_period_ms_ = target.msg_notfound_wait_period_ms_;
-    is_confirm_in_local_ = target.is_confirm_in_local_;
     is_rollback_if_confirm_timout_ = target.is_rollback_if_confirm_timout_;
     reb_confirm_wait_period_ms_ = target.reb_confirm_wait_period_ms_;
     max_confirm_wait_period_ms_ = target.max_confirm_wait_period_ms_;
@@ -475,15 +474,23 @@ void ConsumerConfig::SetMsgNotFoundWaitPeriodMs(int32_t msg_notfound_wait_period
   msg_notfound_wait_period_ms_ = msg_notfound_wait_period_ms;
 }
 
-const int32_t ConsumerConfig::GetConsumeStatusCheckMs() const {
-  return cosume_status_check_ms_;
+const uint32_t ConsumerConfig::GetPartCheckSliceMs() const {
+  return part_check_slice_ms_;
 }
 
-void ConsumerConfig::SetConsumeStatusCheckMs(int32_t cosume_status_check_ms) {
-  if (cosume_status_check_ms > 50 
-    && cosume_status_check_ms < 1000) {
-    cosume_status_check_ms_ = cosume_status_check_ms;
+void ConsumerConfig::SetPartCheckSliceMs(uint32_t part_check_slice_ms) {
+  if (part_check_slice_ms >= 0 
+    && part_check_slice_ms <= 1000) {
+    part_check_slice_ms_ = part_check_slice_ms;
   }
+}
+
+const int32_t ConsumerConfig::GetMaxPartCheckPeriodMs() const {
+  return max_part_check_period_ms_;
+}
+
+void ConsumerConfig::SetMaxPartCheckPeriodMs(int32_t max_part_check_period_ms) {
+  max_part_check_period_ms_ = max_part_check_period_ms;
 }
 
 const int32_t ConsumerConfig::GetMaxSubinfoReportIntvl() const {
@@ -492,12 +499,6 @@ const int32_t ConsumerConfig::GetMaxSubinfoReportIntvl() const {
 
 void ConsumerConfig::SetMaxSubinfoReportIntvl(int32_t max_subinfo_report_intvl) {
   max_subinfo_report_intvl_ = max_subinfo_report_intvl;
-}
-
-bool ConsumerConfig::IsConfirmInLocal() { return is_confirm_in_local_; }
-
-void ConsumerConfig::SetConfirmInLocal(bool confirm_in_local) {
-  is_confirm_in_local_ = confirm_in_local;
 }
 
 bool ConsumerConfig::IsRollbackIfConfirmTimeout() {
@@ -591,10 +592,10 @@ string ConsumerConfig::ToString() {
   ss << max_subinfo_report_intvl_;
   ss << ", msg_notfound_wait_period_ms_=";
   ss << msg_notfound_wait_period_ms_;
-  ss << ", cosume_status_check_ms_=";
-  ss << cosume_status_check_ms_;
-  ss << ", is_confirm_in_local_=";
-  ss << is_confirm_in_local_;
+  ss << ", max_part_check_period_ms_=";
+  ss << max_part_check_period_ms_;
+  ss << ", part_check_slice_ms_=";
+  ss << part_check_slice_ms_;
   ss << ", is_rollback_if_confirm_timout_=";
   ss << is_rollback_if_confirm_timout_;
   ss << ", reb_confirm_wait_period_ms_=";

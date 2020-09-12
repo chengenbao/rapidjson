@@ -72,7 +72,7 @@ void thread_task_pull(int32_t thread_no) {
   do {
     msg_count = 0;
     // 1. get Message;
-    result = consumer_1.GetMessage(gentRet, 60 * 1000);
+    result = consumer_1.GetMessage(gentRet);
     if (result) {
       // 2.1.1  if success, process message
       list<Message> msgs = gentRet.GetMessageList();
