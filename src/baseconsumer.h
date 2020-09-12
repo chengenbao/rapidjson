@@ -54,7 +54,6 @@ class BaseConsumer : public BaseClient, public std::enable_shared_from_this<Base
   virtual void ShutDown();
   bool GetMessage(ConsumerResult& result);
   bool Confirm(const string& confirm_context, bool is_consumed, ConsumerResult& result);
-  bool IsConsumeReady(ConsumerResult& result);
   bool GetCurConsumedInfo(map<string, ConsumeOffsetInfo>& consume_info_map);
 
  private:
@@ -67,6 +66,7 @@ class BaseConsumer : public BaseClient, public std::enable_shared_from_this<Base
  private:
   string buildUUID();
   bool isClientRunning();
+  bool IsConsumeReady(ConsumerResult& result);
   int32_t getConsumeReadStatus(bool is_first_reg);
   bool initMasterAddress(string& err_info, const string& master_info);
   void getNextMasterAddr(string& ipaddr, int32_t& port);

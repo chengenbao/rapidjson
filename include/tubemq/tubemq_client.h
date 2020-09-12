@@ -42,6 +42,7 @@ class TubeMQConsumer {
   ~TubeMQConsumer();
   bool Start(string& err_info, const ConsumerConfig& config);
   virtual void ShutDown();
+  const int32_t GetClientId() const { return client_id_; }
   bool GetMessage(ConsumerResult& result);
   bool Confirm(const string& confirm_context, bool is_consumed, ConsumerResult& result);
   bool GetCurConsumedInfo(map<string, ConsumeOffsetInfo>& consume_info_map);
