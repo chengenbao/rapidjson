@@ -116,7 +116,7 @@ void ClientSubInfo::GetAssignedPartOffset(const string& partition_key, int64_t& 
   offset = tb_config::kInvalidValue;
   if (!first_registered_.Get() 
     && bound_consume_ 
-    && !not_allocated_.Get()) {
+    && not_allocated_.Get()) {
     it = assigned_part_map_.find(partition_key);
     if (it != assigned_part_map_.end()) {
       offset = it->second;

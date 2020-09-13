@@ -1082,7 +1082,7 @@ bool BaseConsumer::processRegisterResponseM2C(int32_t& error_code, string& err_i
     return false;
   }
   // update policy
-  if (rsp_m2c.has_notallocated() || !rsp_m2c.notallocated()) {
+  if (rsp_m2c.has_notallocated() && !rsp_m2c.notallocated()) {
     sub_info_.CompAndSetNotAllocated(true, false);
   }
   if (rsp_m2c.has_defflowcheckid() || rsp_m2c.has_groupflowcheckid()) {
@@ -1131,7 +1131,7 @@ bool BaseConsumer::processHBResponseM2C(int32_t& error_code, string& err_info,
     return false;
   }
   // update policy
-  if (rsp_m2c.has_notallocated() || !rsp_m2c.notallocated()) {
+  if (rsp_m2c.has_notallocated() && !rsp_m2c.notallocated()) {
     sub_info_.CompAndSetNotAllocated(true, false);
   }
   if (rsp_m2c.has_defflowcheckid() || rsp_m2c.has_groupflowcheckid()) {
