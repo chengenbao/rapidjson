@@ -125,7 +125,7 @@ bool TubeMQConsumer::GetMessage(ConsumerResult& result) {
     return false;
   }
   BaseConsumer* rmt_client =
-    (BaseConsumer* )TubeMQService::Instance()->GetClientObj(client_id_);
+    (BaseConsumer*)TubeMQService::Instance()->GetClientObj(client_id_);
   if ((rmt_client == NULL)
     || (rmt_client->GetClientIndex() != client_id_)) {
     result.SetFailureResult(err_code::kErrBadRequest,
@@ -153,7 +153,7 @@ bool TubeMQConsumer::Confirm(const string& confirm_context,
     return false;
   }
   BaseConsumer* rmt_client =
-    (BaseConsumer* )TubeMQService::Instance()->GetClientObj(client_id_);
+    (BaseConsumer*)TubeMQService::Instance()->GetClientObj(client_id_);
   if ((rmt_client == NULL)
     || (rmt_client->GetClientIndex() != client_id_)) {
     result.SetFailureResult(err_code::kErrBadRequest,
