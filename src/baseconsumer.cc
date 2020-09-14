@@ -206,7 +206,7 @@ bool BaseConsumer::IsConsumeReady(ConsumerResult& result) {
     if (err_code::kErrSuccess == ret_code) {
       return true;
     }
-    if ((config_.GetMaxPartCheckPeriodMs() > 0)
+    if ((config_.GetMaxPartCheckPeriodMs() >= 0)
       && (Utils::GetCurrentTimeMillis() - start_time 
       > config_.GetMaxPartCheckPeriodMs())) {
       switch (ret_code) {
