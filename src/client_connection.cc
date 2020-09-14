@@ -150,19 +150,22 @@ void ClientConnection::asyncRead() {
   }
   recv_buffer_->EnsureWritableBytes(rpc_config::kRpcEnsureWriteableBytes);
   auto self = shared_from_this();
-  socket_->async_read_some(asio::buffer(recv_buffer_->WriteBegin(), recv_buffer_->WritableBytes()),
-                           [self, this](std::error_code ec, std::size_t len) {
-                             if (ec) {
-                               LOG_ERROR("[%s]async read error:%d, %s, %s", ToString().c_str(),
-                                         ec.value(), ec.message().c_str(), ec.category().name());
-                               close(&ec);
-                               return;
-                             }
-                             recv_time_ = std::time(nullptr);
-                             recv_buffer_->WriteBytes(len);
-                             checkPackageDone();
-                             asyncRead();
-                           });
+  socket_->async_read_some(
+      asio::buffer(recv_buffer_->WriteBegin(), recv_buffer_->WritableBytes()),
+      [self, this](std::error_code ec, std::size_t len) {
+        if (ec) {
+          LOG_ERROR("[%s]async read error:%d, %s, %s", ToString().c_str(), ec.value(),
+                    ec.message().c_str(), ec.category().name());
+          close(&ec);
+          return;
+        }
+        recv_time_ = std::time(nullptr);
+        recv_buffer_->WriteBytes(len);
+        checkPackageDone();
+        LOG_TRACE("[%s]async read done, len:%ld, package_length_:%ld, recvbuffer:%s",
+                  ToString().c_str(), len, package_length_, recv_buffer_->String().c_str());
+        asyncRead();
+      });
 }
 
 void ClientConnection::checkPackageDone() {
@@ -272,6 +275,7 @@ void ClientConnection::asyncWrite() {
           return;
         }
         ++write_package_number_;
+        LOG_TRACE("[%s]async write done, request_id:%d", ToString().c_str(), req->request_id_);
         asyncWrite();
       });
 }
