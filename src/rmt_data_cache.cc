@@ -512,6 +512,30 @@ void RmtDataCacheCsm::HandleTimeout(const string partition_key, const asio::erro
   }
 }
 
+int RmtDataCacheCsm::IncrAndGetHBError(NodeInfo broker) {
+  int count = 0;
+  map<NodeInfo, int>::iterator it_map;
+  lock_guard<mutex> lck(status_mutex_);
+  it_map = broker_status_.find(broker);
+  if (it_map == broker_status_.end()) {
+    broker_status_[broker] = 1;
+    count = 1;
+  } else {
+    count = ++it_map->second;
+  }
+  return count;
+}
+
+void RmtDataCacheCsm::ResetHBError(NodeInfo broker) {
+  map<NodeInfo, int>::iterator it_map;
+  lock_guard<mutex> lck(status_mutex_);
+  it_map = broker_status_.find(broker);
+  if (it_map != broker_status_.end()) {
+    it_map->second = 0;
+  }
+}
+
+
 void RmtDataCacheCsm::addDelayTimer(const string& partition_key, int64_t delay_time) {
   // add timer
   tuple<int64_t, SteadyTimerPtr> timer = std::make_tuple(

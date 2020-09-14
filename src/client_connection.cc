@@ -32,15 +32,15 @@ void ClientConnection::AsyncWrite(RequestContextPtr& req) {
     transport_req.req_ = req;
     bool queue_empty = write_queue_.empty();
     write_queue_.push_back(req->request_id_);
-    if (IsConnected() && queue_empty) {
-      asyncWrite();
-    }
     if (req->timeout_ > 0) {
       transport_req.deadline_ = executor_->CreateSteadyTimer();
       transport_req.deadline_->expires_after(std::chrono::milliseconds(req->timeout_));
       transport_req.deadline_->async_wait(std::bind(&ClientConnection::requestTimeoutHandle,
                                                     shared_from_this(), std::placeholders::_1,
                                                     transport_req.req_));
+    }
+    if (IsConnected() && queue_empty) {
+      asyncWrite();
     }
   });
 }

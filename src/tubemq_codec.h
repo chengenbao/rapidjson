@@ -187,7 +187,7 @@ class TubeMQCodec final : public CodecProtocol {
                         size_t &package_length) {
     // check package is valid
     if (in->length() < 12) {
-      package_length = 12;
+      //package_length = 12;
       LOG_TRACE("Check: data's length < 12, is %ld, out", in->length());
       return 0;
     }
@@ -206,10 +206,10 @@ class TubeMQCodec final : public CodecProtocol {
     }
     // check data list
     uint32_t item_len = 0;
-    package_length = 12;
+    //package_length = 12;
     auto check_buf = in->Slice();
     for (uint32_t i = 0; i < list_size; i++) {
-      package_length += 4;
+      //package_length += 4;
       if (check_buf->length() < 4) {
         LOG_TRACE("Check: buffer Remaining length < 4, is %ld, out", check_buf->length());
         return 0;
@@ -224,7 +224,7 @@ class TubeMQCodec final : public CodecProtocol {
                   rpc_config::kRpcMaxBufferSize);
         return -1;
       }
-      package_length += item_len;
+      //package_length += item_len;
       if (item_len > check_buf->length()) {
         LOG_TRACE("Check: item_len(%d) > remaining length(%ld), out", item_len,
                   check_buf->length());

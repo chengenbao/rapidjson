@@ -106,6 +106,9 @@ class RmtDataCacheCsm {
   void OfferEventResult(const ConsumerEvent& event);
   bool PollEventResult(ConsumerEvent& event);
   void HandleTimeout(const string partition_key, const asio::error_code& error);
+  int IncrAndGetHBError(NodeInfo broker);
+  void ResetHBError(NodeInfo broker);
+  
 
  private:
   void addDelayTimer(const string& part_key, int64_t delay_time);
@@ -150,13 +153,16 @@ class RmtDataCacheCsm {
   map<string, int64_t> partition_offset_;
   // for partiton register booked
   map<string, bool> part_reg_booked_;
-
   // event
   mutable mutex event_read_mutex_;
   condition_variable event_read_cond_;
   list<ConsumerEvent> rebalance_events_;
   mutable mutex event_write_mutex_;
   list<ConsumerEvent> rebalance_results_;
+  // status check
+  mutable mutex status_mutex_;
+  map<NodeInfo, int> broker_status_;
+  
 };
 
 }  // namespace tubemq
