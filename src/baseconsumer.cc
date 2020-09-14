@@ -1318,6 +1318,7 @@ bool BaseConsumer::processGetMessageRspB2C(ConsumerResult& result, PeerInfo& pee
                                              bool filter_consume, const PartitionExt& partition_ext,
                                              const string& confirm_context,
                                              const TubeMQCodec::RspProtocolPtr& rsp) {
+  // #lizard forgives
   string err_info;
 
   if (!rsp->success_) {
