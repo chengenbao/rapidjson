@@ -107,7 +107,6 @@ class RmtDataCacheCsm {
   void HandleTimeout(const string partition_key, const asio::error_code& error);
   int IncrAndGetHBError(NodeInfo broker);
   void ResetHBError(NodeInfo broker);
-  
 
  private:
   void addDelayTimer(const string& part_key, int64_t delay_time);
@@ -119,7 +118,6 @@ class RmtDataCacheCsm {
     const string& confirm_context, string& partition_key, int64_t& booked_time);
   bool inRelPartition(string &err_info, bool need_delay_check,
     bool filter_consume, const string& confirm_context, bool is_consumed);
-
 
  private:
   //
@@ -161,7 +159,6 @@ class RmtDataCacheCsm {
   // status check
   mutable mutex status_mutex_;
   map<NodeInfo, int> broker_status_;
-  
 };
 
 }  // namespace tubemq

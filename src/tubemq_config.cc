@@ -384,7 +384,7 @@ bool ConsumerConfig::setGroupConsumeTarget(
   }
   // check session_key
   string tgt_session_key = Utils::Trim(session_key);
-  if (tgt_session_key.length() == 0 
+  if (tgt_session_key.length() == 0
     || tgt_session_key.length() > tb_config::kSessionKeyMaxLength) {
     if (tgt_session_key.length() == 0) {
       err_info = "Illegal parameter: session_key is empty!";
@@ -480,7 +480,7 @@ const uint32_t ConsumerConfig::GetPartCheckSliceMs() const {
 }
 
 void ConsumerConfig::SetPartCheckSliceMs(uint32_t part_check_slice_ms) {
-  if (part_check_slice_ms >= 0 
+  if (part_check_slice_ms >= 0
     && part_check_slice_ms <= 1000) {
     part_check_slice_ms_ = part_check_slice_ms;
   }

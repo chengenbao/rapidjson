@@ -67,7 +67,7 @@ TubeMQConsumer::~TubeMQConsumer() {
 
 bool TubeMQConsumer::Start(string& err_info,
   const ConsumerConfig& config) {
-  if (!TubeMQService::Instance()->IsRunning()){
+  if (!TubeMQService::Instance()->IsRunning()) {
     err_info = "TubeMQ Service not startted!";
     return false;
   }
@@ -172,7 +172,7 @@ bool TubeMQConsumer::GetCurConsumedInfo(map<string, ConsumeOffsetInfo>& consume_
     return false;
   }
   BaseConsumer* rmt_client =
-    (BaseConsumer* )TubeMQService::Instance()->GetClientObj(client_id_);
+    (BaseConsumer*)TubeMQService::Instance()->GetClientObj(client_id_);
   if ((rmt_client == NULL)
     || (rmt_client->GetClientIndex() != client_id_)) {
     return false;

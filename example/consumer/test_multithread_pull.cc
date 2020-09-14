@@ -113,8 +113,7 @@ int main(int argc, char* argv[]) {
   string conf_file = "../conf/client.conf";
   string group_name = "test_c_v8";
   string master_addr = "10.215.128.83:8000,10.215.128.83:8000";
-  int32_t thread_num =15;
-  
+  int32_t thread_num = 15;
   set<string> topic_list;
   topic_list.insert("test_1");
   ConsumerConfig consumer_config;
@@ -147,7 +146,7 @@ int main(int argc, char* argv[]) {
     pull_threads[i] = std::thread(thread_task_pull, i);
   }
 
-  getchar(); // for test hold the test thread
+  getchar();  // for test hold the test thread
   consumer_1.ShutDown();
   // 
   for (int32_t i = 0; i < thread_num; i++) {
@@ -156,7 +155,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  getchar(); // for test hold the test thread
+  getchar();  // for test hold the test thread
   result = StopTubeMQService(err_info);
   if (!result) {
     printf("\n *** StopTubeMQService failure, reason is %s", err_info.c_str());

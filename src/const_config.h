@@ -30,8 +30,6 @@ namespace tubemq {
 
 using std::string;
 
-//#define TUBEMQ_MAX(a, b) ( ((a) > (b)) ? (a) : (b) )
-//#define TUBEMQ_MIN(a, b) ( ((a) > (b)) ? (b) : (a) )
 #define TUBEMQ_MAX(a, b) std::max((a), (b))
 #define TUBEMQ_MIN(a, b) std::min((a), (b))
 #define TUBEMQ_MID(data, max, min) TUBEMQ_MAX(min, TUBEMQ_MIN((max), (data)))

@@ -137,7 +137,7 @@ bool BaseConsumer::GetMessage(ConsumerResult& result) {
   string err_info;
   PartitionExt partition_ext;
   string confirm_context;
-  
+
   if (!IsConsumeReady(result)) {
     return false;
   }
@@ -146,7 +146,7 @@ bool BaseConsumer::GetMessage(ConsumerResult& result) {
     result.SetFailureResult(error_code, err_info);
     return false;
   }
-  long curr_offset = tb_config::kInvalidValue;
+  int64_t curr_offset = tb_config::kInvalidValue;
   bool filter_consume = sub_info_.IsFilterConsume(partition_ext.GetTopic());
   PeerInfo peer_info(partition_ext.GetBrokerHost(), partition_ext.GetPartitionId(),
     partition_ext.GetPartitionKey(), curr_offset);
@@ -207,7 +207,7 @@ bool BaseConsumer::IsConsumeReady(ConsumerResult& result) {
       return true;
     }
     if ((config_.GetMaxPartCheckPeriodMs() >= 0)
-      && (Utils::GetCurrentTimeMillis() - start_time 
+      && (Utils::GetCurrentTimeMillis() - start_time
       >= config_.GetMaxPartCheckPeriodMs())) {
       switch (ret_code) {
         case err_code::kErrNoPartAssigned: {
@@ -277,7 +277,7 @@ bool BaseConsumer::Confirm(const string& confirm_context, bool is_consumed,
   string part_key = Utils::Trim(confirm_context.substr(0, pos1));
   string booked_time_str =
       Utils::Trim(confirm_context.substr(pos1 + token1.size(), confirm_context.size()));
-  long booked_time = atol(booked_time_str.c_str());
+  int64_t booked_time = atol(booked_time_str.c_str());
   pos1 = part_key.find(token2);
   if (string::npos == pos1) {
     result.SetFailureResult(err_code::kErrBadRequest,
@@ -305,7 +305,7 @@ bool BaseConsumer::Confirm(const string& confirm_context, bool is_consumed,
                             "Not found the partition by confirm_context!");
     return false;
   }
-  long curr_offset = tb_config::kInvalidValue;
+  int64_t curr_offset = tb_config::kInvalidValue;
   PeerInfo peer_info(partition_ext.GetBrokerHost(), partition_ext.GetPartitionId(),
     partition_ext.GetPartitionKey(), curr_offset);
   auto request = std::make_shared<RequestContext>();
@@ -344,7 +344,7 @@ bool BaseConsumer::Confirm(const string& confirm_context, bool is_consumed,
     if (rsp->success_) {
       CommitOffsetResponseB2C rsp_b2c;
       ret_result = rsp_b2c.ParseFromArray(rsp->rsp_body_.data().c_str(),
-                                          (int)(rsp->rsp_body_.data().length()));
+                                          (int32_t)(rsp->rsp_body_.data().length()));
       if (ret_result) {
         if (rsp_b2c.success()) {
           curr_offset = rsp_b2c.curroffset();
@@ -439,7 +439,7 @@ bool BaseConsumer::register2Master(int32_t& error_code, string& err_info, bool n
       error_code = error.Value();
       err_info = error.Message();
     }
-    if (error_code == err_code::kErrConsumeGroupForbidden 
+    if (error_code == err_code::kErrConsumeGroupForbidden
       || error_code == err_code::kErrConsumeContentForbidden) {
       // set regist process status to existed
       master_reg_status_.CompareAndSet(1, 0);
@@ -805,7 +805,7 @@ void BaseConsumer::processHeartBeat2Broker(NodeInfo broker_info) {
           if (rsp->success_) {
             HeartBeatResponseB2C rsp_b2c;
             bool result = rsp_b2c.ParseFromArray(rsp->rsp_body_.data().c_str(),
-                                                 (int)(rsp->rsp_body_.data().length()));
+                                                 (int32_t)(rsp->rsp_body_.data().length()));
             if (result) {
               set<string> partition_keys;
               if (rsp_b2c.success()) {
@@ -1259,10 +1259,8 @@ void BaseConsumer::convertMessages(int32_t& msg_size, list<Message>& message_lis
     int32_t payload_length = tsfMsg.payloaddata().length();
     int32_t calc_checksum = Utils::Crc32(tsfMsg.payloaddata());
     if (in_check_sum != calc_checksum) {
-
       LOG_TRACE("[CONSUMER] convertMessages [%d], Crc32 failure, in=%d, calc=%d, client=%s",
         i, in_check_sum, calc_checksum, client_uuid_.c_str());
-
       continue;
     }
     int read_pos = 0;
@@ -1272,10 +1270,8 @@ void BaseConsumer::convertMessages(int32_t& msg_size, list<Message>& message_lis
     memcpy(&payload_data[0], tsfMsg.payloaddata().c_str(), payload_length);
     if ((flag & tb_config::kMsgFlagIncProperties) == 1) {
       if (payload_length < 4) {
-
         LOG_TRACE("[CONSUMER] convertMessages [%d], payload_length(%d) < 4, client=%s",
           i, payload_length, client_uuid_.c_str());
-
         continue;
       }
       int32_t attr_len = ntohl(*(int*)(&payload_data[0]));
