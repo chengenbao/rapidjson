@@ -208,7 +208,7 @@ bool BaseConsumer::IsConsumeReady(ConsumerResult& result) {
     }
     if ((config_.GetMaxPartCheckPeriodMs() >= 0)
       && (Utils::GetCurrentTimeMillis() - start_time 
-      > config_.GetMaxPartCheckPeriodMs())) {
+      >= config_.GetMaxPartCheckPeriodMs())) {
       switch (ret_code) {
         case err_code::kErrNoPartAssigned: {
           result.SetFailureResult(ret_code,
