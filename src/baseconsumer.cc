@@ -1338,9 +1338,7 @@ bool BaseConsumer::processGetMessageRspB2C(ConsumerResult& result, PeerInfo& pee
     result.SetFailureResult(err_code::kErrServerError,
                             "Parse GetMessageResponseB2C response failure!",
                             partition_ext.GetTopic(), peer_info);
-
     LOG_TRACE("[CONSUMER] processGetMessageRspB2C parse failure, client=%s", client_uuid_.c_str());
-
     return false;
   }
 

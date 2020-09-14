@@ -17,18 +17,18 @@
  * under the License.
  */
 
+#include <errno.h>
+#include <fcntl.h>
+#include <libgen.h>
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
-#include <signal.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include <time.h>
-#include <fcntl.h>
-#include <errno.h>
 #include <string>
-#include <libgen.h>
-#include <sys/time.h>
 #include <chrono>
 #include <set>
 #include <thread>
@@ -38,7 +38,6 @@
 #include "tubemq/tubemq_errcode.h"
 #include "tubemq/tubemq_message.h"
 #include "tubemq/tubemq_return.h"
-#include "tubemq/tubemq_errcode.h"
 
 
 using namespace std;
@@ -58,7 +57,7 @@ void calc_message_count(int64_t msg_count) {
   int64_t last_time = last_print_time.Get();
   int64_t cur_count = last_msg_count.AddAndGet(msg_count);
   int64_t cur_time = time(NULL);
-  if (cur_count - last_print_count.Get() >= 50000 
+  if (cur_count - last_print_count.Get() >= 50000
     || cur_time - last_time > 90) {
     if (last_print_time.CompareAndSet(last_time, cur_time)) {
       printf("\n %ld Current message count=%ld", cur_time, last_msg_count.Get());
@@ -86,14 +85,14 @@ void thread_task_pull(int32_t thread_no) {
       consumer_1.Confirm(gentRet.GetConfirmContext(), true, confirm_result);
     } else {
       // 2.2.1 if failure, check error code
-      // print error message if errcode not in 
+      // print error message if errcode not in
       // [no partitions assigned, all partitions in use,
       //    or all partitons idle, reach max position]
       if (!(gentRet.GetErrCode() == err_code::kErrNotFound
         || gentRet.GetErrCode() == err_code::kErrNoPartAssigned
         || gentRet.GetErrCode() == err_code::kErrAllPartInUse
         || gentRet.GetErrCode() == err_code::kErrAllPartWaiting)) {
-        if (gentRet.GetErrCode() == err_code::kErrMQServiceStop 
+        if (gentRet.GetErrCode() == err_code::kErrMQServiceStop
           || gentRet.GetErrCode() == err_code::kErrClientStop) {
           break;
         }
@@ -140,7 +139,7 @@ int main(int argc, char* argv[]) {
     printf("\n Initial consumer failure, error is: %s ", err_info.c_str());
     return -2;
   }
-  
+
   std::thread pull_threads[thread_num];
   for (int32_t i = 0; i < thread_num; i++) {
     pull_threads[i] = std::thread(thread_task_pull, i);
@@ -148,7 +147,7 @@ int main(int argc, char* argv[]) {
 
   getchar();  // for test hold the test thread
   consumer_1.ShutDown();
-  // 
+  //
   for (int32_t i = 0; i < thread_num; i++) {
     if (pull_threads[i].joinable()) {
       pull_threads[i].join();
