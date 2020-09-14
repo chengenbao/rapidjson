@@ -242,7 +242,6 @@ void Utils::Split(const string& source, map<string, string>& result,
   }
 }
 
-
 void Utils::Join(const vector<string>& vec, const string& delimiter, string& target) {
   vector<string>::const_iterator it;
   target.clear();
@@ -251,6 +250,19 @@ void Utils::Join(const vector<string>& vec, const string& delimiter, string& tar
     if (it != vec.end() - 1) {
       target += delimiter;
     }
+  }
+}
+
+void Utils::Join(const map<string, string>& source, string& target,
+  const string& delimiter_step1, const string& delimiter_step2) {
+  map<string, string>::const_iterator it;
+  target.clear();
+  int count = 0;
+  for (it = source.begin(); it != source.end(); ++it) {
+    if (count++ > 0) {
+      target += delimiter_step1;
+    }
+    target += it->first + delimiter_step2 + it->second;
   }
 }
 

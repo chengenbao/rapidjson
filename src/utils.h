@@ -45,6 +45,8 @@ class Utils {
   static void Split(const string& source, map<string, string>& result,
                     const string& delimiter_step1, const string& delimiter_step2);
   static void Join(const vector<string>& vec, const string& delimiter, string& target);
+  static void Join(const map<string, string>& source, string& target,
+    const string& delimiter_step1, const string& delimiter_step2);
   static bool ValidString(string& err_info, const string& source, bool allow_empty, bool pat_match,
                           bool check_max_length, unsigned int maxlen);
   static bool ValidGroupName(string& err_info, const string& group_name, string& tgt_group_name);
