@@ -150,7 +150,7 @@ void ClientConnection::asyncRead() {
   }
   recv_buffer_->EnsureWritableBytes(rpc_config::kRpcEnsureWriteableBytes);
   auto self = shared_from_this();
-  socket_->async_read_some(
+  socket_->async_receive(
       asio::buffer(recv_buffer_->WriteBegin(), recv_buffer_->WritableBytes()),
       [self, this](std::error_code ec, std::size_t len) {
         if (ec) {
@@ -166,8 +166,20 @@ void ClientConnection::asyncRead() {
         }
         recv_time_ = std::time(nullptr);
         recv_buffer_->WriteBytes(len);
-        LOG_TRACE("[%s]async read done, len:%ld, package_length_:%ld, recvbuffer:%s",
-                  ToString().c_str(), len, package_length_, recv_buffer_->String().c_str());
+        std::error_code error;
+        size_t availsize = socket_->available(error);
+        LOG_TRACE("[%s]async read done, len:%ld, package_length_:%ld, availsize:%ld, recvbuffer:%s",
+                  ToString().c_str(), len, package_length_, availsize,
+                  recv_buffer_->String().c_str());
+        if (availsize > 0 && !error) {
+          recv_buffer_->EnsureWritableBytes(availsize);
+          size_t rlen = socket_->receive(asio::buffer(recv_buffer_->WriteBegin(), availsize));
+          if (rlen > 0) {
+            recv_buffer_->WriteBytes(rlen);
+          }
+          LOG_TRACE("[%s]syncread done, receivelen:%ld, recvbuffer:%s", ToString().c_str(), rlen,
+                    recv_buffer_->String().c_str());
+        }
         while (checkPackageDone() > 0 && recv_buffer_->length() > 0) {
           LOG_TRACE("[%s]recheck packagedone package_length_:%ld, recvbuffer:%s",
                     ToString().c_str(), package_length_, recv_buffer_->String().c_str());
