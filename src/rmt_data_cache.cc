@@ -205,7 +205,7 @@ void RmtDataCacheCsm::BookedPartionInfo(const string& partition_key, int64_t cur
   }
 }
 
-bool RmtDataCacheCsm::IsPartitionInUse(string partition_key, long used_time) {
+bool RmtDataCacheCsm::IsPartitionInUse(string partition_key, int64_t used_time) {
   map<string, int64_t>::iterator it_used;
   lock_guard<mutex> lck(meta_lock_);
   it_used = partition_useds_.find(partition_key);

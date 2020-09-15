@@ -1066,7 +1066,7 @@ bool BaseConsumer::processRegisterResponseM2C(int32_t& error_code, string& err_i
   }
   RegisterResponseM2C rsp_m2c;
   bool result = rsp_m2c.ParseFromArray(rsp_protocol->rsp_body_.data().c_str(),
-                                       (int)(rsp_protocol->rsp_body_.data().length()));
+                                       (int32_t)(rsp_protocol->rsp_body_.data().length()));
   if (!result) {
     error_code = err_code::kErrParseFailure;
     err_info = "Parse RegisterResponseM2C response failure!";
@@ -1223,7 +1223,7 @@ bool BaseConsumer::processRegResponseB2C(int32_t& error_code, string& err_info,
   }
   RegisterResponseB2C rsp_b2c;
   bool result = rsp_b2c.ParseFromArray(rsp_protocol->rsp_body_.data().c_str(),
-                                       (int)(rsp_protocol->rsp_body_.data().length()));
+                                       (int32_t)(rsp_protocol->rsp_body_.data().length()));
   if (!result) {
     error_code = err_code::kErrParseFailure;
     err_info = "Parse RegisterResponseB2C response failure!";
@@ -1331,8 +1331,8 @@ bool BaseConsumer::processGetMessageRspB2C(ConsumerResult& result, PeerInfo& pee
     return false;
   }
   GetMessageResponseB2C rsp_b2c;
-  bool ret_result =
-      rsp_b2c.ParseFromArray(rsp->rsp_body_.data().c_str(), (int)(rsp->rsp_body_.data().length()));
+  bool ret_result = rsp_b2c.ParseFromArray(
+    rsp->rsp_body_.data().c_str(), (int32_t)(rsp->rsp_body_.data().length()));
   if (!ret_result) {
     rmtdata_cache_.RelPartition(err_info, filter_consume, confirm_context, false);
     result.SetFailureResult(err_code::kErrServerError,
@@ -1345,9 +1345,9 @@ bool BaseConsumer::processGetMessageRspB2C(ConsumerResult& result, PeerInfo& pee
   switch (rsp_b2c.errcode()) {
     case err_code::kErrSuccess: {
       bool esc_limit = (rsp_b2c.has_escflowctrl() && rsp_b2c.escflowctrl());
-      long data_dltval =
+      int64_t data_dltval =
           rsp_b2c.has_currdatadlt() ? rsp_b2c.currdatadlt() : tb_config::kInvalidValue;
-      long curr_offset = rsp_b2c.has_curroffset() ? rsp_b2c.curroffset() : tb_config::kInvalidValue;
+      int64_t curr_offset = rsp_b2c.has_curroffset() ? rsp_b2c.curroffset() : tb_config::kInvalidValue;
       bool req_slow = rsp_b2c.has_requireslow() ? rsp_b2c.requireslow() : false;
       int msg_size = 0;
       list<Message> message_list;
@@ -1372,7 +1372,7 @@ bool BaseConsumer::processGetMessageRspB2C(ConsumerResult& result, PeerInfo& pee
 
     case err_code::kErrConsumeSpeedLimit: {
       // Process with server side speed limit
-      long def_dlttime = rsp_b2c.has_minlimittime() ? rsp_b2c.minlimittime()
+      int64_t def_dlttime = rsp_b2c.has_minlimittime() ? rsp_b2c.minlimittime()
                                                     : config_.GetMsgNotFoundWaitPeriodMs();
       rmtdata_cache_.RelPartition(err_info, filter_consume, confirm_context, false,
                                   tb_config::kInvalidValue, rsp_b2c.errcode(), false, 0,
@@ -1388,7 +1388,7 @@ bool BaseConsumer::processGetMessageRspB2C(ConsumerResult& result, PeerInfo& pee
     case err_code::kErrServiceUnavilable:
     default: {
       // Slow down the request based on the limitation configuration when meet these errors
-      long limit_dlt = 300;
+      int64_t limit_dlt = 300;
       switch (rsp_b2c.errcode()) {
         case err_code::kErrForbidden: {
           limit_dlt = 2000;
@@ -1450,8 +1450,6 @@ int32_t BaseConsumer::getConsumeReadStatus(bool is_first_reg) {
       LOG_INFO("[Consumer From Max Offset Always], clientId=%s", client_uuid_.c_str());
     }
   }
-  LOG_INFO("[getConsumeReadStatus], readStatus=%d, is_first_reg=%d, config_.GetConsumePosition()=%d",
-    readStatus, is_first_reg, config_.GetConsumePosition());
   return readStatus;
 }
 
