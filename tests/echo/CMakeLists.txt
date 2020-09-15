@@ -18,4 +18,5 @@
 #
 
 
-tubemq_add_tests(chat_client chat_client.cc)
+tubemq_add_tests(echo_client echo_client.cc)
+tubemq_add_tests(echo_server echo_server.cc)

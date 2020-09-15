@@ -31,5 +31,4 @@ endfunction()
 
 add_subdirectory (log)
 add_subdirectory (executor_pool)
-add_subdirectory (chat)
 add_subdirectory (thread_pool)
