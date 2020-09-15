@@ -288,7 +288,7 @@ void TubeMQService::updMasterAddrByDns() {
   lock_guard<mutex> lck(dns_mutex_);
   for (it = tmp_tgt_addr_map.begin(); it != tmp_tgt_addr_map.end(); it++) {
     master_target_[it->first] = it->second;
-  }  
+  }
 }
 
 }  // namespace tubemq
