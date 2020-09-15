@@ -63,8 +63,11 @@ class EchoCodec final : public CodecProtocol {
   virtual bool Encode(const Any &in, BufferPtr &buff) {
     RequestBody req_body;
     ReqProtocolPtr req_protocol = any_cast<ReqProtocolPtr>(in);
-
-    LOG_TRACE("Encode: encode message success, finished!");
+    buff->AppendInt32((int32_t)rpc_config::kRpcPrtBeginToken);
+    buff->AppendInt32((int32_t)req_protocol->request_id_);
+    buff->AppendInt32((int32_t)req_protocol->data_.size());
+    buff->Write(req_protocol->data_.data(), req_protocol->data_.size());
+    LOG_TRACE("Encode: encode message success, finished! request_id:%d", req_protocol->request_id_);
     return true;
   }
 
@@ -72,7 +75,30 @@ class EchoCodec final : public CodecProtocol {
   virtual int32_t Check(BufferPtr &in, Any &out, uint32_t &request_id, bool &has_request_id,
                         size_t &package_length) {
     LOG_TRACE("check in:%s", in->String().c_str());
-    return readed_len;
+    // check package is valid
+    if (in->length() < 12) {
+      // package_length = 12;
+      LOG_TRACE("Check: data's length < 12, is %ld, out", in->length());
+      return 0;
+    }
+    // check frameToken
+    uint32_t token = in->ReadUint32();
+    if (token != rpc_config::kRpcPrtBeginToken) {
+      LOG_TRACE("Check: first token is illegal, is %d, out", token);
+      return -1;
+    }
+    // get request_id
+    request_id = in->ReadUint32();
+    uint32_t length = in->ReadUint32();
+    if (length > 1024 * 1024) {
+      LOG_TRACE("Check: length over max, is %d, out", length);
+      return -1;
+    }
+    if (in->length() < 12 + length) {
+      return 0;
+    }
+    out = in->Slice();
+    return 12 + length;
   }
 
   static ReqProtocolPtr GetReqProtocol() { return std::make_shared<ReqProtocol>(); }
