@@ -37,11 +37,20 @@
 #include "tubemq/tubemq_errcode.h"
 #include "tubemq/tubemq_message.h"
 #include "tubemq/tubemq_return.h"
-#include "tubemq/tubemq_errcode.h"
 
 
 using namespace std;
 using namespace tubemq;
+
+using std::set;
+using std::string;
+using tubemq::ConsumerConfig;
+using tubemq::ConsumerResult;
+using tubemq::TubeMQConsumer;
+
+
+
+
 
 
 int main(int argc, char* argv[]) {

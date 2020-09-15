@@ -167,8 +167,8 @@ bool TubeMQConsumer::GetCurConsumedInfo(map<string, ConsumeOffsetInfo>& consume_
   if (!TubeMQService::Instance()->IsRunning()) {
     return false;
   }
-  if (status_.Get() != 2 
-    || client_id_ == tb_config::kInvalidValue) {
+  if ((status_.Get() != 2)
+    || (client_id_ == tb_config::kInvalidValue)) {
     return false;
   }
   BaseConsumer* rmt_client =
