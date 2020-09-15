@@ -159,6 +159,11 @@ void ClientConnection::asyncRead() {
           close(&ec);
           return;
         }
+        if (len == 0) {
+          LOG_ERROR("[%s]async read zero", ToString().c_str());
+          close(&ec);
+          return;
+        }
         recv_time_ = std::time(nullptr);
         recv_buffer_->WriteBytes(len);
         checkPackageDone();
