@@ -1347,7 +1347,8 @@ bool BaseConsumer::processGetMessageRspB2C(ConsumerResult& result, PeerInfo& pee
       bool esc_limit = (rsp_b2c.has_escflowctrl() && rsp_b2c.escflowctrl());
       int64_t data_dltval =
           rsp_b2c.has_currdatadlt() ? rsp_b2c.currdatadlt() : tb_config::kInvalidValue;
-      int64_t curr_offset = rsp_b2c.has_curroffset() ? rsp_b2c.curroffset() : tb_config::kInvalidValue;
+      int64_t curr_offset = rsp_b2c.has_curroffset() ?
+        rsp_b2c.curroffset() : tb_config::kInvalidValue;
       bool req_slow = rsp_b2c.has_requireslow() ? rsp_b2c.requireslow() : false;
       int msg_size = 0;
       list<Message> message_list;
