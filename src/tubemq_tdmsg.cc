@@ -55,7 +55,7 @@ DataItem::~DataItem() {
 }
 
 DataItem& DataItem::operator=(const DataItem& target) {
-  if (this != &target){
+  if (this != &target) {
     length_ = target.length_;
     clearData();
     copyData(target.data_, target.length_);
@@ -220,7 +220,7 @@ bool TubeMQTDMsg::parseDefaultMsg(const char* data,
       return false;
     }
     memset(origAttrData, 0, origAttrLen + 1);
-    memcpy(origAttrData, data + pos1, origAttrLen); 
+    memcpy(origAttrData, data + pos1, origAttrLen);
     pos1 += origAttrLen;
     remain -= origAttrLen;
     commAttr = origAttrData;
@@ -394,7 +394,7 @@ bool TubeMQTDMsg::parseMixAttrMsg(const char* data,
     int32_t itemPos = 0;
     uint32_t totalItemDataLen = 0;
     uint32_t itemRemain = uncompressDataLen;
-    if (!getDatantohlInt(uncompressData, 
+    if (!getDatantohlInt(uncompressData,
       itemPos, itemRemain, totalItemDataLen, err_info)) {
       free(uncompressData);
       uncompressData = NULL;
@@ -413,7 +413,7 @@ bool TubeMQTDMsg::parseMixAttrMsg(const char* data,
       uint32_t singleAttrLen = 0;
       char *singleAttr = NULL;
       string finalAttr;
-      if (!getDatantohlInt(uncompressData, 
+      if (!getDatantohlInt(uncompressData,
         itemPos, itemRemain, singleMsgLen, err_info)) {
         free(uncompressData);
         uncompressData = NULL;
@@ -466,7 +466,7 @@ bool TubeMQTDMsg::parseMixAttrMsg(const char* data,
         memset(singleAttr, 0, singleAttrLen + 1);
         memcpy(singleAttr, uncompressData + itemPos, singleAttrLen);
         itemPos += singleAttrLen;
-        itemRemain -= singleAttrLen; 
+        itemRemain -= singleAttrLen;
         string strSingleAttr = singleAttr;
         finalAttr = commAttr + "&" + strSingleAttr;
         free(singleAttr);
@@ -678,7 +678,7 @@ bool TubeMQTDMsg::parseBinMsg(const char* data,
     uint32_t bodyRemain = realBodyLen;
     while ((bodyRemain > 0) && (msgCount-- > 0)) {
       uint32_t singleMsgLen = 0;
-      if (!getDatantohlInt(bodyData, 
+      if (!getDatantohlInt(bodyData,
         bodyPos, bodyRemain, singleMsgLen, err_info)) {
         free(bodyData);
         bodyData = NULL;
@@ -705,7 +705,7 @@ bool TubeMQTDMsg::parseBinMsg(const char* data,
       bodyPos += singleMsgLen;
       bodyRemain -= singleMsgLen;
       uint32_t singleAttrLen = 0;
-      if (!getDatantohlInt(bodyData, 
+      if (!getDatantohlInt(bodyData,
         bodyPos, bodyRemain, singleAttrLen, err_info)) {
         free(bodyData);
         free(singleData);
@@ -746,7 +746,7 @@ bool TubeMQTDMsg::parseBinMsg(const char* data,
         bodyRemain -= singleAttrLen;
         strSingleAttr = singleAttr;
         Utils::Split(strSingleAttr, privAttrMap,
-          delimiter::kDelimiterAnd, delimiter::kDelimiterEqual);        
+          delimiter::kDelimiterAnd, delimiter::kDelimiterEqual);
         if (privAttrMap.empty()) {
           free(bodyData);
           free(singleAttr);
@@ -762,7 +762,7 @@ bool TubeMQTDMsg::parseBinMsg(const char* data,
       }
       string outKeyValStr;
       Utils::Join(privAttrMap, outKeyValStr,
-        delimiter::kDelimiterAnd, delimiter::kDelimiterEqual);      
+        delimiter::kDelimiterAnd, delimiter::kDelimiterEqual);
       DataItem tmpDataItem(singleMsgLen, singleData);
       addDataItem2Map(outKeyValStr, tmpDataItem);
       free(singleData);
@@ -797,14 +797,14 @@ bool TubeMQTDMsg::ParseAttrValue(string attr_value,
     return result;
   }
   Utils::Split(attr_value, result,
-    delimiter::kDelimiterAnd, delimiter::kDelimiterEqual);      
+    delimiter::kDelimiterAnd, delimiter::kDelimiterEqual);
   err_info = "Ok";
   return true;
 }
 
 bool TubeMQTDMsg::addDataItem2Map(
   const string& datakey, const DataItem& data_item) {
-  map<string, list<DataItem> >::iterator itDataList = 
+  map<string, list<DataItem> >::iterator itDataList =
     attr2data_map_.find(datakey);
   if (itDataList == attr2data_map_.end()) {
     list<DataItem> tmpDataList;
@@ -836,13 +836,13 @@ static bool getUTFString(const char* data, int32_t& pos,
     return true;
   }
   uint32_t origCount = 0;
-  int32_t targetCount=0;
+  int32_t targetCount = 0;
   int32_t c, char2, char3;
   char origValue[utflen];
   char targetValue[utflen];
   memset(origValue, 0, utflen);
   memset(targetValue, 0, utflen);
-  memcpy(origValue, data+pos, utflen);
+  memcpy(origValue, data + pos, utflen);
   pos += utflen;
   remain -= utflen;
   while (origCount < utflen) {
@@ -851,7 +851,7 @@ static bool getUTFString(const char* data, int32_t& pos,
       break;
     }
     origCount++;
-    targetValue[targetCount++]=(char)c;
+    targetValue[targetCount++] = (char)c;
   }
   while (origCount < utflen) {
     c = (int) origValue[origCount] & 0xff;
@@ -901,9 +901,9 @@ static bool getUTFString(const char* data, int32_t& pos,
           err_info = ss.str();
           return false;
         }
-        targetValue[targetCount++] = 
-          (char)(((c & 0x0F) << 12) 
-          | ((char2 & 0x3F) << 6) 
+        targetValue[targetCount++] =
+          (char)(((c & 0x0F) << 12)
+          | ((char2 & 0x3F) << 6)
           | ((char3 & 0x3F) << 0));
         break;
 
@@ -915,7 +915,7 @@ static bool getUTFString(const char* data, int32_t& pos,
         return false;
     }
   }
-  string tmpValue(targetValue,targetCount);
+  string tmpValue(targetValue, targetCount);
   attrStr = tmpValue;
   return true;
 }
@@ -957,7 +957,6 @@ static bool getDatantohlInt(const char* data,
   pos += 4;
   remain -= 4;
   return true;
-
 }
 
 static bool getDatantohsInt(const char* data,
@@ -1040,5 +1039,5 @@ static bool getDataMagic(const char* data,
   return false;
 }
 
-}
+}  //  tubemq
 
