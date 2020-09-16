@@ -53,4 +53,12 @@ ExternalProject_Add(
     INSTALL_COMMAND ""
     )
 
+ExternalProject_Add(
+    snappy_proj
+    URL https://github.com/google/snappy/archive/1.1.3.tar.gz
+    CONFIGURE_COMMAND cd ../snappy_proj && ./autogen.sh && ./configure --prefix=<INSTALL_DIR>--disable-shared --with-pic CFLAGS=-O2\  CXXFLAGS=-O2\ -fPIC
+    TEST_BEFORE_INSTALL 0
+    BUILD_IN_SOURCE 1
+    INSTALL_DIR ${CMAKE_BINARY_DIR}/third_party/
+    )
 
