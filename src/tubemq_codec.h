@@ -119,8 +119,8 @@ class TubeMQCodec final : public CodecProtocol {
     }
     rsp_protocol->serial_no_ = request_id;
     out = Any(rsp_protocol);
-    LOG_TRACE("Decode: decode message finished, success_=%d, request_id=%d", rsp_protocol->success_,
-              rsp_protocol->serial_no_);
+    LOG_TRACE("Decode: decode message finished, success_=%d, request_id=%d",
+      rsp_protocol->success_, request_id);
     return true;
   }
 
@@ -164,8 +164,8 @@ class TubeMQCodec final : public CodecProtocol {
       if (slice_len > rpc_config::kRpcMaxBufferSize) {
         slice_len = rpc_config::kRpcMaxBufferSize;
       }
-      LOG_TRACE("Encode: encode slice [%d] slice_len = %d, serial_len = %d", i, slice_len,
-                serial_len);
+      LOG_TRACE("Encode: encode slice [%d] slice_len = %d, serial_len = %d",
+        i, slice_len, serial_len);
       buff->AppendInt32(slice_len);
       buff->Write(step_buff.data() + write_pos, slice_len);
       write_pos += slice_len;
@@ -227,8 +227,8 @@ class TubeMQCodec final : public CodecProtocol {
       in->Skip(item_len);
     }
     out = buf;
-    LOG_TRACE("Check: received message check success, request_id=%d, readed_len:%d", request_id,
-              readed_len);
+    LOG_TRACE("Check: received message check success, request_id=%d, readed_len:%d",
+      request_id, readed_len);
     return readed_len;
   }
 
