@@ -241,7 +241,7 @@ void ClientConnection::requestCallback(uint32_t request_id, ErrorCode* err, Any*
     ResponseContext rsp;
     BufferPtr* buff = any_cast<BufferPtr>(check_out);
     if (buff != nullptr) {
-      req->req_->codec_->Decode(*buff, rsp.rsp_);
+      req->req_->codec_->Decode(*buff, request_id, rsp.rsp_);
     } else {
       rsp.rsp_ = *check_out;
     }
