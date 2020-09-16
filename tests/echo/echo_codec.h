@@ -52,10 +52,11 @@ class EchoCodec final : public CodecProtocol {
 
   virtual std::string Name() const { return "echo"; }
 
-  virtual bool Decode(const BufferPtr &buff, Any &out) {
+  virtual bool Decode(const BufferPtr &buff, uint32_t request_id, Any &out) {
     // check total length
     RspProtocolPtr rsp_protocol = GetRspProtocol();
     rsp_protocol->data_ = buff->ToString();
+    rsp_protocol->request_id_ = request_id;
     out = Any(rsp_protocol);
     return true;
   }

@@ -72,7 +72,7 @@ class TubeMQCodec final : public CodecProtocol {
 
   virtual std::string Name() const { return "tubemq_v1"; }
 
-  virtual bool Decode(const BufferPtr &buff, Any &out) {
+  virtual bool Decode(const BufferPtr &buff, uint32_t request_id, Any &out) {
     // check total length
     int32_t total_len = buff->length();
     if (total_len <= 0) {
@@ -117,9 +117,10 @@ class TubeMQCodec final : public CodecProtocol {
       rsp_protocol->code_ = err_code::kErrRcvThrowError;
       rsp_protocol->error_msg_ = err_info;
     }
+    rsp_protocol->serial_no_ = request_id;
     out = Any(rsp_protocol);
-    LOG_TRACE("Decode: decode message finished, success_=%d, request_id=%d",
-              rsp_protocol->success_, rsp_protocol->serial_no_);
+    LOG_TRACE("Decode: decode message finished, success_=%d, request_id=%d", rsp_protocol->success_,
+              rsp_protocol->serial_no_);
     return true;
   }
 
