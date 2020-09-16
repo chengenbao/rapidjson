@@ -92,7 +92,7 @@ void TubeMQConsumer::ShutDown() {
   }
   if (client_id_ != tb_config::kInvalidValue) {
     BaseConsumer* rmt_client =
-        dynamic_cast<BaseConsumer*>(TubeMQService::Instance()->GetClientObj(client_id_));
+      dynamic_cast<BaseConsumer*>(TubeMQService::Instance()->GetClientObj(client_id_));
     if ((rmt_client != NULL) && (rmt_client->GetClientIndex() == client_id_)) {
       rmt_client->ShutDown();
       delete rmt_client;
@@ -115,7 +115,8 @@ bool TubeMQConsumer::GetMessage(ConsumerResult& result) {
                             "Tube client not call init function, please initial first!");
     return false;
   }
-  BaseConsumer* rmt_client = (BaseConsumer*)TubeMQService::Instance()->GetClientObj(client_id_);
+  BaseConsumer* rmt_client =
+    dynamic_cast<BaseConsumer*>(TubeMQService::Instance()->GetClientObj(client_id_));
   if ((rmt_client == NULL) || (rmt_client->GetClientIndex() != client_id_)) {
     result.SetFailureResult(err_code::kErrBadRequest,
                             "Rmt client CB has been released, please re-start this client");
@@ -139,7 +140,8 @@ bool TubeMQConsumer::Confirm(const string& confirm_context, bool is_consumed,
                             "Tube client not call init function, please initial first!");
     return false;
   }
-  BaseConsumer* rmt_client = (BaseConsumer*)TubeMQService::Instance()->GetClientObj(client_id_);
+  BaseConsumer* rmt_client =
+    dynamic_cast<BaseConsumer*>(TubeMQService::Instance()->GetClientObj(client_id_));
   if ((rmt_client == NULL) || (rmt_client->GetClientIndex() != client_id_)) {
     result.SetFailureResult(err_code::kErrBadRequest,
                             "Rmt client CB has been released, please re-start this client");
@@ -155,7 +157,8 @@ bool TubeMQConsumer::GetCurConsumedInfo(map<string, ConsumeOffsetInfo>& consume_
   if ((status_.Get() != 2) || (client_id_ == tb_config::kInvalidValue)) {
     return false;
   }
-  BaseConsumer* rmt_client = (BaseConsumer*)TubeMQService::Instance()->GetClientObj(client_id_);
+  BaseConsumer* rmt_client =
+    dynamic_cast<BaseConsumer*>(TubeMQService::Instance()->GetClientObj(client_id_));
   if ((rmt_client == NULL) || (rmt_client->GetClientIndex() != client_id_)) {
     return false;
   }
