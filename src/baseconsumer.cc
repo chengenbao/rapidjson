@@ -1202,7 +1202,7 @@ void BaseConsumer::convertMessages(int32_t& msg_size, list<Message>& message_lis
       if (payload_length < 4) {
         continue;
       }
-      int32_t attr_len = ntohl(*(int*)(&payload_data[0]));
+      int32_t attr_len = ntohl(*reinterpret_cast<int*>(&payload_data[0]));
       read_pos += 4;
       data_len -= 4;
       if (attr_len > data_len) {
