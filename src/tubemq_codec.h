@@ -117,11 +117,11 @@ class TubeMQCodec final : public CodecProtocol {
         LOG_TRACE("Decode: parse RspExceptionBody failure, out");
         return false;
       }
-      string errInfo = rpc_exception.exceptionname();
-      errInfo += delimiter::kDelimiterPound;
-      errInfo += rpc_exception.stacktrace();
+      string err_info = rpc_exception.exceptionname();
+      err_info += delimiter::kDelimiterPound;
+      err_info += rpc_exception.stacktrace();
       rsp_protocol->code_ = err_code::kErrRcvThrowError;
-      rsp_protocol->error_msg_ = errInfo;
+      rsp_protocol->error_msg_ = err_info;
     }
     out = Any(rsp_protocol);
     LOG_TRACE("Decode: decode message success, finished");
