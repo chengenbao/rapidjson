@@ -2,42 +2,38 @@
 #include "tubemq/tubemq_tdmsg.h"
 
 #include <arpa/inet.h>
-#include <snappy/snappy-c.h>
+#include <snappy-c.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <sstream>
+
 #include "utils.h"
-
-
 
 namespace tubemq {
 
+#define TUBEMQ_TDMSG_V4_MSG_FORMAT_SIZE 29
+#define TUBEMQ_TDMSG_V4_MSG_COUNT_OFFSET 15
+#define TUBEMQ_TDMSG_V4_MSG_EXTFIELD_OFFSET 9
 
-
-#define TUBEMQ_TDMSG_V4_MSG_FORMAT_SIZE        29
-#define TUBEMQ_TDMSG_V4_MSG_COUNT_OFFSET       15
-#define TUBEMQ_TDMSG_V4_MSG_EXTFIELD_OFFSET    9
-
-
-static bool getDataChar(const char* data,
-  int32_t& pos, uint32_t& remain, char& chrVal, string& err_info);
-static bool getDataMagic(const char* data,
-  int32_t& pos, uint32_t& remain, int32_t& ver, string& err_info);
-static bool getUTFString(const char* data,
-  int32_t& pos, uint32_t& remain, string& attrStr, string& err_info);
-static bool getDataCreateTime(const char* data,
-  int32_t& pos, uint32_t& remain, int64_t& createTime, string& err_info);
-static bool getDataUnsignedShortInt(const char* data,
-  int32_t& pos, uint32_t& remain, uint32_t& intVal, string& err_info);
-static bool getDatantohlInt(const char* data,
-  int32_t& pos, uint32_t& remain, uint32_t& intVal, string& err_info);
-static bool getDatantohsInt(const char* data,
-  int32_t& pos, uint32_t& remain, uint32_t& intVal, string& err_info);
-
+static bool getDataChar(const char* data, int32_t& pos, uint32_t& remain, char& chrVal,
+                        string& err_info);
+static bool getDataMagic(const char* data, int32_t& pos, uint32_t& remain, int32_t& ver,
+                         string& err_info);
+static bool getUTFString(const char* data, int32_t& pos, uint32_t& remain, string& attrStr,
+                         string& err_info);
+static bool getDataCreateTime(const char* data, int32_t& pos, uint32_t& remain, int64_t& createTime,
+                              string& err_info);
+static bool getDataUnsignedShortInt(const char* data, int32_t& pos, uint32_t& remain,
+                                    uint32_t& intVal, string& err_info);
+static bool getDatantohlInt(const char* data, int32_t& pos, uint32_t& remain, uint32_t& intVal,
+                            string& err_info);
+static bool getDatantohsInt(const char* data, int32_t& pos, uint32_t& remain, uint32_t& intVal,
+                            string& err_info);
 
 DataItem::DataItem() {
   length_ = 0;
-  data_   = NULL;
+  data_ = NULL;
 }
 
 DataItem::DataItem(const DataItem& target) {
@@ -50,9 +46,7 @@ DataItem::DataItem(const uint32_t length, const char* data) {
   copyData(data, length);
 }
 
-DataItem::~DataItem() {
-  clearData();
-}
+DataItem::~DataItem() { clearData(); }
 
 DataItem& DataItem::operator=(const DataItem& target) {
   if (this != &target) {
@@ -83,7 +77,6 @@ void DataItem::copyData(const char* data, uint32_t length) {
   }
 }
 
-
 TubeMQTDMsg::TubeMQTDMsg() {
   is_parsed_ = false;
   is_numbid_ = false;
@@ -103,8 +96,7 @@ TubeMQTDMsg::~TubeMQTDMsg() {
   attr2data_map_.clear();
 }
 
-bool TubeMQTDMsg::ParseTDMsg(const char* data,
-  uint32_t data_length, string& err_info) {
+bool TubeMQTDMsg::ParseTDMsg(const char* data, uint32_t data_length, string& err_info) {
   int32_t pos1 = 0;
   uint32_t remain = 0;
   bool result = false;
@@ -187,13 +179,13 @@ bool TubeMQTDMsg::ParseTDMsg(const char* data,
   return result;
 }
 
-bool TubeMQTDMsg::parseDefaultMsg(const char* data,
-  uint32_t data_length, int32_t start_pos, string& err_info) {
+bool TubeMQTDMsg::parseDefaultMsg(const char* data, uint32_t data_length, int32_t start_pos,
+                                  string& err_info) {
   int32_t pos1 = start_pos;
   uint32_t remain = data_length;
   for (uint32_t i = 0; i < attr_count_; i++) {
     uint32_t origAttrLen = 0;
-    char *origAttrData = NULL;
+    char* origAttrData = NULL;
     string commAttr;
     uint32_t dataCnt = 1;
     uint32_t dataLen = 0;
@@ -244,10 +236,9 @@ bool TubeMQTDMsg::parseDefaultMsg(const char* data,
       return false;
     }
     size_t uncompressDataLen = 0;
-    char *uncompressData = NULL;
+    char* uncompressData = NULL;
     if (compress != 0) {
-      if (snappy_uncompressed_length(data + pos1,
-        dataLen - 1, &uncompressDataLen) != SNAPPY_OK) {
+      if (snappy_uncompressed_length(data + pos1, dataLen - 1, &uncompressDataLen) != SNAPPY_OK) {
         err_info = "Parse message error:  snappy uncompressed default compress's length failure!";
         return false;
       }
@@ -256,15 +247,15 @@ bool TubeMQTDMsg::parseDefaultMsg(const char* data,
         err_info = "Parse message error: malloc buffer for default compress's data failure!";
         return false;
       }
-      if (snappy_uncompress(data + pos1, dataLen - 1,
-        uncompressData, &uncompressDataLen) != SNAPPY_OK) {
+      if (snappy_uncompress(data + pos1, dataLen - 1, uncompressData, &uncompressDataLen) !=
+          SNAPPY_OK) {
         free(uncompressData);
         uncompressData = NULL;
         err_info = "Parse message error:  snappy uncompressed default compress's data failure!";
         return false;
       }
     } else {
-      uncompressDataLen = dataLen-1;
+      uncompressDataLen = dataLen - 1;
       uncompressData = (char*)malloc(uncompressDataLen);
       if (uncompressData == NULL) {
         err_info = "Parse message error: malloc buffer for default's data failure!";
@@ -275,14 +266,13 @@ bool TubeMQTDMsg::parseDefaultMsg(const char* data,
     pos1 += dataLen - 1;
     remain -= dataLen - 1;
     int32_t itemPos = 0;
-    //unsigned int totalItemDataLen = 0;
+    // unsigned int totalItemDataLen = 0;
     uint32_t itemRemain = uncompressDataLen;
     while (itemRemain > 0) {
       uint32_t singleMsgLen = 0;
-      //unsigned int dataMsgLen = 0;
-      //char *singleData = NULL;
-      if (!getDatantohlInt(uncompressData,
-        itemPos, itemRemain, singleMsgLen, err_info)) {
+      // unsigned int dataMsgLen = 0;
+      // char *singleData = NULL;
+      if (!getDatantohlInt(uncompressData, itemPos, itemRemain, singleMsgLen, err_info)) {
         free(uncompressData);
         uncompressData = NULL;
         err_info += " for default item's msgLength parameter";
@@ -309,13 +299,13 @@ bool TubeMQTDMsg::parseDefaultMsg(const char* data,
   return true;
 }
 
-bool TubeMQTDMsg::parseMixAttrMsg(const char* data,
-  uint32_t data_length, int32_t start_pos, string& err_info) {
+bool TubeMQTDMsg::parseMixAttrMsg(const char* data, uint32_t data_length, int32_t start_pos,
+                                  string& err_info) {
   int32_t pos1 = start_pos;
   uint32_t remain = data_length;
   for (uint32_t i = 0; i < attr_count_; i++) {
     uint32_t origAttrLen = 0;
-    char *origAttrData = NULL;
+    char* origAttrData = NULL;
     string commAttr;
     uint32_t bodyDataLen = 0;
     char compress = 0;
@@ -327,8 +317,7 @@ bool TubeMQTDMsg::parseMixAttrMsg(const char* data,
         break;
       }
     }
-    if (!getDatantohsInt(data, pos1,
-      remain, origAttrLen, err_info)) {
+    if (!getDatantohsInt(data, pos1, remain, origAttrLen, err_info)) {
       err_info += " for attr length parameter";
       return false;
     }
@@ -361,10 +350,10 @@ bool TubeMQTDMsg::parseMixAttrMsg(const char* data,
       return false;
     }
     size_t uncompressDataLen = 0;
-    char *uncompressData = NULL;
+    char* uncompressData = NULL;
     if (compress != 0) {
-      if (snappy_uncompressed_length(data + pos1,
-        bodyDataLen - 1, &uncompressDataLen) != SNAPPY_OK) {
+      if (snappy_uncompressed_length(data + pos1, bodyDataLen - 1, &uncompressDataLen) !=
+          SNAPPY_OK) {
         err_info = "Parse message error:  snappy uncompressed v3 compress's length failure!";
         return false;
       }
@@ -373,8 +362,8 @@ bool TubeMQTDMsg::parseMixAttrMsg(const char* data,
         err_info = "Parse message error: malloc buffer for v3 compress's data failure!";
         return false;
       }
-      if (snappy_uncompress(data + pos1,
-        bodyDataLen - 1, uncompressData, &uncompressDataLen) != SNAPPY_OK) {
+      if (snappy_uncompress(data + pos1, bodyDataLen - 1, uncompressData, &uncompressDataLen) !=
+          SNAPPY_OK) {
         free(uncompressData);
         uncompressData = NULL;
         err_info = "Parse message error:  snappy uncompressed v3 compress's data failure!";
@@ -394,8 +383,7 @@ bool TubeMQTDMsg::parseMixAttrMsg(const char* data,
     int32_t itemPos = 0;
     uint32_t totalItemDataLen = 0;
     uint32_t itemRemain = uncompressDataLen;
-    if (!getDatantohlInt(uncompressData,
-      itemPos, itemRemain, totalItemDataLen, err_info)) {
+    if (!getDatantohlInt(uncompressData, itemPos, itemRemain, totalItemDataLen, err_info)) {
       free(uncompressData);
       uncompressData = NULL;
       err_info += " for v3 item's msgLength parameter";
@@ -409,12 +397,11 @@ bool TubeMQTDMsg::parseMixAttrMsg(const char* data,
     }
     while (itemRemain > 0) {
       uint32_t singleMsgLen = 0;
-      char *singleData = NULL;
+      char* singleData = NULL;
       uint32_t singleAttrLen = 0;
-      char *singleAttr = NULL;
+      char* singleAttr = NULL;
       string finalAttr;
-      if (!getDatantohlInt(uncompressData,
-        itemPos, itemRemain, singleMsgLen, err_info)) {
+      if (!getDatantohlInt(uncompressData, itemPos, itemRemain, singleMsgLen, err_info)) {
         free(uncompressData);
         uncompressData = NULL;
         err_info += " for v3 item's msgLength parameter";
@@ -437,8 +424,7 @@ bool TubeMQTDMsg::parseMixAttrMsg(const char* data,
       itemPos += singleMsgLen;
       itemRemain -= singleMsgLen;
       if (itemRemain > 0) {
-        if (!getDatantohlInt(uncompressData,
-          itemPos, itemRemain, singleAttrLen, err_info)) {
+        if (!getDatantohlInt(uncompressData, itemPos, itemRemain, singleAttrLen, err_info)) {
           free(uncompressData);
           free(singleData);
           uncompressData = NULL;
@@ -486,13 +472,13 @@ bool TubeMQTDMsg::parseMixAttrMsg(const char* data,
   return true;
 }
 
-bool TubeMQTDMsg::parseBinMsg(const char* data,
-  uint32_t data_length, int32_t start_pos, string& err_info) {
-  uint32_t totalLen = 0; //0
+bool TubeMQTDMsg::parseBinMsg(const char* data, uint32_t data_length, int32_t start_pos,
+                              string& err_info) {
+  uint32_t totalLen = 0;  // 0
   char msgType = 0;
-  uint32_t bidNum  = 0;
-  uint32_t tidNum  = 0;
-  uint32_t extField  = 0;
+  uint32_t bidNum = 0;
+  uint32_t tidNum = 0;
+  uint32_t extField = 0;
   uint32_t dataTime = 0;
   uint32_t msgCnt = 0;
   uint32_t uniqueId = 0;
@@ -500,7 +486,7 @@ bool TubeMQTDMsg::parseBinMsg(const char* data,
   uint32_t attrLen = 0;
   uint32_t msgMagic = 0;
   size_t realBodyLen = 0;
-  char *bodyData = NULL;
+  char* bodyData = NULL;
 
   int32_t pos1 = start_pos;
   uint32_t remain = data_length;
@@ -548,8 +534,7 @@ bool TubeMQTDMsg::parseBinMsg(const char* data,
   }
   int32_t attrLenPos = pos1 + bodyLen;
   uint32_t attrLenRemain = remain - bodyLen;
-  if (!getDatantohsInt(data,
-    attrLenPos, attrLenRemain, attrLen, err_info)) {
+  if (!getDatantohsInt(data, attrLenPos, attrLenRemain, attrLen, err_info)) {
     err_info += " for data v4 attrLen parameter";
     return false;
   }
@@ -559,8 +544,7 @@ bool TubeMQTDMsg::parseBinMsg(const char* data,
   }
   int32_t msgMagicPos = attrLenPos + attrLen;
   uint32_t msgMagicRemain = remain - attrLen;
-  if (!getDatantohsInt(data,
-    msgMagicPos, msgMagicRemain, msgMagic, err_info)) {
+  if (!getDatantohsInt(data, msgMagicPos, msgMagicRemain, msgMagic, err_info)) {
     err_info += " for v4 msgMagic parameter";
     return false;
   }
@@ -569,7 +553,7 @@ bool TubeMQTDMsg::parseBinMsg(const char* data,
   bool result = false;
   map<string, string> commonAttrMap;
   if (attrLen != 0) {
-    char *commonAttr = (char*)malloc(attrLen + 1);
+    char* commonAttr = (char*)malloc(attrLen + 1);
     if (commonAttr == NULL) {
       err_info = "Parse message error: malloc buffer for v3 common attr failure!";
       return false;
@@ -577,8 +561,7 @@ bool TubeMQTDMsg::parseBinMsg(const char* data,
     memset(commonAttr, 0, attrLen + 1);
     memcpy(commonAttr, data + attrLenPos, attrLen);
     string strAttr = commonAttr;
-    Utils::Split(strAttr, commonAttrMap,
-      delimiter::kDelimiterAnd, delimiter::kDelimiterEqual);
+    Utils::Split(strAttr, commonAttrMap, delimiter::kDelimiterAnd, delimiter::kDelimiterEqual);
     if (commonAttrMap.empty()) {
       free(commonAttr);
       commonAttr = NULL;
@@ -591,8 +574,7 @@ bool TubeMQTDMsg::parseBinMsg(const char* data,
   // get body data
   switch ((msgType & 0xE0) >> 5) {
     case 1: {
-      if (snappy_uncompressed_length(data + pos1,
-        bodyLen, &realBodyLen) != SNAPPY_OK) {
+      if (snappy_uncompressed_length(data + pos1, bodyLen, &realBodyLen) != SNAPPY_OK) {
         err_info = "Parse message error:  snappy uncompressed v4 body's length failure!";
         return false;
       }
@@ -601,8 +583,7 @@ bool TubeMQTDMsg::parseBinMsg(const char* data,
         err_info = "Parse message error: malloc buffer for v4 body's data failure!";
         return false;
       }
-      if (snappy_uncompress(data+pos1,
-        bodyLen, bodyData, &realBodyLen) != SNAPPY_OK) {
+      if (snappy_uncompress(data + pos1, bodyLen, bodyData, &realBodyLen) != SNAPPY_OK) {
         free(bodyData);
         bodyData = NULL;
         err_info = "Parse message error:  snappy uncompressed v4 body's data failure!";
@@ -636,12 +617,10 @@ bool TubeMQTDMsg::parseBinMsg(const char* data,
     int32_t bodyPos = 0;
     uint32_t bodyRemain = realBodyLen;
     string outKeyValStr;
-    Utils::Join(commonAttrMap, outKeyValStr,
-      delimiter::kDelimiterAnd, delimiter::kDelimiterEqual);
+    Utils::Join(commonAttrMap, outKeyValStr, delimiter::kDelimiterAnd, delimiter::kDelimiterEqual);
     while ((bodyRemain > 0) && (msgCount-- > 0)) {
       uint32_t singleMsgLen = 0;
-      if (!getDatantohlInt(bodyData, bodyPos,
-        bodyRemain, singleMsgLen, err_info)) {
+      if (!getDatantohlInt(bodyData, bodyPos, bodyRemain, singleMsgLen, err_info)) {
         free(bodyData);
         bodyData = NULL;
         err_info += " for v4 attr's msgLength parameter";
@@ -656,7 +635,7 @@ bool TubeMQTDMsg::parseBinMsg(const char* data,
         err_info = "Parse message error: invalid v4 attr's msg Length 1";
         return false;
       }
-      char *singleData = (char*)malloc(singleMsgLen);
+      char* singleData = (char*)malloc(singleMsgLen);
       if (singleData == NULL) {
         free(bodyData);
         bodyData = NULL;
@@ -678,8 +657,7 @@ bool TubeMQTDMsg::parseBinMsg(const char* data,
     uint32_t bodyRemain = realBodyLen;
     while ((bodyRemain > 0) && (msgCount-- > 0)) {
       uint32_t singleMsgLen = 0;
-      if (!getDatantohlInt(bodyData,
-        bodyPos, bodyRemain, singleMsgLen, err_info)) {
+      if (!getDatantohlInt(bodyData, bodyPos, bodyRemain, singleMsgLen, err_info)) {
         free(bodyData);
         bodyData = NULL;
         err_info += " for v4 attr's msgLength parameter";
@@ -694,7 +672,7 @@ bool TubeMQTDMsg::parseBinMsg(const char* data,
         err_info = "Parse message error: invalid v4 attr's msg Length 2";
         return false;
       }
-      char *singleData = (char*)malloc(singleMsgLen);
+      char* singleData = (char*)malloc(singleMsgLen);
       if (singleData == NULL) {
         free(bodyData);
         bodyData = NULL;
@@ -705,8 +683,7 @@ bool TubeMQTDMsg::parseBinMsg(const char* data,
       bodyPos += singleMsgLen;
       bodyRemain -= singleMsgLen;
       uint32_t singleAttrLen = 0;
-      if (!getDatantohlInt(bodyData,
-        bodyPos, bodyRemain, singleAttrLen, err_info)) {
+      if (!getDatantohlInt(bodyData, bodyPos, bodyRemain, singleAttrLen, err_info)) {
         free(bodyData);
         free(singleData);
         bodyData = NULL;
@@ -724,13 +701,12 @@ bool TubeMQTDMsg::parseBinMsg(const char* data,
       }
       map<string, string> privAttrMap;
       map<string, string>::iterator tempIt;
-      for (tempIt = commonAttrMap.begin();
-      tempIt != commonAttrMap.end(); ++tempIt) {
+      for (tempIt = commonAttrMap.begin(); tempIt != commonAttrMap.end(); ++tempIt) {
         privAttrMap[tempIt->first] = tempIt->second;
       }
       string strSingleAttr;
       if (singleAttrLen > 0) {
-        char *singleAttr = (char*)malloc(singleAttrLen + 1);
+        char* singleAttr = (char*)malloc(singleAttrLen + 1);
         if (singleAttr == NULL) {
           free(bodyData);
           free(singleData);
@@ -740,13 +716,13 @@ bool TubeMQTDMsg::parseBinMsg(const char* data,
           return false;
         }
         memset(singleAttr, 0, singleAttrLen + 1);
-        memcpy(singleAttr, bodyData+bodyPos, singleAttrLen);
+        memcpy(singleAttr, bodyData + bodyPos, singleAttrLen);
         bodyPos += singleAttrLen;
         attrLenRemain -= singleAttrLen;
         bodyRemain -= singleAttrLen;
         strSingleAttr = singleAttr;
-        Utils::Split(strSingleAttr, privAttrMap,
-          delimiter::kDelimiterAnd, delimiter::kDelimiterEqual);
+        Utils::Split(strSingleAttr, privAttrMap, delimiter::kDelimiterAnd,
+                     delimiter::kDelimiterEqual);
         if (privAttrMap.empty()) {
           free(bodyData);
           free(singleAttr);
@@ -761,8 +737,7 @@ bool TubeMQTDMsg::parseBinMsg(const char* data,
         singleAttr = NULL;
       }
       string outKeyValStr;
-      Utils::Join(privAttrMap, outKeyValStr,
-        delimiter::kDelimiterAnd, delimiter::kDelimiterEqual);
+      Utils::Join(privAttrMap, outKeyValStr, delimiter::kDelimiterAnd, delimiter::kDelimiterEqual);
       DataItem tmpDataItem(singleMsgLen, singleData);
       addDataItem2Map(outKeyValStr, tmpDataItem);
       free(singleData);
@@ -785,8 +760,7 @@ void TubeMQTDMsg::Clear() {
   attr2data_map_.clear();
 }
 
-bool TubeMQTDMsg::ParseAttrValue(string attr_value,
-  map<string, string>& result, string& err_info) {
+bool TubeMQTDMsg::ParseAttrValue(string attr_value, map<string, string>& result, string& err_info) {
   bool result = false;
   if (attr_value.empty()) {
     err_info = "parmeter attr_value is empty";
@@ -796,16 +770,13 @@ bool TubeMQTDMsg::ParseAttrValue(string attr_value,
     err_info = "Unregular attr_value error: not found token '&'!";
     return result;
   }
-  Utils::Split(attr_value, result,
-    delimiter::kDelimiterAnd, delimiter::kDelimiterEqual);
+  Utils::Split(attr_value, result, delimiter::kDelimiterAnd, delimiter::kDelimiterEqual);
   err_info = "Ok";
   return true;
 }
 
-bool TubeMQTDMsg::addDataItem2Map(
-  const string& datakey, const DataItem& data_item) {
-  map<string, list<DataItem> >::iterator itDataList =
-    attr2data_map_.find(datakey);
+bool TubeMQTDMsg::addDataItem2Map(const string& datakey, const DataItem& data_item) {
+  map<string, list<DataItem> >::iterator itDataList = attr2data_map_.find(datakey);
   if (itDataList == attr2data_map_.end()) {
     list<DataItem> tmpDataList;
     tmpDataList.push_back(data_item);
@@ -816,10 +787,10 @@ bool TubeMQTDMsg::addDataItem2Map(
   return true;
 }
 
-static bool getUTFString(const char* data, int32_t& pos,
-  uint32_t& remain, string& attrStr, string& err_info) {
+static bool getUTFString(const char* data, int32_t& pos, uint32_t& remain, string& attrStr,
+                         string& err_info) {
   uint32_t utflen = 0;
-  const char *p = data;
+  const char* p = data;
   if (!getDatantohsInt(p, pos, remain, utflen, err_info)) {
     err_info += " for attr length parameter";
     return false;
@@ -846,7 +817,7 @@ static bool getUTFString(const char* data, int32_t& pos,
   pos += utflen;
   remain -= utflen;
   while (origCount < utflen) {
-    c = (int) origValue[origCount] & 0xff;
+    c = (int)origValue[origCount] & 0xff;
     if (c > 127) {
       break;
     }
@@ -854,7 +825,7 @@ static bool getUTFString(const char* data, int32_t& pos,
     targetValue[targetCount++] = (char)c;
   }
   while (origCount < utflen) {
-    c = (int) origValue[origCount] & 0xff;
+    c = (int)origValue[origCount] & 0xff;
     switch (c >> 4) {
       case 0:
       case 1:
@@ -883,7 +854,7 @@ static bool getUTFString(const char* data, int32_t& pos,
           err_info = ss.str();
           return false;
         }
-        targetValue[targetCount++] = (char)(((c & 0x1F) << 6)|(char2 & 0x3F));
+        targetValue[targetCount++] = (char)(((c & 0x1F) << 6) | (char2 & 0x3F));
         break;
 
       case 14: /* 1110 xxxx  10xx xxxx  10xx xxxx */
@@ -902,9 +873,7 @@ static bool getUTFString(const char* data, int32_t& pos,
           return false;
         }
         targetValue[targetCount++] =
-          (char)(((c & 0x0F) << 12)
-          | ((char2 & 0x3F) << 6)
-          | ((char3 & 0x3F) << 0));
+            (char)(((c & 0x0F) << 12) | ((char2 & 0x3F) << 6) | ((char3 & 0x3F) << 0));
         break;
 
       default: /* 10xx xxxx,  1111 xxxx */
@@ -920,9 +889,9 @@ static bool getUTFString(const char* data, int32_t& pos,
   return true;
 }
 
-static bool getDataChar(const char* data, int32_t& pos,
-  uint32_t& remain, char& chrVal, string& err_info) {
-  const char *p = data;
+static bool getDataChar(const char* data, int32_t& pos, uint32_t& remain, char& chrVal,
+                        string& err_info) {
+  const char* p = data;
   if (remain < 1) {
     err_info = "Parse message error: no enough char data length";
     return false;
@@ -933,9 +902,9 @@ static bool getDataChar(const char* data, int32_t& pos,
   return true;
 }
 
-static bool getDataUnsignedShortInt(const char* data,
-  int32_t& pos, uint32_t& remain, uint32_t& intVal, string& err_info) {
-  const char *p = data;
+static bool getDataUnsignedShortInt(const char* data, int32_t& pos, uint32_t& remain,
+                                    uint32_t& intVal, string& err_info) {
+  const char* p = data;
   if (remain < 2) {
     err_info = "Parse message error: no enough data length";
     return false;
@@ -946,90 +915,86 @@ static bool getDataUnsignedShortInt(const char* data,
   return true;
 }
 
-static bool getDatantohlInt(const char* data,
-  int32_t& pos, uint32_t& remain, uint32_t& intVal, string& err_info) {
-  const char *p = data;
+static bool getDatantohlInt(const char* data, int32_t& pos, uint32_t& remain, uint32_t& intVal,
+                            string& err_info) {
+  const char* p = data;
   if (remain < 4) {
     err_info = "Parse error: no enough data length";
     return false;
   }
-  intVal = ntohl(*(unsigned int *)(&p[pos]));
+  intVal = ntohl(*(unsigned int*)(&p[pos]));
   pos += 4;
   remain -= 4;
   return true;
 }
 
-static bool getDatantohsInt(const char* data,
-  int32_t& pos, uint32_t& remain, uint32_t& intVal, string& err_info) {
-  const char *p = data;
+static bool getDatantohsInt(const char* data, int32_t& pos, uint32_t& remain, uint32_t& intVal,
+                            string& err_info) {
+  const char* p = data;
   if (remain < 2) {
     err_info = "Parse message error: no enough data length";
     return false;
   }
-  intVal = ntohs(*(unsigned int *)(&p[pos]));
+  intVal = ntohs(*(unsigned int*)(&p[pos]));
   pos += 2;
   remain -= 2;
   return true;
 }
 
-static bool getDataCreateTime(const char* data,
-  int32_t& pos, uint32_t& remain, int64_t& createTime, string& err_info) {
-  const char *p = data;
+static bool getDataCreateTime(const char* data, int32_t& pos, uint32_t& remain, int64_t& createTime,
+                              string& err_info) {
+  const char* p = data;
   if (remain < 8) {
     err_info = "Parse message error: no enough data length for createtime data";
     return false;
   }
-  createTime = (((long)p[pos] << 56)
-                + ((long)(p[pos + 1] & 255) << 48)
-                + ((long)(p[pos + 2] & 255) << 40)
-                + ((long)(p[pos + 3] & 255) << 32)
-                + ((long)(p[pos + 4] & 255) << 24)
-                + ((p[pos + 5] & 255) << 16)
-                + ((p[pos + 6] & 255) <<  8)
-                + ((p[pos + 7] & 255) <<  0));
+  createTime =
+      (((long)p[pos] << 56) + ((long)(p[pos + 1] & 255) << 48) + ((long)(p[pos + 2] & 255) << 40) +
+       ((long)(p[pos + 3] & 255) << 32) + ((long)(p[pos + 4] & 255) << 24) +
+       ((p[pos + 5] & 255) << 16) + ((p[pos + 6] & 255) << 8) + ((p[pos + 7] & 255) << 0));
   pos += 8;
   remain -= 8;
   return true;
 }
 
-static bool getDataMagic(const char* data,
-  int32_t& pos, uint32_t& remain, int32_t& ver, string& err_info) {
+static bool getDataMagic(const char* data, int32_t& pos, uint32_t& remain, int32_t& ver,
+                         string& err_info) {
   ver = -1;
-  const char *p = data;
+  const char* p = data;
   if (remain < 4) {
     err_info = "Parse message error: no enough data length for magic data";
     return false;
   }
-  if (((p[pos] == 0xf) && (p[pos + 1] == 0x2))
-    && ((p[pos + remain - 2] == 0xf) && (p[pos + remain - 1] == 0x2))) {
+  if (((p[pos] == 0xf) && (p[pos + 1] == 0x2)) &&
+      ((p[pos + remain - 2] == 0xf) && (p[pos + remain - 1] == 0x2))) {
     ver = 2;
     pos += 2;
     remain -= 2;
     return true;
   }
-  if (((p[pos] == 0xf) && (p[pos + 1] == 0x1))
-    && ((p[pos + remain - 2] == 0xf) && (p[pos + remain - 1] == 0x1))) {
+  if (((p[pos] == 0xf) && (p[pos + 1] == 0x1)) &&
+      ((p[pos + remain - 2] == 0xf) && (p[pos + remain - 1] == 0x1))) {
     ver = 1;
     pos += 2;
     remain -= 2;
     return true;
   }
-  if (((p[pos] == 0xf) && (p[pos + 1] == 0x4))
-    && ((p[pos + remain - 2] == 0xf) && (p[pos + remain - 1] == 0x4))) {
+  if (((p[pos] == 0xf) && (p[pos + 1] == 0x4)) &&
+      ((p[pos + remain - 2] == 0xf) && (p[pos + remain - 1] == 0x4))) {
     ver = 4;
     pos += 2;
     remain -= 2;
     return true;
   }
-  if (((p[pos] == 0xf) && (p[pos + 1] == 0x3))
-    && ((p[pos + remain - 2] == 0xf) && (p[pos + remain - 1] == 0x3))) {
+  if (((p[pos] == 0xf) && (p[pos + 1] == 0x3)) &&
+      ((p[pos + remain - 2] == 0xf) && (p[pos + remain - 1] == 0x3))) {
     ver = 3;
     pos += 2;
     remain -= 2;
     return true;
   }
-  if (((p[pos] == 0xf) && (p[pos + 1] == 0x0))
-    && ((p[pos + remain - 2] == 0xf) && (p[pos + remain - 1] == 0x0))) {
+  if (((p[pos] == 0xf) && (p[pos + 1] == 0x0)) &&
+      ((p[pos + remain - 2] == 0xf) && (p[pos + remain - 1] == 0x0))) {
     ver = 0;
     pos += 2;
     remain -= 2;
@@ -1039,5 +1004,5 @@ static bool getDataMagic(const char* data,
   return false;
 }
 
-}  //  tubemq
+}  // namespace tubemq
 
