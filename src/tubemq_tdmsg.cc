@@ -1,11 +1,11 @@
 
 #include "tubemq/tubemq_tdmsg.h"
 
+#include <arpa/inet.h>
+#include <snappy/snappy-c.h>
 #include <stdlib.h>
 #include <string.h>
-#include <arpa/inet.h>
 #include <sstream>
-#include <snappy/snappy-c.h>
 #include "utils.h"
 
 
