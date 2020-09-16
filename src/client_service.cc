@@ -281,7 +281,6 @@ void TubeMQService::updMasterAddrByDns() {
   map<string, string> tmp_tgt_addr_map;
   map<string, string>::iterator it;
   if (!hasXfsTask(tmp_src_addr_map)) {
-    LOG_INFO("[TubeMQService] no xfs task exit");
     return;
   }
   Utils::XfsAddrByDns(tmp_src_addr_map, tmp_tgt_addr_map);
