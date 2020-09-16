@@ -54,14 +54,13 @@ class EchoCodec final : public CodecProtocol {
 
   virtual bool Decode(const BufferPtr &buff, Any &out) {
     // check total length
-    LOG_TRACE("Decode: full message Decode come, begin decode");
+    RspProtocolPtr rsp_protocol = GetRspProtocol();
+    rsp_protocol->data_ = buff->ToString();
     out = Any(rsp_protocol);
-    LOG_TRACE("Decode: decode message success, finished");
     return true;
   }
 
   virtual bool Encode(const Any &in, BufferPtr &buff) {
-    RequestBody req_body;
     ReqProtocolPtr req_protocol = any_cast<ReqProtocolPtr>(in);
     buff->AppendInt32((int32_t)rpc_config::kRpcPrtBeginToken);
     buff->AppendInt32((int32_t)req_protocol->request_id_);
@@ -77,7 +76,7 @@ class EchoCodec final : public CodecProtocol {
     LOG_TRACE("check in:%s", in->String().c_str());
     // check package is valid
     if (in->length() < 12) {
-      // package_length = 12;
+      package_length = 12;
       LOG_TRACE("Check: data's length < 12, is %ld, out", in->length());
       return 0;
     }
@@ -90,15 +89,19 @@ class EchoCodec final : public CodecProtocol {
     // get request_id
     request_id = in->ReadUint32();
     uint32_t length = in->ReadUint32();
-    if (length > 1024 * 1024) {
+    if (length > 10 * 1024 * 1024) {
       LOG_TRACE("Check: length over max, is %d, out", length);
       return -1;
     }
-    if (in->length() < 12 + length) {
+    size_t size = 12 + length;
+    package_length = size;
+    if (in->length() < length) {
       return 0;
     }
-    out = in->Slice();
-    return 12 + length;
+    auto output_buf = in->Slice();
+    output_buf->Truncate(length);
+    out = output_buf;
+    return size;
   }
 
   static ReqProtocolPtr GetReqProtocol() { return std::make_shared<ReqProtocol>(); }

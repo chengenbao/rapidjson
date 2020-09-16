@@ -181,8 +181,6 @@ void ClientConnection::asyncRead() {
                     recv_buffer_->String().c_str());
         }
         while (checkPackageDone() > 0 && recv_buffer_->length() > 0) {
-          LOG_TRACE("[%s]recheck packagedone package_length_:%ld, recvbuffer:%s",
-                    ToString().c_str(), package_length_, recv_buffer_->String().c_str());
         }
         asyncRead();
       });
