@@ -59,7 +59,7 @@ namespace tubemq {
 
 class Any {
  public:
-  explicit Any() : content_(nullptr) {}
+  Any() : content_(nullptr) {}
   ~Any() { delete content_; }
 
   template <typename ValueType>
