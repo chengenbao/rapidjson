@@ -38,7 +38,7 @@ using asio::ip::tcp;
 
 class session : public std::enable_shared_from_this<session> {
  public:
-  session(tcp::socket socket) : socket_(std::move(socket)) {}
+  explicit session(tcp::socket socket) : socket_(std::move(socket)) {}
 
   void start() { do_read(); }
 
