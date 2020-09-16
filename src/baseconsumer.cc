@@ -161,15 +161,9 @@ bool BaseConsumer::GetMessage(ConsumerResult& result) {
   request->request_id_ = Singleton<UniqueSeqId>::Instance().Next();
   req_protocol->request_id_ = request->request_id_;
   req_protocol->rpc_read_timeout_ = config_.GetRpcReadTimeoutMs() - 500;
-
-  LOG_TRACE("[CONSUMER] GetMessage select partition=%s, client=%s",
-    partition_ext.GetPartitionKey().c_str(), client_uuid_.c_str());
-
   // send message to target
   ResponseContext response_context;
   ErrorCode error = SyncRequest(response_context, request, req_protocol);
-  LOG_TRACE("[CONSUMER] GetMessage received response, ret_code=%d, client=%s",
-    error.Value(), client_uuid_.c_str());
   if (!TubeMQService::Instance()->IsRunning()) {
     result.SetFailureResult(err_code::kErrMQServiceStop, "TubeMQ Service stopped!");
     return false;
@@ -260,10 +254,6 @@ bool BaseConsumer::Confirm(const string& confirm_context, bool is_consumed,
     result.SetFailureResult(err_code::kErrClientStop, "TubeMQ Client stopped!");
     return false;
   }
-
-  LOG_TRACE("[CONSUMER] Confirm begin, confirm_context = %s, is_consumed =%d, client=%s",
-    confirm_context.c_str(), is_consumed, client_uuid_.c_str());
-
   string token1 = delimiter::kDelimiterAt;
   string token2 = delimiter::kDelimiterColon;
   string::size_type pos1, pos2;
@@ -319,10 +309,6 @@ bool BaseConsumer::Confirm(const string& confirm_context, bool is_consumed,
   request->request_id_ = Singleton<UniqueSeqId>::Instance().Next();
   req_protocol->request_id_ = request->request_id_;
   req_protocol->rpc_read_timeout_ = config_.GetRpcReadTimeoutMs() - 500;
-
-  LOG_TRACE("[CONSUMER] Confirm to %s, client=%s",
-    partition_ext.GetPartitionKey().c_str(), client_uuid_.c_str());
-
   // send message to target
   ResponseContext response_context;
   ErrorCode error = SyncRequest(response_context, request, req_protocol);
@@ -334,10 +320,6 @@ bool BaseConsumer::Confirm(const string& confirm_context, bool is_consumed,
     result.SetFailureResult(err_code::kErrClientStop, "TubeMQ Client stopped!");
     return false;
   }
-
-  LOG_TRACE("[CONSUMER] Confirm response result=%d, client=%s",
-    error.Value(), client_uuid_.c_str());
-
   if (error.Value() == err_code::kErrSuccess) {
     // process response
     auto rsp = any_cast<TubeMQCodec::RspProtocolPtr>(response_context.rsp_);
@@ -368,8 +350,6 @@ bool BaseConsumer::Confirm(const string& confirm_context, bool is_consumed,
   rmtdata_cache_.BookedPartionInfo(part_key, curr_offset);
   rmtdata_cache_.RelPartition(err_info, sub_info_.IsFilterConsume(topic_name), confirm_context,
                               is_consumed);
-  LOG_TRACE("[CONSUMER] Confirm response finished, result=%d, client=%s",
-    result.IsSuccess(), client_uuid_.c_str());
   return result.IsSuccess();
 }
 
@@ -1338,7 +1318,6 @@ bool BaseConsumer::processGetMessageRspB2C(ConsumerResult& result, PeerInfo& pee
     result.SetFailureResult(err_code::kErrServerError,
                             "Parse GetMessageResponseB2C response failure!",
                             partition_ext.GetTopic(), peer_info);
-    LOG_TRACE("[CONSUMER] processGetMessageRspB2C parse failure, client=%s", client_uuid_.c_str());
     return false;
   }
 
