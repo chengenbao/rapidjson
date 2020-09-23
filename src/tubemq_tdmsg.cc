@@ -5,12 +5,15 @@
 #include <snappy-c.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <sstream>
-
+#include "const_config.h"
 #include "utils.h"
 
+
 namespace tubemq {
+
+using std::stringstream;
+
 
 #define TUBEMQ_TDMSG_V4_MSG_FORMAT_SIZE 29
 #define TUBEMQ_TDMSG_V4_MSG_COUNT_OFFSET 15
@@ -20,12 +23,8 @@ static bool getDataChar(const char* data, int32_t& pos, uint32_t& remain, char& 
                         string& err_info);
 static bool getDataMagic(const char* data, int32_t& pos, uint32_t& remain, int32_t& ver,
                          string& err_info);
-static bool getUTFString(const char* data, int32_t& pos, uint32_t& remain, string& attrStr,
-                         string& err_info);
 static bool getDataCreateTime(const char* data, int32_t& pos, uint32_t& remain, int64_t& createTime,
                               string& err_info);
-static bool getDataUnsignedShortInt(const char* data, int32_t& pos, uint32_t& remain,
-                                    uint32_t& intVal, string& err_info);
 static bool getDatantohlInt(const char* data, int32_t& pos, uint32_t& remain, uint32_t& intVal,
                             string& err_info);
 static bool getDatantohsInt(const char* data, int32_t& pos, uint32_t& remain, uint32_t& intVal,
@@ -761,14 +760,13 @@ void TubeMQTDMsg::Clear() {
 }
 
 bool TubeMQTDMsg::ParseAttrValue(string attr_value, map<string, string>& result, string& err_info) {
-  bool result = false;
   if (attr_value.empty()) {
     err_info = "parmeter attr_value is empty";
-    return result;
+    return false;
   }
   if (string::npos == attr_value.find(delimiter::kDelimiterAnd)) {
     err_info = "Unregular attr_value error: not found token '&'!";
-    return result;
+    return false;
   }
   Utils::Split(attr_value, result, delimiter::kDelimiterAnd, delimiter::kDelimiterEqual);
   err_info = "Ok";
@@ -787,108 +785,6 @@ bool TubeMQTDMsg::addDataItem2Map(const string& datakey, const DataItem& data_it
   return true;
 }
 
-static bool getUTFString(const char* data, int32_t& pos, uint32_t& remain, string& attrStr,
-                         string& err_info) {
-  uint32_t utflen = 0;
-  const char* p = data;
-  if (!getDatantohsInt(p, pos, remain, utflen, err_info)) {
-    err_info += " for attr length parameter";
-    return false;
-  }
-  if (utflen > remain) {
-    err_info = "Parse message error: invalid attr length";
-    return false;
-  }
-  if (utflen == 0) {
-    pos += utflen;
-    remain -= utflen;
-    string tmpValue;
-    attrStr = tmpValue;
-    return true;
-  }
-  uint32_t origCount = 0;
-  int32_t targetCount = 0;
-  int32_t c, char2, char3;
-  char origValue[utflen];
-  char targetValue[utflen];
-  memset(origValue, 0, utflen);
-  memset(targetValue, 0, utflen);
-  memcpy(origValue, data + pos, utflen);
-  pos += utflen;
-  remain -= utflen;
-  while (origCount < utflen) {
-    c = (int)origValue[origCount] & 0xff;
-    if (c > 127) {
-      break;
-    }
-    origCount++;
-    targetValue[targetCount++] = (char)c;
-  }
-  while (origCount < utflen) {
-    c = (int)origValue[origCount] & 0xff;
-    switch (c >> 4) {
-      case 0:
-      case 1:
-      case 2:
-      case 3:
-      case 4:
-      case 5:
-      case 6:
-      case 7:
-        origCount++;
-        targetValue[targetCount++] = (char)c;
-        break;
-
-      case 12:
-      case 13: /* 110x xxxx   10xx xxxx*/
-        origCount += 2;
-        if (origCount > utflen) {
-          err_info = "Parse message error: malformed attr value for partial character at end";
-          return false;
-        }
-        char2 = (int)origValue[origCount - 1];
-        if ((char2 & 0xC0) != 0x80) {
-          stringstream ss;
-          ss << "Parse message error: malformed attr value around byte";
-          ss << origCount;
-          err_info = ss.str();
-          return false;
-        }
-        targetValue[targetCount++] = (char)(((c & 0x1F) << 6) | (char2 & 0x3F));
-        break;
-
-      case 14: /* 1110 xxxx  10xx xxxx  10xx xxxx */
-        origCount += 3;
-        if (origCount > utflen) {
-          err_info = "Parse message error: malformed attr value for partial character at end";
-          return false;
-        }
-        char2 = (int)origValue[origCount - 2];
-        char3 = (int)origValue[origCount - 1];
-        if (((char2 & 0xC0) != 0x80) || ((char3 & 0xC0) != 0x80)) {
-          stringstream ss;
-          ss << "Parse message error: malformed attr value around byte";
-          ss << origCount - 1;
-          err_info = ss.str();
-          return false;
-        }
-        targetValue[targetCount++] =
-            (char)(((c & 0x0F) << 12) | ((char2 & 0x3F) << 6) | ((char3 & 0x3F) << 0));
-        break;
-
-      default: /* 10xx xxxx,  1111 xxxx */
-        stringstream ss;
-        ss << "Parse message error: malformed attr value around byte";
-        ss << origCount;
-        err_info = ss.str();
-        return false;
-    }
-  }
-  string tmpValue(targetValue, targetCount);
-  attrStr = tmpValue;
-  return true;
-}
-
 static bool getDataChar(const char* data, int32_t& pos, uint32_t& remain, char& chrVal,
                         string& err_info) {
   const char* p = data;
@@ -899,19 +795,6 @@ static bool getDataChar(const char* data, int32_t& pos, uint32_t& remain, char& 
   chrVal = (p[pos] & 0xFF);
   pos += 1;
   remain -= 1;
-  return true;
-}
-
-static bool getDataUnsignedShortInt(const char* data, int32_t& pos, uint32_t& remain,
-                                    uint32_t& intVal, string& err_info) {
-  const char* p = data;
-  if (remain < 2) {
-    err_info = "Parse message error: no enough data length";
-    return false;
-  }
-  intVal = ((p[pos] << 8) + ((p[pos + 1] << 0) & 0xFF)) & 0xFFFF;
-  pos += 2;
-  remain -= 2;
   return true;
 }
 
