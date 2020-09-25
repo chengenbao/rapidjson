@@ -831,10 +831,14 @@ static bool getDataCreateTime(const char* data, int32_t& pos, uint32_t& remain, 
     err_info = "Parse message error: no enough data length for createtime data";
     return false;
   }
-  createTime =
-      (((int64_t)p[pos] << 56) + ((int64_t)(p[pos + 1] & 255) << 48) + ((int64_t)(p[pos + 2] & 255) << 40) +
-       ((int64_t)(p[pos + 3] & 255) << 32) + ((int64_t)(p[pos + 4] & 255) << 24) +
-       ((p[pos + 5] & 255) << 16) + ((p[pos + 6] & 255) << 8) + ((p[pos + 7] & 255) << 0));
+  createTime = (((int64_t)p[pos] << 56)
+    + ((int64_t)(p[pos + 1] & 255) << 48)
+    + ((int64_t)(p[pos + 2] & 255) << 40)
+    + ((int64_t)(p[pos + 3] & 255) << 32)
+    + ((int64_t)(p[pos + 4] & 255) << 24)
+    + ((p[pos + 5] & 255) << 16)
+    + ((p[pos + 6] & 255) << 8)
+    + ((p[pos + 7] & 255) << 0));
   pos += 8;
   remain -= 8;
   return true;

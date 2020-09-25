@@ -252,7 +252,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  getchar(); // for test hold the test thread
+  getchar();  // for test hold the test thread
   result = StopTubeMQService(err_info);
   if (!result) {
     printf("\n *** StopTubeMQService failure, reason is %s", err_info.c_str());
