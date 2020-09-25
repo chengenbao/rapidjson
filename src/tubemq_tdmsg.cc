@@ -124,7 +124,7 @@ bool TubeMQTDMsg::ParseTDMsg(const char* data, uint32_t data_length, string& err
         err_info += " for attrCount parameter";
         return result;
       }
-      result = parseMixAttrMsg(data, pos1, remain, err_info);
+      result = parseMixAttrMsg(data, remain, pos1, err_info);
       break;
     }
 
@@ -151,7 +151,7 @@ bool TubeMQTDMsg::ParseTDMsg(const char* data, uint32_t data_length, string& err
       } else {
         is_numbid_ = true;
       }
-      result = parseBinMsg(data, pos1, remain, err_info);
+      result = parseBinMsg(data, remain, pos1, err_info);
       break;
     }
 
@@ -171,7 +171,7 @@ bool TubeMQTDMsg::ParseTDMsg(const char* data, uint32_t data_length, string& err
         err_info += " for attrCount parameter";
         return result;
       }
-      result = parseDefaultMsg(data, pos1, remain, err_info);
+      result = parseDefaultMsg(data, remain, pos1, err_info);
       break;
     }
   }
