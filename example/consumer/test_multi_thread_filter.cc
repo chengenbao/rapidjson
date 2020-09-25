@@ -64,11 +64,11 @@ bool parse_TDMsg1_type_msg(const list<Message>& messageSet) {
   map<string, string>::const_iterator it_attr;
   list<DataItem>::const_iterator it_item;
   map<string, list<DataItem> >::const_iterator it_map;
-  for(it_list = messageSet.begin(); it_list != messageSet.end(); ++it_list) {
+  for (it_list = messageSet.begin(); it_list != messageSet.end(); ++it_list) {
     printf("\nMessage id is %ld, topic is %s",
       it_list->GetMessageId(), it_list->GetTopic().c_str());
     TubeMQTDMsg tubemq_tdmsg;
-    if(tubemq_tdmsg.ParseTDMsg(it_list->GetData(), it_list->GetDataLength(), err_info)) {
+    if (tubemq_tdmsg.ParseTDMsg(it_list->GetData(), it_list->GetDataLength(), err_info)) {
       printf("\n parse data success, version is %d, createTime is %ld",
         tubemq_tdmsg.GetVersion(), tubemq_tdmsg.GetCreateTime());
       map<string, list<DataItem> > data_map = tubemq_tdmsg.GetAttr2DataMap();
@@ -80,13 +80,13 @@ bool parse_TDMsg1_type_msg(const list<Message>& messageSet) {
           continue;
         }
         printf("\n parsed attribute:");
-        for(it_attr = key_vals.begin(); it_attr != key_vals.end(); ++it_attr) {
+        for (it_attr = key_vals.begin(); it_attr != key_vals.end(); ++it_attr) {
           printf("\nkey is %s, value is %s",
             (it_attr->first).c_str(), (it_attr->second).c_str());
         }
         list<DataItem> data_items = it_map->second;
         printf("\n parsed msg count is %ld", data_items.size());
-        for(it_item = data_items.begin(); it_item != data_items.end(); ++it_item) {
+        for (it_item = data_items.begin(); it_item != data_items.end(); ++it_item) {
           printf("\n parsed msg data' length is %d, value is: %s",
             it_item->GetLength(), it_item->GetData());
         }
@@ -174,29 +174,32 @@ int main(int argc, char* argv[]) {
     printf("\n Set Master AddrInfo failure: %s ", err_info.c_str());
     return -1;
   }
-  // non-filter consume begin
-  //set<string> topic_list;
-  //topic_list.insert("test_1");
-  //result = consumer_config.SetGroupConsumeTarget(err_info, group_name, topic_list);
-  //if (!result) {
-  //  printf("\n Set GroupConsume Target failure: %s", err_info.c_str());
-  //  return -1;
-  //}
-  // non-filter consume end
 
+  // non-filter consume begin
+  set<string> topic_list;
+  topic_list.insert("test_1");
+  result = consumer_config.SetGroupConsumeTarget(err_info, group_name, topic_list);
+  if (!result) {
+    printf("\n Set GroupConsume Target failure: %s", err_info.c_str());
+    return -1;
+  }
+  //  non-filter consume end
+
+
+/*
   // filter consume begin
-  //set<string> filters;
-  //filters.insert("aaa");
-  //filters.insert("bbb");
-  //filters.insert("xxb");
-  //map<string, set<string> > subscribed_topic_and_filter_map;
-  //subscribed_topic_and_filter_map["test_1"] = filters; 
-  //result = consumer_config.SetGroupConsumeTarget(err_info,
-  //  group_name, subscribed_topic_and_filter_map);
-  //if (!result) {
-  //  printf("\n Set GroupConsume Target failure: %s", err_info.c_str());
-  //  return -1;
-  //}
+  set<string> filters;
+  filters.insert("aaa");
+  filters.insert("bbb");
+  filters.insert("xxb");
+  map<string, set<string> > subscribed_topic_and_filter_map;
+  subscribed_topic_and_filter_map["test_1"] = filters; 
+  result = consumer_config.SetGroupConsumeTarget(err_info,
+    group_name, subscribed_topic_and_filter_map);
+  if (!result) {
+    printf("\n Set GroupConsume Target failure: %s", err_info.c_str());
+    return -1;
+  }
   // filter consume end
 
   // bound consume begin
@@ -221,7 +224,8 @@ int main(int argc, char* argv[]) {
     printf("\n Set GroupConsume Target failure: %s", err_info.c_str());
     return -1;
   }
-  // bound consume end
+// bound consume end
+*/
 
   result = StartTubeMQService(err_info, conf_file);
   if (!result) {
@@ -239,7 +243,7 @@ int main(int argc, char* argv[]) {
     pull_threads[i] = std::thread(thread_task_pull, i);
   }
 
-  getchar(); // for test hold the test thread
+  getchar();  // for test hold the test thread
   consumer_1.ShutDown();
   //
   for (int32_t i = 0; i < thread_num; i++) {
