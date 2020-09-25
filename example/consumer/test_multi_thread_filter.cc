@@ -131,14 +131,14 @@ void thread_task_pull(int32_t thread_no) {
       // parse_raw_type_msg(msgs);
     } else {
       // 2.2.1 if failure, check error code
-      // print error message if errcode not in 
+      // print error message if errcode not in
       // [no partitions assigned, all partitions in use,
       //    or all partitons idle, reach max position]
       if (!(gentRet.GetErrCode() == err_code::kErrNotFound
         || gentRet.GetErrCode() == err_code::kErrNoPartAssigned
         || gentRet.GetErrCode() == err_code::kErrAllPartInUse
         || gentRet.GetErrCode() == err_code::kErrAllPartWaiting)) {
-        if (gentRet.GetErrCode() == err_code::kErrMQServiceStop 
+        if (gentRet.GetErrCode() == err_code::kErrMQServiceStop
           || gentRet.GetErrCode() == err_code::kErrClientStop) {
           break;
         }
@@ -165,11 +165,9 @@ int main(int argc, char* argv[]) {
   string conf_file = "../conf/client.conf";
   if (argc > 4) {
     conf_file = argv[4];
-  }  
-  int32_t thread_num =15;
-  
+  }
+  int32_t thread_num = 15;
   ConsumerConfig consumer_config;
-
   consumer_config.SetRpcReadTimeoutMs(20000);
   result = consumer_config.SetMasterAddrInfo(err_info, master_addr);
   if (!result) {
@@ -185,7 +183,7 @@ int main(int argc, char* argv[]) {
   //  return -1;
   //}
   // non-filter consume end
-  
+
   // filter consume begin
   //set<string> filters;
   //filters.insert("aaa");
@@ -218,7 +216,7 @@ int main(int argc, char* argv[]) {
   part_offset_map["181895251:test_1:30"] = 0;
   result =  consumer_config.SetGroupConsumeTarget(err_info, group_name,
     subscribed_topic_and_filter_map, session_key,
-    source_count, is_select_big,part_offset_map);
+    source_count, is_select_big, part_offset_map);
   if (!result) {
     printf("\n Set GroupConsume Target failure: %s", err_info.c_str());
     return -1;
@@ -236,7 +234,6 @@ int main(int argc, char* argv[]) {
     printf("\n Initial consumer failure, error is: %s ", err_info.c_str());
     return -2;
   }
-  
   std::thread pull_threads[thread_num];
   for (int32_t i = 0; i < thread_num; i++) {
     pull_threads[i] = std::thread(thread_task_pull, i);
@@ -244,7 +241,7 @@ int main(int argc, char* argv[]) {
 
   getchar(); // for test hold the test thread
   consumer_1.ShutDown();
-  // 
+  //
   for (int32_t i = 0; i < thread_num; i++) {
     if (pull_threads[i].joinable()) {
       pull_threads[i].join();
