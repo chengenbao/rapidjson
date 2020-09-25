@@ -29,6 +29,8 @@
 #include <libgen.h>
 #include <sys/time.h>
 #include <chrono>
+#include <map>
+#include <list>
 #include <set>
 #include <string>
 #include <thread>
@@ -38,6 +40,8 @@
 #include "tubemq/tubemq_errcode.h"
 #include "tubemq/tubemq_message.h"
 #include "tubemq/tubemq_return.h"
+#include "tubemq/tubemq_tdmsg.h"
+
 
 
 
@@ -54,36 +58,77 @@ AtomicLong last_print_count(0);
 
 
 
-void calc_message_count(int64_t msg_count) {
+bool parse_TDMsg1_type_msg(const list<Message>& messageSet) {
+  string err_info;
+  list<Message>::const_iterator it_list;
+  map<string, string>::const_iterator it_attr;
+  list<DataItem>::const_iterator it_item;
+  map<string, list<DataItem> >::const_iterator it_map;
+  for(it_list = messageSet.begin(); it_list != messageSet.end(); ++it_list) {
+    printf("\nMessage id is %ld, topic is %s",
+      it_list->GetMessageId(), it_list->GetTopic().c_str());
+    TubeMQTDMsg tubemq_tdmsg;
+    if(tubemq_tdmsg.ParseTDMsg(it_list->GetData(), it_list->GetDataLength(), err_info)) {
+      printf("\n parse data success, version is %d, createTime is %ld",
+        tubemq_tdmsg.GetVersion(), tubemq_tdmsg.GetCreateTime());
+      map<string, list<DataItem> > data_map = tubemq_tdmsg.GetAttr2DataMap();
+      for (it_map = data_map.begin(); it_map != data_map.end(); ++it_map) {
+        map<string, string> key_vals;
+        if (!tubemq_tdmsg.ParseAttrValue(it_map->first, key_vals, err_info)) {
+          printf("\n parse attribute error, attr is %s, reason is %s",
+            (it_map->first).c_str(), err_info.c_str());
+          continue;
+        }
+        printf("\n parsed attribute:");
+        for(it_attr = key_vals.begin(); it_attr != key_vals.end(); ++it_attr) {
+          printf("\nkey is %s, value is %s",
+            (it_attr->first).c_str(), (it_attr->second).c_str());
+        }
+        list<DataItem> data_items = it_map->second;
+        printf("\n parsed msg count is %ld", data_items.size());
+        for(it_item = data_items.begin(); it_item != data_items.end(); ++it_item) {
+          printf("\n parsed msg data' length is %d, value is: %s",
+            it_item->GetLength(), it_item->GetData());
+        }
+      }
+    } else {
+      printf("\n \n parse data error, reason is %s\n", err_info.c_str());
+      break;
+    }
+  }
+  return true;
+}
+
+
+bool parse_raw_type_msg(const list<Message>& messageSet) {
   int64_t last_time = last_print_time.Get();
-  int64_t cur_count = last_msg_count.AddAndGet(msg_count);
+  int64_t cur_count = last_msg_count.AddAndGet(messageSet.size());
   int64_t cur_time = time(NULL);
-  if (cur_count - last_print_count.Get() >= 50000 
+  if (cur_count - last_print_count.Get() >= 50000
     || cur_time - last_time > 90) {
     if (last_print_time.CompareAndSet(last_time, cur_time)) {
       printf("\n %ld Current message count=%ld", cur_time, last_msg_count.Get());
       last_print_count.Set(cur_count);
     }
   }
+  return true;
 }
-
 
 void thread_task_pull(int32_t thread_no) {
   bool result;
-  int64_t msg_count = 0;
   ConsumerResult gentRet;
   ConsumerResult confirm_result;
   printf("\n thread_task_pull start: %d", thread_no);
   do {
-    msg_count = 0;
     // 1. get Message;
     result = consumer_1.GetMessage(gentRet);
     if (result) {
       // 2.1.1  if success, process message
       list<Message> msgs = gentRet.GetMessageList();
-      msg_count = msgs.size();
       // 2.1.2 confirm message result
       consumer_1.Confirm(gentRet.GetConfirmContext(), true, confirm_result);
+      parse_TDMsg1_type_msg(msgs);
+      // parse_raw_type_msg(msgs);
     } else {
       // 2.2.1 if failure, check error code
       // print error message if errcode not in 
@@ -101,7 +146,6 @@ void thread_task_pull(int32_t thread_no) {
           gentRet.GetErrCode(), gentRet.GetErrMessage().c_str());
       }
     }
-    calc_message_count(msg_count);
   } while (true);
   printf("\n thread_task_pull finished: %d", thread_no);
 }
