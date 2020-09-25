@@ -603,7 +603,7 @@ bool TubeMQTDMsg::parseBinMsg(const char* data, uint32_t data_length, int32_t st
       break;
     }
   }
-  //构造固定attr
+  //  build attr
   commonAttrMap["dt"] = Utils::Long2str(create_time_);
   if ((extField & 0x4) == 0x0) {
     commonAttrMap["bid"] = Utils::Int2str(bidNum);
@@ -611,7 +611,7 @@ bool TubeMQTDMsg::parseBinMsg(const char* data, uint32_t data_length, int32_t st
   }
   commonAttrMap["cnt"] = "1";
   int msgCount = msgCnt;
-  // 构造数据
+  //  build data
   if ((extField & 0x1) == 0x0) {
     int32_t bodyPos = 0;
     uint32_t bodyRemain = realBodyLen;
@@ -832,8 +832,8 @@ static bool getDataCreateTime(const char* data, int32_t& pos, uint32_t& remain, 
     return false;
   }
   createTime =
-      (((long)p[pos] << 56) + ((long)(p[pos + 1] & 255) << 48) + ((long)(p[pos + 2] & 255) << 40) +
-       ((long)(p[pos + 3] & 255) << 32) + ((long)(p[pos + 4] & 255) << 24) +
+      (((int64_t)p[pos] << 56) + ((int64_t)(p[pos + 1] & 255) << 48) + ((int64_t)(p[pos + 2] & 255) << 40) +
+       ((int64_t)(p[pos + 3] & 255) << 32) + ((int64_t)(p[pos + 4] & 255) << 24) +
        ((p[pos + 5] & 255) << 16) + ((p[pos + 6] & 255) << 8) + ((p[pos + 7] & 255) << 0));
   pos += 8;
   remain -= 8;

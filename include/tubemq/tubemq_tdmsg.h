@@ -84,5 +84,5 @@ class TubeMQTDMsg {
 }  // namespace tubemq
 
 
-#endif // TUBEMQ_CLIENT_TDMSG_H_
+#endif  // TUBEMQ_CLIENT_TDMSG_H_
 
