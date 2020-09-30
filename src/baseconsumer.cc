@@ -82,6 +82,7 @@ bool BaseConsumer::Start(string& err_info, const ConsumerConfig& config) {
   }
   config_ = config;
   if (!initMasterAddress(err_info, config.GetMasterAddrInfo())) {
+    TubeMQService::Instance()->RmvClientObj(shared_from_this());
     return false;
   }
   client_uuid_ = buildUUID();
@@ -92,6 +93,7 @@ bool BaseConsumer::Start(string& err_info, const ConsumerConfig& config) {
   // register to master
   int32_t error_code;
   if (!register2Master(error_code, err_info, false)) {
+    TubeMQService::Instance()->RmvClientObj(shared_from_this());
     status_.CompareAndSet(1, 0);
     return false;
   }
