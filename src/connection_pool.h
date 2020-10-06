@@ -43,12 +43,14 @@ namespace tubemq {
 
 using std::string;
 
-class ConnectionPool : noncopyable {
+class ConnectionPool : public noncopyable, public std::enable_shared_from_this<ConnectionPool> {
  public:
   explicit ConnectionPool(ExecutorPoolPtr& executor_pool)
       : executor_pool_(executor_pool), regular_timer_(executor_pool_->Get()->CreateSteadyTimer()) {
     regular_timer_->expires_after(std::chrono::seconds(kRegularTimerSecond));
-    regular_timer_->async_wait([this](const std::error_code& ec) { ClearInvalidConnect(ec); });
+    auto self = shared_from_this();
+    regular_timer_->async_wait(
+        [this, self](const std::error_code& ec) { ClearInvalidConnect(ec); });
   }
   ~ConnectionPool() { Clear(); }
 
