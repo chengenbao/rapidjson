@@ -82,7 +82,9 @@ class ConnectionPool : public noncopyable, public std::enable_shared_from_this<C
       ++it;
     }
     regular_timer_->expires_after(std::chrono::seconds(kRegularTimerSecond));
-    regular_timer_->async_wait([this](const std::error_code& ec) { ClearInvalidConnect(ec); });
+    auto self = shared_from_this();
+    regular_timer_->async_wait(
+        [this, self](const std::error_code& ec) { ClearInvalidConnect(ec); });
   }
 
   ConnectionPtr GetConnection(RequestContextPtr& request) {
