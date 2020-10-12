@@ -1,5 +1,6 @@
 /*****************************************************
-//
+Copyright [20]<Copyright Owner>
+
 //  this file is created by Goson 
 //  time: 2016.04.26
 //  version: 1.0

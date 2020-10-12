@@ -1,3 +1,16 @@
+/*****************************************************
+Copyright [20]<Copyright Owner>
+
+//  this file is created by Goson 
+//  time: 2016.04.26
+//  version: 1.0
+//  description: tube TDMsg define
+//
+//  time: 2020.09.10
+//  version: 1.1
+//  description: change the class's Code style
+//
+*****************************************************/
 
 #include "tubemq/tubemq_tdmsg.h"
 
