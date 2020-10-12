@@ -28,6 +28,18 @@
  * [OpenSSL](https://github.com/openssl/openssl.git)
  * [Protocol Buffer](https://developers.google.com/protocol-buffers/) ./configure --disable-shared && make && make install
  * [Log4cplus](https://github.com/log4cplus/log4cplus.git)
- * [Rapidjson](https://github.com/Tencent/rapidjson.git)
+ * [Rapidjson](https://github.com/Tencent/rapidjson.git) 
 
+# Step to build
+  * install protobuf
+  * ./build_linux.sh
+  * cd release/
+  * chmod +x release_linux.sh
+  * ./release_linux.sh 
+ 
 
+# 版本修改历史
+ 
+## 0.1.1-0.5.0
+ - 1. 基于0.5.0版本的TubeMQ协议进行重新构建TubeMQ的SDK，后续版本都基于此进行
+ 
