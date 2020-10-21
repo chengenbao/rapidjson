@@ -39,8 +39,10 @@ using BufferPtr = std::shared_ptr<Buffer>;
 
 class Buffer {
  public:
-  static const size_t kCheapPrependSize = 0;
-  static const size_t kInitialSize = 8192;
+  enum {
+    kCheapPrependSize = 0,
+    kInitialSize = 8192,
+  };
 
   explicit Buffer(size_t initial_size = kInitialSize,
                   size_t reserved_prepend_size = kCheapPrependSize)

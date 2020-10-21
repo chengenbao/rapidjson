@@ -122,7 +122,9 @@ class ConnectionPool : public noncopyable, public std::enable_shared_from_this<C
   std::unordered_map<std::string, ConnectionPtr> connection_pool_;
   ExecutorPoolPtr executor_pool_;
   SteadyTimerPtr regular_timer_;
-  static const uint32_t kRegularTimerSecond = 20;
+  enum {
+    kRegularTimerSecond = 20,
+  };
   typedef std::unique_lock<std::mutex> Lock;
 };
 

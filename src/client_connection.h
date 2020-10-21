@@ -85,8 +85,10 @@ class ClientConnection : public Connection, public std::enable_shared_from_this<
 
  private:
   using BufferQueue = std::deque<uint32_t>;
-  static const uint32_t kConnnectMaxTimeMs{1000 * 20};  // ms
-  static const uint32_t kReadMaxTimeMs{1000 * 30};      // ms
+  enum {
+    kConnnectMaxTimeMs = 1000 * 20,  // ms
+    kReadMaxTimeMs = 1000 * 30,      // ms
+  };
   ExecutorPtr executor_;
   TcpSocketPtr socket_;
   BufferPtr recv_buffer_;
