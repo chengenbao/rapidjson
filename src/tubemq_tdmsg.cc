@@ -83,8 +83,8 @@ void DataItem::copyData(const char* data, uint32_t length) {
     length_ = 0;
   } else {
     length_ = length;
-    data_ = new char[length];
-    memset(data_, 0, length);
+    data_ = new char[length + 1];
+    memset(data_, 0, length + 1);
     memcpy(data_, data, length);
   }
 }
