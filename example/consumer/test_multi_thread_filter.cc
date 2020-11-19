@@ -177,7 +177,7 @@ int main(int argc, char* argv[]) {
 
   // non-filter consume begin
   set<string> topic_list;
-  topic_list.insert("test_1");
+  topic_list.insert(topic_name);
   result = consumer_config.SetGroupConsumeTarget(err_info, group_name, topic_list);
   if (!result) {
     printf("\n Set GroupConsume Target failure: %s", err_info.c_str());
