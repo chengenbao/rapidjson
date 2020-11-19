@@ -193,6 +193,7 @@ bool TubeMQTDMsg::ParseTDMsg(const char* data, uint32_t data_length, string& err
 
 bool TubeMQTDMsg::parseDefaultMsg(const char* data, uint32_t data_length, int32_t start_pos,
                                   string& err_info) {
+  // #lizard forgives
   int32_t pos1 = start_pos;
   uint32_t remain = data_length;
   for (uint32_t i = 0; i < attr_count_; i++) {
@@ -313,6 +314,7 @@ bool TubeMQTDMsg::parseDefaultMsg(const char* data, uint32_t data_length, int32_
 
 bool TubeMQTDMsg::parseMixAttrMsg(const char* data, uint32_t data_length, int32_t start_pos,
                                   string& err_info) {
+  // #lizard forgives
   int32_t pos1 = start_pos;
   uint32_t remain = data_length;
   for (uint32_t i = 0; i < attr_count_; i++) {
@@ -486,7 +488,8 @@ bool TubeMQTDMsg::parseMixAttrMsg(const char* data, uint32_t data_length, int32_
 
 bool TubeMQTDMsg::parseBinMsg(const char* data, uint32_t data_length, int32_t start_pos,
                               string& err_info) {
-  uint32_t totalLen = 0;  // 0
+  // #lizard forgives
+  uint32_t totalLen = 0;  //
   char msgType = 0;
   uint32_t bidNum = 0;
   uint32_t tidNum = 0;
@@ -859,6 +862,7 @@ static bool getDataCreateTime(const char* data, int32_t& pos, uint32_t& remain, 
 
 static bool getDataMagic(const char* data, int32_t& pos, uint32_t& remain, int32_t& ver,
                          string& err_info) {
+  // #lizard forgives
   ver = -1;
   const char* p = data;
   if (remain < 4) {
