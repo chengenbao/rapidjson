@@ -489,7 +489,7 @@ bool TubeMQTDMsg::parseMixAttrMsg(const char* data, uint32_t data_length, int32_
 bool TubeMQTDMsg::parseBinMsg(const char* data, uint32_t data_length, int32_t start_pos,
                               string& err_info) {
   // #lizard forgives
-  uint32_t totalLen = 0;  //
+  uint32_t totalLen = 0;
   char msgType = 0;
   uint32_t bidNum = 0;
   uint32_t tidNum = 0;
