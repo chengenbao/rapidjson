@@ -85,6 +85,11 @@ void Message::SetTopic(const string& topic) { topic_ = topic; }
 
 const char* Message::GetData() const { return data_; }
 
+vector<char> Message::GetVectorData() const {
+  vector<char> vector_data(data_, data_ + datalen_);
+  return vector_data;
+}
+
 uint32_t Message::GetDataLength() const { return datalen_; }
 
 void Message::setData(const char* data, uint32_t datalen) {

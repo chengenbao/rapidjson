@@ -45,6 +45,7 @@ class Message {
   const string& GetTopic() const;
   void SetTopic(const string& topic);
   const char* GetData() const;
+  vector<char> GetVectorData() const;
   uint32_t GetDataLength() const;
   void setData(const char* data, uint32_t datalen);
   const int32_t GetFlag() const;
