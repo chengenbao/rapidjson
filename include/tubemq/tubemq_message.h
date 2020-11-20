@@ -24,12 +24,16 @@
 #include <stdio.h>
 
 #include <map>
+#include <vector>
 #include <string>
 
 namespace tubemq {
 
 using std::map;
+using std::vector;
 using std::string;
+
+
 
 class Message {
  public:
