@@ -55,7 +55,7 @@ class Message {
   const int32_t GetFlag() const;
   void SetFlag(int32_t flag);
   const map<string, string>& GetProperties() const;
-  int32_t GetProperties(string& attribute);
+  int32_t GetPropertie(string& attribute);
   bool HasProperty(const string& key);
   bool GetProperty(const string& key, string& value);
   bool GetFilterItem(string& value);

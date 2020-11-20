@@ -103,7 +103,7 @@ void Message::SetFlag(int32_t flag) { flag_ = flag; }
 
 const map<string, string>& Message::GetProperties() const { return properties_; }
 
-int32_t Message::GetProperties(string& attribute) {
+int32_t Message::GetPropertie(string& attribute) {
   attribute.clear();
   map<string, string>::iterator it_map;
   for (it_map = properties_.begin(); it_map != properties_.end(); ++it_map) {
