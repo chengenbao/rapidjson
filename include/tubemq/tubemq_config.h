@@ -118,7 +118,7 @@ class ConsumerConfig : public BaseConfig {
   //    be blocked forever and will not return until the consumption conditions are met;
   // 2. if If it is set to 0, it means that the GetMessage() calling thread will only block
   //    the ConsumerConfig.GetPartCheckSliceMs() interval when the consumption conditions
-  //    are not met and then return; 
+  //    are not met and then return;
   // 3. if it is set to a positive number, it will not meet the current user usage (including
   //    unused partitions or allocated partitions, but these partitions do not meet the usage
   //    conditions), the GetMessage() calling thread will be blocked until the total time of
