@@ -48,17 +48,21 @@ class TubeMQServiceConfig {
   const string& GetLogStorePath() const;
   void setDnsXfsPeriodInMs(int32_t dns_xfs_period_ms);
   const int32_t getDnsXfsPeriodInMs() const;
-  void setServiceThreads(int32_t timer_threads, 
-                 int32_t network_threads, int32_t signal_threads);
+  void setServiceThreads(int32_t timer_threads,
+    int32_t network_threads, int32_t signal_threads);
   const int32_t getTimerThreads() const;
   const int32_t getNetWorkThreads() const;
   const int32_t getSignalThreads() const;
   const string ToString() const;
 
  private:
+  // max log file count
   int32_t log_num_;
+  // unit MB
   int32_t log_size_;
+  // 0:trace, 1:debug, 2:info, 3:warn, 4:error
   int32_t log_level_;
+  // need include log filename
   string log_path_;
   int32_t dns_xfs_period_ms_;
   int32_t timer_threads_;
