@@ -19,6 +19,7 @@ Copyright [20]<Copyright Owner>
 #include <stdint.h>
 #include <list>
 #include <map>
+#include <vector>
 #include <string>
 
 
@@ -26,6 +27,7 @@ namespace tubemq {
 
 using std::list;
 using std::map;
+using std::vector;
 using std::string;
 
 
@@ -34,7 +36,7 @@ class DataItem {
   DataItem();
   DataItem(const DataItem& target);
   DataItem(const uint32_t length, const char* data);
-  ~DataItem();
+  virtual ~DataItem();
   DataItem& operator=(const DataItem& target);
   const uint32_t GetLength() const { return length_; }
   const char* GetData() const { return data_; }
@@ -51,9 +53,10 @@ class DataItem {
 class TubeMQTDMsg {
  public:
   TubeMQTDMsg();
-  ~TubeMQTDMsg();
+  virtual ~TubeMQTDMsg();
   bool ParseTDMsg(const char* data,
     uint32_t data_length, string& err_info);
+  bool ParseTDMsg(const vector<char>& data_vec, string& err_info);
   void Clear();
   const int32_t GetVersion() const { return version_; }
   bool IsNumBid() const { return is_numbid_; }

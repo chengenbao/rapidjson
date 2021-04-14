@@ -191,6 +191,21 @@ bool TubeMQTDMsg::ParseTDMsg(const char* data, uint32_t data_length, string& err
   return result;
 }
 
+bool TubeMQTDMsg::ParseTDMsg(const vector<char>& data_vec, string& err_info) {
+  bool result = false;
+
+  if (is_parsed_) {
+    err_info = "TDMsg is parsed, if need re-parse, please clear first!";
+    return result;
+  }
+  if (data_vec.empty()) {
+      err_info = "Check parameter data is NULL or data_length is zero!";
+      return result;
+  }
+  result = ParseTDMsg(data_vec.data(), data_vec.size(), err_info);
+  return result;
+}
+
 bool TubeMQTDMsg::parseDefaultMsg(const char* data, uint32_t data_length, int32_t start_pos,
                                   string& err_info) {
   // #lizard forgives
