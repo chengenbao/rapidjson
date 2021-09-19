@@ -210,7 +210,7 @@ void Message::copyData(const char* data, uint32_t datalen) {
   } else {
     datalen_ = datalen;
     data_ = new char[datalen + 1];
-    memset(data_, 0, datalen);
+    memset(data_, 0, datalen + 1);
     memcpy(data_, data, datalen);
   }
 }
