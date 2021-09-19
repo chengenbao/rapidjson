@@ -66,7 +66,6 @@ void calc_message_count(int64_t msg_count) {
   }
 }
 
-
 void thread_task_pull(int32_t thread_no) {
   bool result;
   int64_t msg_count = 0;
