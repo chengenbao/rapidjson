@@ -28,9 +28,9 @@
  * [OpenSSL](https://github.com/openssl/openssl.git)
  * [Protocol Buffer](https://developers.google.com/protocol-buffers/) ./configure --disable-shared CFLAGS="-fPIC" CXXFLAGS="-fPIC" && make && make install
  * [Log4cplus](https://github.com/log4cplus/log4cplus.git)
- * [Rapidjson](https://github.com/Tencent/rapidjson.git) 
+ * [Rapidjson](https://github.com/Tencent/rapidjson.git)
 
-# Step to build
+## Step to build
   * install protobuf (./configure --disable-shared CFLAGS="-fPIC" CXXFLAGS="-fPIC" && make && make install)
   * ./build_linux.sh
   * cd release/

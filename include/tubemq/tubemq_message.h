@@ -33,8 +33,6 @@ using std::map;
 using std::vector;
 using std::string;
 
-
-
 class Message {
  public:
   Message();
