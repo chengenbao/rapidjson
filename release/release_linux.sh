@@ -33,7 +33,7 @@ mkdir lib
 
 cp ../build/src/libtubemq.a lib/
 cp ../build/third_party/lib/liblog4cplus.a lib/
-cp ../build/third_party/lib64/libsnappy.a lib/
+cp ../build/third_party/lib/libsnappy.a lib/
 cp ../build/proto/libtubemq_proto.a lib/
 cp /usr/local/lib/libprotobuf.a lib/
 cp -rf ../include/*  tubemq/include/
