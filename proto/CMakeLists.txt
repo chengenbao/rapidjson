@@ -24,3 +24,4 @@ file(GLOB ProtoFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.proto")
 PROTOBUF_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
 add_library(tubemq_proto STATIC ${ProtoSources} ${ProtoHeaders})
 target_link_libraries(tubemq_proto libprotobuf.a)
+

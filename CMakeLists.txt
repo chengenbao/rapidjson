@@ -25,24 +25,16 @@ project (TubeMQ)
 find_package(Protobuf REQUIRED)
 
 if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0.0)
-    SET(CMAKE_CXX_FLAGS "-std=c++11 -O2 -g -Wall -Werror -Wsign-compare -Wfloat-equal -fno-strict-aliasing -fPIC -DASIO_STANDALONE")
+    SET(CMAKE_CXX_FLAGS "-std=c++11 -O2 -g -Wall -Werror -Wsign-compare -Wfloat-equal -fno-strict-aliasing -fPIC -DASIO_STANDALONEi -D_GLIBCXX_USE_CXX11_ABI=0")
 else ()
-    SET(CMAKE_CXX_FLAGS "-std=c++11 -O2 -g -Wall -Werror -Wno-error=class-memaccess -Wsign-compare -Wfloat-equal -fno-strict-aliasing -fPIC -DASIO_STANDALONE")
+    SET(CMAKE_CXX_FLAGS "-std=c++11 -O2 -g -Wall -Werror -Wno-error=class-memaccess -Wsign-compare -Wfloat-equal -fno-strict-aliasing -fPIC -DASIO_STANDALONE -D_GLIBCXX_USE_CXX11_ABI=0")
 endif ()
-
-
-INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR}/proto)
 
 INCLUDE_DIRECTORIES(include)
 INCLUDE_DIRECTORIES(src)
+INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR}/proto)
+include(third_party/CMakeLists.txt)
 
-INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR}/third_party/rapidjson/src/rapidjson/include)
-INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR}/third_party/include)
-LINK_DIRECTORIES(${CMAKE_BINARY_DIR}/third_party/lib)
-LINK_DIRECTORIES(${CMAKE_BINARY_DIR}/third_party/lib64)
-
-
-ADD_SUBDIRECTORY(third_party)
 ADD_SUBDIRECTORY(proto)
 ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(example)

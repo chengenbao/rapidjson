@@ -57,7 +57,7 @@ int main(int argc, char* argv[]) {
   bool result;
   string err_info;
   if (argc < 4) {
-    printf("\n must ./comd master_addr group_name topic_name [config_file_path]");
+    printf("\n must ./comd master_addr group_name topic_name [config_file_path]\n");
     return -1;
   }
   // set parameters
